@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<!-- Design System COR -->
+<link rel="stylesheet" href="{% static 'mapa_novo/css/cor_design_system.css' %}">
+<link rel="stylesheet" href="{% static 'mapa_novo/css/cor_components.css' %}">
+
+<!-- CSS específico do sistema -->
+{% block system_css %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="cor-system-wrapper">
+    <!-- Header do Sistema -->
+    <div class="cor-system-header">
+        <div class="cor-system-title">
+            <i class="bi bi-{{ system_icon }}"></i>
+            <h1>{{ system_name }}</h1>
+        </div>
+        <div class="cor-system-actions">
+            {% block system_actions %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="cor-system-content">
+        {% block system_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% block system_js %}{% endblock %}
+{% endblock %}
+
+<style>
+.cor-system-wrapper {
+    padding: var(--cor-spacing-lg);
+    min-height: calc(100vh - 146px);
+    margin-top: 146px;
+}
+
+.cor-system-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--cor-spacing-lg);
+    background: var(--cor-white);
+    border-radius: var(--cor-radius-lg);
+    box-shadow: var(--cor-shadow-md);
+    margin-bottom: var(--cor-spacing-lg);
+}
+
+.cor-system-title {
+    display: flex;
+    align-items: center;
+    gap: var(--cor-spacing-md);
+}
+
+.cor-system-title i {
+    font-size: var(--cor-font-size-3xl);
+    color: var(--cor-primary);
+}
+
+.cor-system-title h1 {
+    font-size: var(--cor-font-size-2xl);
+    font-weight: var(--cor-font-weight-bold);
+    color: var(--cor-primary);
+    margin: 0;
+}
+
+.cor-system-content {
+    background: var(--cor-white);
+    border-radius: var(--cor-radius-lg);
+    padding: var(--cor-spacing-lg);
+    box-shadow: var(--cor-shadow-md);
+}
+</style>

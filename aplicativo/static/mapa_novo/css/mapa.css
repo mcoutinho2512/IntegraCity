@@ -1,0 +1,436 @@
+﻿/* ESCONDER BOTÃO ANTIGO DE CAMADAS - SOLUÇÃO DEFINITIVA */
+button[style*="right: 20px"][style*="top: 220px"]:not(#layers-toggle),
+button[style*="right: 20px"][style*="top: 280px"]:not(#layers-toggle),
+button[style*="position: fixed"]:has(i.bi-layers):not(#layers-toggle),
+button[style*="position: fixed"]:has(i.bi-layers-fill):not(#layers-toggle),
+.leaflet-control-layers-toggle,
+.layer-control-button:not(#layers-toggle) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Garantir que APENAS o botão novo apareça */
+#layers-toggle.cor-layers-toggle {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+
+/* Pluviômetros - Apenas Nuvem */
+.marker-pluviometro {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    position: relative;
+}
+
+.marker-pluviometro i {
+    font-size: 32px;
+    color: #3b82f6;
+    filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.4));
+    animation: float-cloud 3s ease-in-out infinite;
+}
+
+.rain-indicator {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(59, 130, 246, 0.95);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+@keyframes float-cloud {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Dark mode */
+body.dark-theme .marker-pluviometro i {
+    color: #60a5fa;
+    filter: drop-shadow(0 2px 8px rgba(96, 165, 250, 0.5));
+}
+
+body.dark-theme .rain-indicator {
+    background: rgba(30, 64, 175, 0.95);
+}
+
+/* Estações de Vento - Verde Neon Vibrante */
+.marker-vento {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    position: relative;
+}
+
+.marker-vento i {
+    font-size: 28px;
+    color: #00ff88;
+    filter: drop-shadow(0 3px 12px rgba(0, 255, 136, 0.7));
+    animation: spin-wind 4s linear infinite;
+}
+
+
+
+.wind-speed {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 255, 136, 0.95);
+    color: #000;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(0, 255, 136, 0.6);
+}
+
+@keyframes spin-wind {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Dark mode */
+body.dark-theme .marker-vento i {
+    color: #00ff88;
+    filter: drop-shadow(0 3px 12px rgba(0, 255, 136, 0.9));
+}
+
+body.dark-theme .wind-speed {
+    background: rgba(0, 255, 136, 0.95);
+    color: #000;
+}
+
+
+/* Escolas - Laranja Neon Vibrante */
+.marker-escola {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    position: relative;
+}
+
+.marker-escola i {
+    font-size: 32px;
+    color: #ff6b35;
+    filter: drop-shadow(0 3px 12px rgba(255, 107, 53, 0.8));
+    animation: pulse-escola 2s ease-in-out infinite;
+}
+
+@keyframes pulse-escola {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 3px 12px rgba(255, 107, 53, 0.8));
+    }
+    50% {
+        transform: scale(1.1);
+        filter: drop-shadow(0 5px 20px rgba(255, 107, 53, 1));
+    }
+}
+
+/* Bens Tombados - Roxo Neon Vibrante */
+.marker-bem-tombado {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    position: relative;
+}
+
+.marker-bem-tombado i {
+    font-size: 32px;
+    color: #a855f7;
+    filter: drop-shadow(0 3px 12px rgba(168, 85, 247, 0.8));
+    animation: pulse-bem 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse-bem {
+    0%, 100% {
+        transform: scale(1) rotate(0deg);
+        filter: drop-shadow(0 3px 12px rgba(168, 85, 247, 0.8));
+    }
+    50% {
+        transform: scale(1.15) rotate(5deg);
+        filter: drop-shadow(0 5px 20px rgba(168, 85, 247, 1));
+    }
+}
+
+/* Dark mode */
+body.dark-theme .marker-escola i {
+    color: #ff8c5a;
+    filter: drop-shadow(0 3px 12px rgba(255, 140, 90, 0.9));
+}
+
+body.dark-theme .marker-bem-tombado i {
+    color: #c084fc;
+    filter: drop-shadow(0 3px 12px rgba(192, 132, 252, 0.9));
+}
+
+/* Esconder painel antigo */
+#layer-control-panel {
+    display: none !important;
+}
+
+.layer-panel {
+    display: none !important;
+}
+
+/* Waze Markers */
+.waze-alert-marker {
+    background: none;
+    border: none;
+}
+
+.waze-popup h4 {
+    margin: 0 0 10px 0;
+    color: #00d4ff;
+    font-size: 16px;
+}
+
+.waze-popup p {
+    margin: 5px 0;
+    font-size: 13px;
+}
+
+.waze-badge {
+    background: #00d4ff;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 8px;
+}
+
+/* ESCONDER APENAS BOTÕES ANTIGOS - NÃO O NOVO */
+.leaflet-control-layers,
+.leaflet-control-layers-toggle {
+    display: none !important;
+}
+
+/* Garantir que o botão NOVO apareça */
+.cor-layers-toggle {
+    display: flex !important;
+}
+
+/* ===== MARCADORES DE OCORRÊNCIAS ===== */
+.custom-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+.marker-ocorrencia {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white !important;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 3px solid white;
+    animation: pulse-ocorrencia 2s infinite;
+}
+
+@keyframes pulse-ocorrencia {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+/* ===== POPUPS DE OCORRÊNCIAS ===== */
+.ocorrencia-popup .popup-header {
+    color: white;
+    padding: 12px;
+    border-radius: 8px 8px 0 0;
+    margin: -10px -10px 12px -10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.popup-icon {
+    font-size: 20px;
+}
+
+.popup-body {
+    padding: 0 4px;
+}
+
+.popup-info {
+    margin-bottom: 12px;
+}
+
+.popup-info strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.popup-info p {
+    margin: 0;
+    color: #111827;
+    font-size: 13px;
+}
+
+/* ===== BADGES DE NÍVEL ===== */
+.nivel-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.nivel-baixo {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.nivel-medio {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.nivel-alto {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* ===== BADGES DE PRIORIDADE ===== */
+.badge {
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-baixo {
+    background: #10b981;
+    color: white;
+}
+
+.badge-medio {
+    background: #f59e0b;
+    color: white;
+}
+
+.badge-alto {
+    background: #ef4444;
+    color: white;
+}
+
+/* ===== ÍCONE BOOTSTRAP ICONS ===== */
+.marker-ocorrencia i {
+    color: white;
+    font-size: 18px;
+}
+
+/* ===== MARCADORES DE SIRENE ===== */
+.marker-sirene {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white !important;
+    font-size: 18px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 3px solid white;
+    background: #ef4444;
+}
+
+/* Cores por prioridade */
+.marker-sirene.alta,
+.marker-sirene.muito.alta {
+    background: #dc2626;
+    animation: pulse-sirene-alta 1.5s infinite;
+}
+
+.marker-sirene.media,
+.marker-sirene.média {
+    background: #f59e0b;
+}
+
+.marker-sirene.baixa {
+    background: #10b981;
+}
+
+/* Animação apenas para alta prioridade */
+@keyframes pulse-sirene-alta {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.9);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 0 15px rgba(220, 38, 38, 0);
+        transform: scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+        transform: scale(1);
+    }
+}
+
+.marker-sirene i {
+    color: white;
+    font-size: 20px;
+}
+
+/* ============================================ */
+/* MAPA RESPONSIVO - RESIZE AUTOMÁTICO */
+/* ============================================ */
+
+#map {
+    width: 100%;
+    height: 100vh;
+    transition: height 0.3s ease;
+}
+
+/* Quando o painel de monitoramento está aberto */
+.cor-monitoring-panel:not(.collapsed) ~ #map,
+body:has(.cor-monitoring-panel:not(.collapsed)) #map {
+    height: calc(100vh - 300px);
+}
+
+/* Quando o painel está fechado */
+.cor-monitoring-panel.collapsed ~ #map,
+body:has(.cor-monitoring-panel.collapsed) #map {
+    height: 100vh;
+}
+
+/* Garantir que o mapa ocupe todo o espaço disponível */
+.leaflet-container {
+    width: 100% !important;
+    height: 100% !important;
+}

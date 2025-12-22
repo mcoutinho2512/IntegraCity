@@ -1,0 +1,286 @@
+/**
+ * Sistemas Padronizados - Cores Unificadas COR
+ * Substitui cores hardcoded por variáveis do Design System
+ */
+
+/* ========================================
+   BACKGROUNDS E CORES BASE
+   ======================================== */
+body {
+    background: var(--cor-dark-bg) !important;
+    color: var(--cor-gray-100) !important;
+}
+
+/* ========================================
+   CORREÇÃO DE ESPAÇAMENTO DOS CONTAINERS
+   ======================================== */
+.dashboard-container,
+.container,
+.mobilidade-container,
+.meteor-container,
+.video-container,
+.waze-wrapper {
+    padding-top: 66px !important;
+    margin-top: 60px !important;
+}
+
+/* Para páginas que usam margin-top ao invés de padding-top */
+body > .container:first-of-type,
+body > div:first-of-type {
+    margin-top: 66px !important;
+}
+
+/* ========================================
+   CONTAINERS E WRAPPERS
+   ======================================== */
+.container {
+    background: var(--cor-dark-bg);
+    color: var(--cor-gray-100);
+}
+
+/* ========================================
+   HEADERS E TÍTULOS
+   ======================================== */
+.page-header {
+    background: linear-gradient(135deg, var(--cor-gray-800) 0%, var(--cor-gray-700) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.page-header h1,
+.page-header .title {
+    color: var(--cor-gray-50) !important;
+}
+
+.page-header .subtitle,
+.page-header p {
+    color: var(--cor-gray-300) !important;
+}
+
+.page-header i {
+    color: var(--cor-info) !important;
+}
+
+/* ========================================
+   CARDS E PAINÉIS
+   ======================================== */
+.stats-grid,
+.dashboard-grid,
+.grid-container {
+    gap: var(--cor-spacing-lg);
+}
+
+.stat-card,
+.card,
+.panel,
+.info-card {
+    background: var(--cor-dark-surface) !important;
+    border: 1px solid var(--cor-dark-border);
+    border-radius: var(--cor-radius-lg);
+    box-shadow: var(--cor-shadow-lg);
+    color: var(--cor-gray-50) !important;
+}
+
+.stat-card:hover,
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--cor-shadow-xl);
+}
+
+.stat-card h3,
+.card-title {
+    color: var(--cor-gray-50) !important;
+}
+
+.stat-card .value,
+.stat-card .number {
+    color: var(--cor-info) !important;
+}
+
+.stat-card .label,
+.stat-card .subtitle {
+    color: var(--cor-gray-400) !important;
+}
+
+/* ========================================
+   BADGES E STATUS
+   ======================================== */
+.badge-success { background: var(--cor-success) !important; }
+.badge-warning { background: var(--cor-warning) !important; }
+.badge-danger { background: var(--cor-danger) !important; }
+.badge-info { background: var(--cor-info) !important; }
+
+/* ========================================
+   BOTÕES
+   ======================================== */
+.btn-primary,
+.action-btn,
+button[class*="primary"] {
+    background: linear-gradient(135deg, var(--cor-info) 0%, var(--cor-primary) 100%) !important;
+    border-color: var(--cor-info) !important;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--cor-primary-light) 0%, var(--cor-info) 100%) !important;
+}
+
+/* ========================================
+   TABELAS
+   ======================================== */
+.table,
+.data-table {
+    background: var(--cor-dark-surface) !important;
+    color: var(--cor-gray-100) !important;
+}
+
+.table thead,
+.table-header {
+    background: var(--cor-primary) !important;
+    color: var(--cor-white) !important;
+}
+
+.table tbody tr:hover {
+    background: var(--cor-gray-700) !important;
+}
+
+/* ========================================
+   ALERTAS E NOTIFICAÇÕES
+   ======================================== */
+.alert-info {
+    background: linear-gradient(135deg, var(--cor-info) 0%, var(--cor-primary) 100%) !important;
+    border-color: var(--cor-info) !important;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, var(--cor-success) 0%, #059669 100%) !important;
+    border-color: var(--cor-success) !important;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, var(--cor-warning) 0%, #d97706 100%) !important;
+    border-color: var(--cor-warning) !important;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, var(--cor-danger) 0%, #dc2626 100%) !important;
+    border-color: var(--cor-danger) !important;
+}
+
+/* ========================================
+   FORMULÁRIOS
+   ======================================== */
+input,
+select,
+textarea {
+    background: var(--cor-dark-surface) !important;
+    border: 1px solid var(--cor-dark-border) !important;
+    color: var(--cor-gray-100) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--cor-info) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* ========================================
+   LINKS
+   ======================================== */
+a {
+    color: var(--cor-info) !important;
+}
+
+a:hover {
+    color: var(--cor-primary-light) !important;
+}
+
+/* ========================================
+   CORES DE TEXTO
+   ======================================== */
+.text-primary { color: var(--cor-primary) !important; }
+.text-success { color: var(--cor-success) !important; }
+.text-warning { color: var(--cor-warning) !important; }
+.text-danger { color: var(--cor-danger) !important; }
+.text-info { color: var(--cor-info) !important; }
+.text-muted { color: var(--cor-gray-400) !important; }
+
+/* ========================================
+   BACKGROUNDS
+   ======================================== */
+.bg-primary { background: var(--cor-primary) !important; }
+.bg-success { background: var(--cor-success) !important; }
+.bg-warning { background: var(--cor-warning) !important; }
+.bg-danger { background: var(--cor-danger) !important; }
+.bg-info { background: var(--cor-info) !important; }
+.bg-dark { background: var(--cor-dark-bg) !important; }
+.bg-surface { background: var(--cor-dark-surface) !important; }
+
+/* ========================================
+   GRÁFICOS E VISUALIZAÇÕES
+   ======================================== */
+.chart-container {
+    background: var(--cor-dark-surface) !important;
+    border: 1px solid var(--cor-dark-border);
+}
+
+/* ========================================
+   SIDEBAR E NAVEGAÇÃO
+   ======================================== */
+.sidebar,
+.navigation {
+    background: var(--cor-dark-surface) !important;
+    border-right: 1px solid var(--cor-dark-border);
+}
+
+.sidebar a,
+.nav-link {
+    color: var(--cor-gray-300) !important;
+}
+
+.sidebar a:hover,
+.nav-link:hover {
+    background: var(--cor-gray-700) !important;
+    color: var(--cor-info) !important;
+}
+
+.sidebar a.active,
+.nav-link.active {
+    background: var(--cor-primary) !important;
+    color: var(--cor-white) !important;
+}
+
+/* ========================================
+   MODAIS E OVERLAYS
+   ======================================== */
+.modal-content,
+.dialog {
+    background: var(--cor-dark-surface) !important;
+    border: 1px solid var(--cor-dark-border);
+}
+
+.modal-header {
+    background: var(--cor-primary) !important;
+    color: var(--cor-white) !important;
+    border-bottom: 1px solid var(--cor-dark-border);
+}
+
+/* ========================================
+   SCROLLBAR CUSTOMIZADA
+   ======================================== */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--cor-dark-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--cor-gray-600);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--cor-info);
+}

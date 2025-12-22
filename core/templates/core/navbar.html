@@ -1,0 +1,48 @@
+<nav class="siscor-navbar">
+    <div class="siscor-navbar-left">
+        <div class="siscor-logo">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+            <span>SISCOR</span>
+        </div>
+        <div class="siscor-subtitle">Sistema Integrado</div>
+    </div>
+    
+    <div class="siscor-navbar-center">
+        <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">
+            <i class="bi bi-map"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="/mobilidade/" class="nav-item {% if '/mobilidade/' in request.path %}active{% endif %}">
+            <i class="bi bi-car-front"></i>
+            <span>Mobilidade</span>
+        </a>
+        <a href="/meteorologia/" class="nav-item {% if '/meteorologia/' in request.path %}active{% endif %}">
+            <i class="bi bi-cloud-rain"></i>
+            <span>Meteorologia</span>
+        </a>
+        <a href="/defesa-civil/" class="nav-item {% if '/defesa-civil/' in request.path %}active{% endif %}">
+            <i class="bi bi-shield-check"></i>
+            <span>Defesa Civil</span>
+        </a>
+        <a href="/cameras/" class="nav-item {% if '/cameras/' in request.path %}active{% endif %}">
+            <i class="bi bi-camera-video"></i>
+            <span>Câmeras</span>
+        </a>
+        <a href="/consultas/" class="nav-item {% if '/consultas/' in request.path %}active{% endif %}">
+            <i class="bi bi-graph-up"></i>
+            <span>Consultas</span>
+        </a>
+    </div>
+    
+    <div class="siscor-navbar-right">
+        <button class="nav-btn" id="theme-toggle">
+            <i class="bi bi-moon-fill"></i>
+        </button>
+        <button class="nav-btn">
+            <i class="bi bi-bell"></i>
+        </button>
+        <div class="user-avatar">
+            <span>A</span>
+        </div>
+    </div>
+</nav>

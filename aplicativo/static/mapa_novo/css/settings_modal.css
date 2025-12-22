@@ -1,0 +1,187 @@
+﻿/* settings_modal.css - Modal de Configurações */
+
+.settings-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+.settings-modal.active {
+    display: flex;
+}
+
+.settings-content {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.settings-header {
+    padding: 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.settings-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.settings-close {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.settings-close:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.settings-body {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: calc(80vh - 160px);
+}
+
+.settings-section {
+    margin-bottom: 24px;
+}
+
+.settings-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.settings-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+}
+
+.settings-option:hover {
+    background: #f1f5f9;
+}
+
+.settings-option-info {
+    flex: 1;
+}
+
+.settings-option-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.settings-option-desc {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.settings-toggle {
+    position: relative;
+    width: 48px;
+    height: 28px;
+    background: #cbd5e1;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.settings-toggle.active {
+    background: #3b82f6;
+}
+
+.settings-toggle::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+}
+
+.settings-toggle.active::after {
+    transform: translateX(20px);
+}
+
+/* Dark theme */
+body.dark-theme .settings-content {
+    background: #1e293b;
+}
+
+body.dark-theme .settings-header {
+    border-bottom-color: #334155;
+}
+
+body.dark-theme .settings-title {
+    color: #f1f5f9;
+}
+
+body.dark-theme .settings-option {
+    background: #0f172a;
+}
+
+body.dark-theme .settings-option:hover {
+    background: #334155;
+}
+
+body.dark-theme .settings-option-label {
+    color: #f1f5f9;
+}
+
+body.dark-theme .settings-option-desc {
+    color: #94a3b8;
+}

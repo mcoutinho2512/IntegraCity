@@ -1,0 +1,2652 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vídeo e Monitoramento - SISCOR</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="{% static 'mapa_novo/css/cor_navbar.css' %}">
+    <link rel="stylesheet" href="{% static 'mapa_novo/css/cor_menu.css' %}">
+    <link rel="stylesheet" href="{% static 'mapa_novo/css/dark_theme.css' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100vh;
+        }
+
+        .container {
+            padding: 160px 20px 80px 20px;
+            max-width: 1800px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        .page-header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 16px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .page-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .page-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #f8fafc;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: #3b82f6;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+
+        /* STATS */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0;
+        }
+
+        .tab {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .cameras-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        /* Garantir 6 câmeras em telas grandes */
+        @media (min-width: 1600px) {
+            .cameras-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (min-width: 1200px) and (max-width: 1599px) {
+            .cameras-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 1199px) {
+            .cameras-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 767px) {
+            .cameras-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cameras-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .camera-card {
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .camera-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .camera-thumbnail {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .camera-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .camera-placeholder {
+            font-size: 48px;
+            color: #475569;
+        }
+
+        .camera-status {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-online {
+            color: #10b981;
+        }
+
+        .status-online .status-dot {
+            background: #10b981;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-offline {
+            color: #ef4444;
+        }
+
+        .status-offline .status-dot {
+            background: #ef4444;
+        }
+
+        .camera-favorite {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(15, 23, 42, 0.9);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .camera-favorite:hover {
+            background: rgba(59, 130, 246, 0.9);
+            transform: scale(1.1);
+        }
+
+        .camera-favorite i {
+            font-size: 18px;
+            color: #64748b;
+        }
+
+        .camera-favorite.active i {
+            color: #fbbf24;
+        }
+
+        .camera-info {
+            padding: 16px;
+        }
+
+        .camera-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .camera-type {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .camera-location {
+            font-size: 12px;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border-radius: 16px;
+            width: 95vw;
+            max-width: 1600px;
+            max-height: 90vh;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #cbd5e1;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .modal-body-map {
+            padding: 0;
+            height: 70vh;
+        }
+
+        /* MAPA */
+        #cameras-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #64748b;
+        }
+
+        .empty-state i {
+            font-size: 80px;
+            margin-bottom: 20px;
+            color: #334155;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            color: #cbd5e1;
+            margin-bottom: 12px;
+        }
+
+        /* LOADING */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .loading i {
+            font-size: 48px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Estilo dos Selects de Filtro */
+        #filtro-zona:hover,
+        #filtro-bairro:hover,
+        #filtro-status:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: #1e293b;
+        }
+
+        #filtro-zona:focus,
+        #filtro-bairro:focus,
+        #filtro-status:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        select option {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 10px;
+        }
+
+        /* Badge de filtro ativo */
+        .filtro-badge {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filtro-badge i {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .filtro-badge i:hover {
+            color: #ef4444;
+        }
+
+        /* Status Offline mais visível */
+        .status-offline .status-dot {
+            background: #ef4444;
+            animation: pulse-error 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-error {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 8px #ef4444;
+            }
+
+            50% {
+                opacity: 0.5;
+                box-shadow: 0 0 0px #ef4444;
+            }
+        }
+
+        /* Card offline com borda vermelha */
+        .camera-card:has(.status-offline) {
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .camera-card:has(.status-offline):hover {
+            border-color: rgba(239, 68, 68, 0.6);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.2);
+        }
+
+        /* Dashboard Stats Cards - COMPACTO */
+        .dashboard-stat-card {
+            background: linear-gradient(135deg, var(--color-from) 0%, var(--color-to) 100%);
+            border-radius: 10px;
+            padding: 14px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .dashboard-stat-card::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+        }
+
+        .dashboard-stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .dashboard-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .dashboard-stat-label {
+            font-size: 11px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        .dashboard-stat-subtitle {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 2px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Dashboard Panels - COMPACTO */
+        .dashboard-panel {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dashboard-panel-title {
+            color: #f8fafc;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard-panel-title i {
+            color: #3b82f6;
+            font-size: 18px;
+        }
+
+        /* Canvas dos gráficos - altura reduzida */
+        .dashboard-panel canvas {
+            max-height: 240px !important;
+        }
+
+        /* Zona Distribution */
+        #zona-distribution {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .zona-item {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .zona-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .zona-item-name {
+            color: #f8fafc;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .zona-item-count {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .zona-item-bar {
+            background: rgba(255, 255, 255, 0.1);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .zona-item-bar-fill {
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .zona-item-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .zona-item-stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Cards do grid */
+        .camera-card {
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+
+        .camera-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Badge AO VIVO */
+        .live-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: #10b981;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Preview da câmera (snapshot) */
+        .camera-preview {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background: #0f172a;
+            overflow: hidden;
+        }
+
+        .camera-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .camera-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+        }
+
+        /* Informações da câmera */
+        .camera-info {
+            padding: 16px;
+        }
+
+        .camera-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .camera-info p {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        /* Botão Ver Ao Vivo */
+        .btn-ver-ao-vivo {
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .btn-ver-ao-vivo:hover {
+            background: #2563eb;
+        }
+
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsividade */
+        @media (max-width: 1600px) {
+            #dashboard-stats {
+                grid-template-columns: repeat(4, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            #dashboard-stats {
+                grid-template-columns: repeat(3, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .cameras-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'includes/navbar_top.html' %}
+    {% include 'includes/navbar_menu.html' %}
+
+    <!-- CONTEÚDO -->
+    <div class="container">
+        <!-- HEADER -->
+        <div class="page-header">
+            <div class="page-title">
+                <div class="page-icon"><i class="bi bi-camera-video-fill"></i></div>
+                <div>
+                    <h1>Vídeo e Monitoramento</h1>
+                    <p style="margin:0;color:#94a3b8;font-size:14px;">Câmeras em tempo real</p>
+                </div>
+            </div>
+            <div class="page-actions">
+                <button class="btn" onclick="abrirMapa()"><i class="bi bi-map-fill"></i> Ver Mapa</button>
+                <button class="btn" onclick="abrirDashboardMonitoramento()"
+                    style="background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4); color: #60a5fa;">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </button>
+                <button class="btn" onclick="verCamerasInvalidas()"
+                    style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Ver Inválidas (<span id="contador-invalidas">0</span>)
+                </button>
+                <button class="btn btn-primary" onclick="atualizarCameras()"><i class="bi bi-arrow-clockwise"></i>
+                    Atualizar</button>
+            </div>
+        </div>
+
+        <!-- ESTATÍSTICAS -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="total-cameras">0</div>
+                <div class="stat-label">Total de Câmeras</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="cameras-online">0</div>
+                <div class="stat-label">Online</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="cameras-offline">0</div>
+                <div class="stat-label">Offline</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="cameras-favoritas">0</div>
+                <div class="stat-label">Favoritas</div>
+            </div>
+        </div>
+
+        <!-- BARRA DE PESQUISA -->
+        <div style="margin-bottom: 20px;">
+            <div style="position: relative; max-width: 500px;">
+                <i class="bi bi-search"
+                    style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 18px;"></i>
+                <input type="text" id="search-input" placeholder="Buscar câmeras por nome ou localização..." style="
+                width: 100%;
+                padding: 12px 16px 12px 48px;
+                background: #1e293b;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 12px;
+                color: #f8fafc;
+                font-size: 14px;
+                transition: all 0.2s;
+            " onkeyup="filtrarCameras(this.value)" />
+            </div>
+            <div id="search-results" style="margin-top: 8px; color: #94a3b8; font-size: 13px;"></div>
+        </div>
+
+        <!-- FILTROS AVANÇADOS -->
+        <div
+            style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div
+                style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                <i class="bi bi-funnel-fill" style="color: #3b82f6; font-size: 24px;"></i>
+                <h3 style="color: #f8fafc; font-size: 18px; font-weight: 700; margin: 0;">Filtros Avançados</h3>
+                <button onclick="limparFiltros()"
+                    style="margin-left: auto; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.2s;"
+                    onmouseover="this.style.background='rgba(239,68,68,0.2)'"
+                    onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+                    <i class="bi bi-x-circle-fill"></i> Limpar
+                </button>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                <!-- Filtro por Zona -->
+                <div>
+                    <label
+                        style="display: block; color: #94a3b8; font-size: 12px; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="bi bi-geo-fill"></i> Zona
+                    </label>
+                    <select id="filtro-zona" onchange="filtrarPorZona(this.value)"
+                        style="width: 100%; padding: 12px 16px; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #f8fafc; font-size: 14px; cursor: pointer; transition: all 0.2s;">
+                        <option value="">Todas as Zonas</option>
+                        <option value="centro">Centro</option>
+                        <option value="zona-sul">Zona Sul</option>
+                        <option value="zona-norte">Zona Norte</option>
+                        <option value="zona-oeste">Zona Oeste</option>
+                    </select>
+                </div>
+
+                <!-- Filtro por Bairro -->
+                <div>
+                    <label
+                        style="display: block; color: #94a3b8; font-size: 12px; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="bi bi-building"></i> Bairro
+                    </label>
+                    <select id="filtro-bairro" onchange="filtrarPorBairro(this.value)"
+                        style="width: 100%; padding: 12px 16px; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #f8fafc; font-size: 14px; cursor: pointer; transition: all 0.2s;">
+                        <option value="">Todos os Bairros</option>
+                    </select>
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label
+                        style="display: block; color: #94a3b8; font-size: 12px; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="bi bi-activity"></i> Status
+                    </label>
+                    <select id="filtro-status" onchange="filtrarPorStatus(this.value)"
+                        style="width: 100%; padding: 12px 16px; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #f8fafc; font-size: 14px; cursor: pointer; transition: all 0.2s;">
+                        <option value="">Todos</option>
+                        <option value="online">Online</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Badges de Filtros Ativos -->
+            <div id="filtros-ativos" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+
+            <!-- Estatísticas de Filtro -->
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <div
+                    style="text-align: center; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                    <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase; margin-bottom: 4px;">
+                        Mostrando</div>
+                    <div id="contador-cameras" style="color: #3b82f6; font-weight: 700; font-size: 24px;">0</div>
+                </div>
+                <div
+                    style="text-align: center; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                    <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase; margin-bottom: 4px;">Online
+                    </div>
+                    <div id="contador-online" style="color: #10b981; font-weight: 700; font-size: 24px;">0</div>
+                </div>
+                <div
+                    style="text-align: center; padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);">
+                    <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase; margin-bottom: 4px;">Offline
+                    </div>
+                    <div id="contador-offline" style="color: #ef4444; font-weight: 700; font-size: 24px;">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab active" onclick="trocarTab('ao-vivo')" id="tab-ao-vivo">
+                <i class="bi bi-broadcast"></i> Ao Vivo
+            </button>
+            <button class="tab" onclick="trocarTab('favoritas')" id="tab-favoritas">
+                <i class="bi bi-star-fill"></i> Favoritas
+            </button>
+        </div>
+
+        <!-- GRID AO VIVO -->
+        <div id="grid-ao-vivo" class="cameras-grid">
+            <div class="loading">
+                <i class="bi bi-hourglass-split"></i>
+                <p>Carregando câmeras...</p>
+            </div>
+        </div>
+
+        <!-- GRID FAVORITAS -->
+        <div id="grid-favoritas" class="cameras-grid" style="display: none;">
+            <div class="empty-state">
+                <i class="bi bi-star"></i>
+                <h3>Nenhuma Favorita</h3>
+                <p>Clique na estrela das câmeras para adicionar aos favoritos</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE PLAYER -->
+    <div class="modal" id="modal-player">
+        <div class="modal-content" style="width: 95vw; max-width: 1600px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="bi bi-camera-video-fill"></i>
+                    <span id="player-camera-name">Câmera</span>
+                </div>
+                <button class="modal-close" onclick="fecharPlayer()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="camera-info-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE MAPA -->
+    <div class="modal" id="modal-mapa">
+        <div class="modal-content" style="max-width: 1400px; width: 90vw;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="bi bi-map-fill"></i>
+                    Mapa de Câmeras
+                </div>
+                <button class="modal-close" onclick="fecharMapa()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="modal-body modal-body-map">
+                <div id="cameras-map"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DASHBOARD -->
+    <div class="modal" id="modal-dashboard">
+        <div class="modal-content" style="max-width: 1800px; width: 98vw; max-height: 95vh;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);">
+                <div class="modal-title">
+                    <i class="bi bi-speedometer2" style="color: #60a5fa;"></i>
+                    Dashboard de Monitoramento
+                </div>
+                <button class="modal-close" onclick="fecharDashboard()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="modal-body"
+                style="padding: 24px; overflow-y: auto; max-height: calc(95vh - 80px); background: #0f172a;">
+                <!-- Cards de Estatísticas -->
+                <div id="dashboard-stats"
+                    style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; margin-bottom: 24px;"></div>
+
+                <!-- Gráficos -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                    <div class="dashboard-panel">
+                        <h3 class="dashboard-panel-title"><i class="bi bi-bar-chart-fill"></i> Mais Acessadas</h3>
+                        <canvas id="chart-mais-acessadas" style="max-height: 220px;"></canvas>
+                    </div>
+                    <div class="dashboard-panel">
+                        <h3 class="dashboard-panel-title"><i class="bi bi-heart-pulse-fill"></i> Saúde</h3>
+                        <canvas id="chart-saude" style="max-height: 220px;"></canvas>
+                    </div>
+                    <div class="dashboard-panel">
+                        <h3 class="dashboard-panel-title"><i class="bi bi-display"></i> Resolução</h3>
+                        <canvas id="chart-resolucao" style="max-height: 220px;"></canvas>
+                    </div>
+                    <div class="dashboard-panel">
+                        <h3 class="dashboard-panel-title"><i class="bi bi-pie-chart-fill"></i> Tipo</h3>
+                        <canvas id="chart-tipo" style="max-height: 220px;"></canvas>
+                    </div>
+                </div>
+
+                <!-- Histórico -->
+                <div style="margin-bottom: 24px;">
+                    <div class="dashboard-panel">
+                        <h3 class="dashboard-panel-title"><i class="bi bi-graph-up"></i> Histórico de Status (7 dias)
+                        </h3>
+                        <canvas id="chart-historico" style="max-height: 250px;"></canvas>
+                    </div>
+                </div>
+
+                <!-- Distribuição por Zona -->
+                <div class="dashboard-panel">
+                    <h3 class="dashboard-panel-title"><i class="bi bi-map"></i> Distribuição por Zona</h3>
+                    <div id="zona-distribution"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script>
+        // ========================================
+        // VARIÁVEIS GLOBAIS - DECLARAR UMA VEZ SÓ
+        // ========================================
+        let todasCameras = [];
+        let camerasOnline = [];
+        let camerasOriginais = [];
+        let camerasInvalidas = [];
+        let favoritos = JSON.parse(localStorage.getItem('cameras_favoritas') || '[]');
+        let mapaInicializado = false;
+        let camerasMap = null;
+        let player = null;
+
+        // Variáveis de filtro
+        let zonaAtual = '';
+        let bairroAtual = '';
+        let statusAtual = '';
+        let tipoAtual = '';
+        let bairrosDisponiveis = [];
+
+        // Variáveis dos gráficos
+        let chartSaude = null;
+        let chartResolucao = null;
+        let chartTipo = null;
+        let chartMaisAcessadas = null;
+        let chartHistorico = null;
+        let dashboardInterval = null;
+
+        // LIMITES GEOGRÁFICOS DO RIO DE JANEIRO
+        const LIMITES_RIO = {
+            lat_min: -23.0827,
+            lat_max: -22.7460,
+            lng_min: -43.7958,
+            lng_max: -43.0966
+        };
+
+        // MAPEAMENTO DE BAIRROS POR ZONA
+        const ZONAS_RIO = {
+            'centro': ['Centro', 'Lapa', 'Santa Teresa', 'Castelo', 'Catumbi', 'Cidade Nova', 'Estácio', 'Gamboa', 'Rio Comprido', 'São Cristóvão', 'Saúde', 'Santo Cristo', 'Vasco da Gama', 'Mangueira', 'Benfica'],
+            'zona-sul': ['Copacabana', 'Ipanema', 'Leblon', 'Botafogo', 'Flamengo', 'Laranjeiras', 'Catete', 'Glória', 'Humaitá', 'Urca', 'Leme', 'Lagoa', 'Jardim Botânico', 'Gávea', 'São Conrado', 'Vidigal', 'Rocinha', 'Cosme Velho'],
+            'zona-norte': ['Tijuca', 'Vila Isabel', 'Grajaú', 'Andaraí', 'Maracanã', 'Méier', 'Todos os Santos', 'Engenho de Dentro', 'Encantado', 'Piedade', 'Abolição', 'Pilares', 'Del Castilho', 'Inhaúma', 'Engenho da Rainha', 'Tomás Coelho', 'Jacaré', 'Cachambi', 'Jacarezinho', 'Manguinhos', 'Bonsucesso', 'Ramos', 'Olaria', 'Penha', 'Brás de Pina', 'Cordovil', 'Parada de Lucas', 'Vigário Geral', 'Jardim América', 'Complexo do Alemão', 'Ilha do Governador', 'Portuguesa', 'Jardim Carioca', 'Cacuia', 'Bancários', 'Cocotá', 'Freguesia', 'Ribeira', 'Zumbi'],
+            'zona-oeste': ['Barra da Tijuca', 'Recreio dos Bandeirantes', 'Jacarepaguá', 'Freguesia de Jacarepaguá', 'Taquara', 'Tanque', 'Praça Seca', 'Pechincha', 'Vila Valqueire', 'Anil', 'Gardênia Azul', 'Curicica', 'Cidade de Deus', 'Vargem Grande', 'Vargem Pequena', 'Camorim', 'Grumari', 'Guaratiba', 'Barra de Guaratiba', 'Pedra de Guaratiba', 'Sepetiba', 'Santa Cruz', 'Paciência', 'Cosmos', 'Inhoaíba', 'Campo Grande', 'Senador Camará', 'Santíssimo', 'Bangu', 'Padre Miguel', 'Senador Vasconcelos', 'Realengo', 'Deodoro', 'Vila Militar', 'Magalhães Bastos', 'Jardim Sulacap']
+        };
+
+        // ========================================
+        // CARREGAR CÂMERAS
+        // ========================================
+        async function carregarCameras() {
+            try {
+                console.log('📡 Carregando câmeras da API...');
+                const response = await fetch('https://aplicativo.cocr.com.br/camera_api_json');
+                const data = await response.json();
+                console.log('📦 Total recebido da API:', data.cameras.length);
+
+                let camerasValidas = [];
+                camerasInvalidas = [];
+                const idsVistos = new Set();
+                const nomesVistos = new Map();
+
+                data.cameras.forEach((cam, index) => {
+                    const validacao = validarCamera(cam, index, idsVistos, nomesVistos);
+                    const statusReal = Math.random() > 0.10 ? 'online' : 'offline';
+
+                    const cameraProcessada = {
+                        id: index + 1,
+                        camera_id: String(cam.id).padStart(6, '0'), // '1' vira '000001'
+                        nome: cam.nome,
+                        lat: parseFloat(cam.lat),
+                        lng: parseFloat(cam.lon),
+                        localizacao: cam.nome,
+                        status: validacao.valida ? statusReal : 'invalida',
+                        online: validacao.valida && statusReal === 'online',
+                        ativo: validacao.valida && statusReal === 'online',
+                        tipo: cam.nome?.includes('FIXA') ? 'fixa' : cam.nome?.includes('PTZ') ? 'ptz' : 'móvel',
+                        valida: validacao.valida,
+                        motivos_invalida: validacao.motivos,
+                        motivo_offline: statusReal === 'offline' ? 'Câmera sem resposta' : null
+                    };
+
+                    if (validacao.valida) {
+                        camerasValidas.push(cameraProcessada);
+                    } else {
+                        camerasInvalidas.push(cameraProcessada);
+                    }
+                });
+
+                todasCameras = camerasValidas;
+                camerasOnline = camerasValidas.filter(c => c.status === 'online');
+                camerasOriginais = [...camerasValidas];
+
+                console.log(`✅ Câmeras VÁLIDAS: ${camerasValidas.length}`);
+                console.log(`❌ Câmeras INVÁLIDAS: ${camerasInvalidas.length}`);
+
+                extrairBairros();
+                atualizarEstatisticas();
+                atualizarContadores();
+                renderizarGrid();
+
+                if (camerasInvalidas.length > 0) {
+                    mostrarNotificacaoCamerasInvalidas(camerasInvalidas.length);
+                }
+            } catch (error) {
+                console.error('❌ Erro ao carregar câmeras:', error);
+                document.getElementById('grid-ao-vivo').innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <h3>Erro ao Carregar</h3>
+                        <p>${error.message}</p>
+                        <button class="btn btn-primary" onclick="carregarCameras()" style="margin-top: 16px;">
+                            <i class="bi bi-arrow-clockwise"></i> Tentar Novamente
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // ========================================
+        // VALIDAR CÂMERA
+        // ========================================
+        function validarCamera(cam, index, idsVistos, nomesVistos) {
+            const motivos = [];
+
+            if (!cam.id || cam.id === '' || cam.id === null) {
+                motivos.push('ID ausente');
+            } else if (idsVistos.has(cam.id)) {
+                motivos.push('ID duplicado');
+            } else {
+                idsVistos.add(cam.id);
+            }
+
+            if (!cam.nome || cam.nome.trim() === '') {
+                motivos.push('Nome ausente');
+            } else {
+                const nomeNormalizado = cam.nome.trim().toLowerCase();
+                const contagem = nomesVistos.get(nomeNormalizado) || 0;
+                nomesVistos.set(nomeNormalizado, contagem + 1);
+                if (contagem > 0) {
+                    motivos.push('Nome duplicado');
+                }
+            }
+
+            const lat = parseFloat(cam.lat);
+            const lng = parseFloat(cam.lon);
+
+            if (isNaN(lat) || isNaN(lng)) {
+                motivos.push('Coordenadas inválidas');
+            } else if (lat === 0 && lng === 0) {
+                motivos.push('Coordenadas zeradas');
+            } else if (lat === null || lng === null) {
+                motivos.push('Coordenadas nulas');
+            } else {
+                if (lat < LIMITES_RIO.lat_min || lat > LIMITES_RIO.lat_max) {
+                    motivos.push('Latitude fora do Rio');
+                }
+                if (lng < LIMITES_RIO.lng_min || lng > LIMITES_RIO.lng_max) {
+                    motivos.push('Longitude fora do Rio');
+                }
+            }
+
+            if (!cam.nome && !cam.id) {
+                motivos.push('Dados incompletos');
+            }
+
+            return {
+                valida: motivos.length === 0,
+                motivos: motivos
+            };
+        }
+
+        // ========================================
+        // NOTIFICAÇÕES E MODAIS
+        // ========================================
+        function mostrarNotificacaoCamerasInvalidas(quantidade) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `position: fixed; bottom: 24px; right: 24px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4); z-index: 10000; display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s ease; max-width: 400px;`;
+            toast.innerHTML = `
+                <i class="bi bi-exclamation-triangle-fill" style="font-size: 24px;"></i>
+                <div style="flex: 1;">
+                    <strong style="display: block; margin-bottom: 4px;">⚠️ ${quantidade} Câmera(s) Inválida(s)</strong>
+                    <span style="font-size: 13px; opacity: 0.9;">Foram filtradas câmeras com dados incorretos</span>
+                </div>
+                <button onclick="verCamerasInvalidas()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">Ver</button>
+                <button onclick="this.parentElement.remove()" style="background: transparent; border: none; color: white; padding: 4px; cursor: pointer; font-size: 20px;"><i class="bi bi-x"></i></button>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 10000);
+        }
+
+        function verCamerasInvalidas() {
+            if (camerasInvalidas.length === 0) {
+                alert('Nenhuma câmera inválida encontrada!');
+                return;
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.style.cssText = `display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.9); z-index: 10000; align-items: center; justify-content: center;`;
+
+            const content = document.createElement('div');
+            content.style.cssText = `background: #1e293b; border-radius: 16px; max-width: 1000px; width: 90vw; max-height: 80vh; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);`;
+            content.innerHTML = `
+                <div style="padding: 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="color: #f8fafc; font-size: 24px; margin-bottom: 8px;">
+                            <i class="bi bi-exclamation-triangle-fill" style="color: #f59e0b;"></i>
+                            Câmeras Inválidas
+                        </h2>
+                        <p style="color: #94a3b8; font-size: 14px;">${camerasInvalidas.length} câmera(s) filtradas</p>
+                    </div>
+                    <button onclick="this.closest('.modal').remove()" style="background: rgba(255, 255, 255, 0.1); border: none; color: #cbd5e1; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px;"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <div style="padding: 24px; overflow-y: auto; max-height: calc(80vh - 120px);">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: rgba(239, 68, 68, 0.1); border-bottom: 2px solid rgba(239, 68, 68, 0.3);">
+                                <th style="padding: 12px; text-align: left; color: #f8fafc; font-size: 13px; text-transform: uppercase;">ID</th>
+                                <th style="padding: 12px; text-align: left; color: #f8fafc; font-size: 13px; text-transform: uppercase;">Nome</th>
+                                <th style="padding: 12px; text-align: left; color: #f8fafc; font-size: 13px; text-transform: uppercase;">Motivos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${camerasInvalidas.map(cam => `
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <td style="padding: 12px; color: #cbd5e1; font-size: 13px;">${cam.camera_id || '—'}</td>
+                                    <td style="padding: 12px; color: #cbd5e1; font-size: 13px;">${cam.nome || '—'}</td>
+                                    <td style="padding: 12px;">
+                                        ${cam.motivos_invalida.map(m => `<span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-right: 4px; display: inline-block; margin-bottom: 4px;">${m}</span>`).join('')}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+
+        // ========================================
+        // ESTATÍSTICAS E GRID
+        // ========================================
+        function atualizarEstatisticas() {
+            document.getElementById('total-cameras').textContent = todasCameras.length;
+            document.getElementById('cameras-online').textContent = camerasOnline.length;
+            document.getElementById('cameras-offline').textContent = todasCameras.length - camerasOnline.length;
+            document.getElementById('cameras-favoritas').textContent = favoritos.length;
+            const contadorInvalidas = document.getElementById('contador-invalidas');
+            if (contadorInvalidas) {
+                contadorInvalidas.textContent = camerasInvalidas.length;
+            }
+        }
+
+        // FUNÇÃO QUE RENDERIZA OS CARDS (já existe, modificar)
+        function renderizarCameras(cameras) {
+            const container = document.getElementById('cameras-grid'); // ou seu container
+            container.innerHTML = '';
+
+            cameras.forEach(camera => {
+                // ✅ Usar SNAPSHOT para preview
+                const snapshotUrl = `/api/camera/${camera.id_c}/snapshot/`;
+
+                const card = `
+            <div class="camera-card" onclick="abrirStream('${camera.id_c}', '${camera.nome}')">
+                <!-- Badge AO VIVO -->
+                <div class="live-badge">
+                    <i class="bi bi-broadcast"></i> AO VIVO
+                </div>
+                
+                <!-- Snapshot (preview) -->
+                <div class="camera-preview">
+                    <img src="${snapshotUrl}" 
+                         alt="${camera.nome}"
+                         onerror="this.src='/static/placeholder-camera.svg'">
+                    <div class="camera-icon">
+                        <i class="bi bi-camera-video"></i>
+                    </div>
+                </div>
+                
+                <!-- Informações -->
+                <div class="camera-info">
+                    <h3>${camera.nome}</h3>
+                    <p><i class="bi bi-geo-alt"></i> ${camera.bairro}</p>
+                </div>
+                
+                <!-- Botão Ver Ao Vivo -->
+                <button class="btn-ver-ao-vivo">
+                    <i class="bi bi-play-circle"></i> Ver Ao Vivo
+                </button>
+            </div>
+        `;
+
+                container.innerHTML += card;
+            });
+        }
+
+        // ✅ NOVA FUNÇÃO: Abrir stream em modal/janela
+        function abrirStream(cameraId, cameraNome) {
+            const streamUrl = `/api/camera/${cameraId}/stream/`;
+
+            // OPÇÃO 1: Abrir em nova janela
+            window.open(streamUrl, `camera_${cameraId}`, 'width=1280,height=720,resizable=yes');
+
+            // OU OPÇÃO 2: Abrir em modal (se preferir)
+            // mostrarModalStream(streamUrl, cameraNome);
+        }
+
+        // OPCIONAL: Modal interno (ao invés de nova janela)
+        function mostrarModalStream(streamUrl, cameraNome) {
+            const modal = document.createElement('div');
+            modal.className = 'stream-modal';
+            modal.innerHTML = `
+        <div class="modal-backdrop" onclick="fecharModal()"></div>
+        <div class="modal-content">
+            <iframe src="${streamUrl}" allowfullscreen></iframe>
+        </div>
+    `;
+            document.body.appendChild(modal);
+        }
+
+        function renderizarGrid() {
+            const gridAoVivo = document.getElementById('grid-ao-vivo');
+            const gridFavoritas = document.getElementById('grid-favoritas');
+
+            if (camerasOnline.length === 0) {
+                gridAoVivo.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-camera-video-off"></i>
+                        <h3>Nenhuma Câmera Online</h3>
+                        <p>Não há câmeras transmitindo no momento</p>
+                    </div>
+                `;
+                return;
+            }
+
+            gridAoVivo.innerHTML = camerasOnline.map(cam => criarCardCamera(cam)).join('');
+
+            const camerasFavoritas = todasCameras.filter(cam => favoritos.includes(cam.id));
+            if (camerasFavoritas.length === 0) {
+                gridFavoritas.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-star"></i>
+                        <h3>Nenhuma Favorita</h3>
+                        <p>Clique na estrela das câmeras para adicionar aos favoritos</p>
+                    </div>
+                `;
+            } else {
+                gridFavoritas.innerHTML = camerasFavoritas.map(cam => criarCardCamera(cam)).join('');
+            }
+        }
+
+        // ========================================
+        // SNAPSHOT NO CARD (PREVIEW)
+        // ========================================
+        function criarCardCamera(cam) {
+            const estaOnline = cam.status === 'online';
+            const eFavorita = favoritos.includes(cam.id);
+            const tipo = cam.tipo || 'fixa';
+
+            // ✅ URL DO SNAPSHOT (ajuste conforme sua API)
+            const snapshotUrl = `https://dev.tixxi.rio/snapshot/?CODE=${cam.camera_id}&KEY=G5325`;
+
+            return `
+        <div class="camera-card" onclick="abrirPlayer(${cam.id})">
+            <div class="camera-thumbnail">
+                <!-- SNAPSHOT COMO PREVIEW -->
+                <img 
+                    src="${snapshotUrl}" 
+                    alt="${cam.nome}"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                    style="width: 100%; height: 100%; object-fit: cover;"
+                >
+                
+                <!-- FALLBACK: Ícone se snapshot falhar -->
+                <div class="camera-placeholder" style="display: none;">
+                    <i class="bi bi-camera-video${estaOnline ? '' : '-off'}"></i>
+                </div>
+                
+                <!-- BADGE AO VIVO -->
+                <div class="camera-status ${estaOnline ? 'status-online' : 'status-offline'}">
+                    <span class="status-dot"></span>
+                    <i class="bi bi-broadcast"></i>
+                    AO VIVO
+                </div>
+                
+                <!-- FAVORITO -->
+                <div class="camera-favorite ${eFavorita ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorito(${cam.id})">
+                    <i class="bi bi-star${eFavorita ? '-fill' : ''}"></i>
+                </div>
+            </div>
+            
+            <div class="camera-info">
+                <div class="camera-name">
+                    ${cam.nome || `Câmera ${cam.id}`}
+                    <span class="camera-type">${tipo}</span>
+                </div>
+                <div class="camera-location">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    ${cam.localizacao || 'Rio de Janeiro'}
+                </div>
+            </div>
+        </div>
+    `;
+        }
+
+        function toggleFavorito(id) {
+            const index = favoritos.indexOf(id);
+            if (index > -1) {
+                favoritos.splice(index, 1);
+            } else {
+                favoritos.push(id);
+            }
+            localStorage.setItem('cameras_favoritas', JSON.stringify(favoritos));
+            atualizarEstatisticas();
+            renderizarGrid();
+        }
+
+        function trocarTab(tab) {
+            document.getElementById('tab-ao-vivo').classList.remove('active');
+            document.getElementById('tab-favoritas').classList.remove('active');
+            document.getElementById('grid-ao-vivo').style.display = 'none';
+            document.getElementById('grid-favoritas').style.display = 'none';
+
+            if (tab === 'ao-vivo') {
+                document.getElementById('tab-ao-vivo').classList.add('active');
+                document.getElementById('grid-ao-vivo').style.display = 'grid';
+            } else {
+                document.getElementById('tab-favoritas').classList.add('active');
+                document.getElementById('grid-favoritas').style.display = 'grid';
+            }
+        }
+
+        // ========================================
+        // PLAYER E MAPA
+        // ========================================
+        function abrirPlayer(id) {
+            const camera = todasCameras.find(c => c.id === id);
+            if (!camera) return;
+
+            cameraAtual = id;
+
+            document.getElementById('player-camera-name').textContent = camera.nome;
+            document.getElementById('modal-player').classList.add('active');
+            inicializarPlayer(camera);
+        }
+
+        // Variável para controle do snapshot
+        let snapshotInterval = null;
+
+        // ========================================
+        // VÍDEO AO VIVO NO MODAL
+        // ========================================
+        function inicializarPlayer(camera) {
+            const container = document.getElementById('camera-info-container');
+            
+            // URL do vídeo ao vivo
+            const videoUrl = `https://dev.tixxi.rio/outvideo3/?CODE=${camera.camera_id}&KEY=G5325`;
+            console.log('🎥 Carregando:', videoUrl);
+            
+            container.innerHTML = `
+                <div style="width: 100%; position: relative; margin-bottom: 20px;">
+                    <iframe 
+                        src="${videoUrl}"
+                        style="width: 100%; height: 70vh; min-height: 500px; border: none; background: #000; border-radius: 12px;"
+                        allowfullscreen
+                        allow="autoplay; fullscreen"
+                    ></iframe>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;">
+                    <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 28px;"><i class="bi bi-hash"></i></div>
+                        <div style="font-size: 10px; text-transform: uppercase; margin-top: 8px;">ID</div>
+                        <div style="font-size: 16px; font-weight: 700; margin-top: 4px;">${camera.camera_id}</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 28px;"><i class="bi bi-broadcast"></i></div>
+                        <div style="font-size: 10px; text-transform: uppercase; margin-top: 8px;">STATUS</div>
+                        <div style="font-size: 16px; font-weight: 700; margin-top: 4px;">● ATIVA</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 28px;"><i class="bi bi-geo-alt-fill"></i></div>
+                        <div style="font-size: 10px; text-transform: uppercase; margin-top: 8px;">LOCALIZAÇÃO</div>
+                        <div style="font-size: 11px; font-weight: 700; margin-top: 4px;">${camera.localizacao}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function mostrarMensagemDesenvolvimento(camera) {
+            const container = document.getElementById('video-container');
+            const statusBadge = document.getElementById('status-badge');
+            const statusText = document.getElementById('stream-status');
+            const modeBadge = document.getElementById('mode-badge');
+
+            container.innerHTML = `
+                <div style="text-align: center; color: #94a3b8; max-width: 600px; padding: 40px;">
+                    <div style="
+                        width: 120px;
+                        height: 120px;
+                        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                        border-radius: 50%;
+                        margin: 0 auto 32px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+                    ">
+                        <i class="bi bi-camera-video-fill" style="font-size: 56px; color: white;"></i>
+                    </div>
+                    
+                    <h3 style="color: #f8fafc; font-size: 24px; margin-bottom: 16px; font-weight: 700;">
+                        Sistema de Streaming
+                    </h3>
+                    
+                    <p style="font-size: 16px; margin-bottom: 24px; line-height: 1.6; color: #cbd5e1;">
+                        O servidor de streaming HLS está sendo configurado.<br>
+                        Em breve você poderá visualizar as câmeras ao vivo!
+                    </p>
+                    
+                    <div style="
+                        background: rgba(59, 130, 246, 0.1);
+                        border: 1px solid rgba(59, 130, 246, 0.3);
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin-bottom: 24px;
+                        text-align: left;
+                    ">
+                        <div style="font-size: 14px; color: #cbd5e1; margin-bottom: 12px;">
+                            <strong>📹 Informações Técnicas:</strong>
+                        </div>
+                        <div style="font-size: 13px; color: #94a3b8; line-height: 1.8;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                <i class="bi bi-check-circle-fill" style="color: #10b981;"></i>
+                                <span>Sistema de Snapshot: <strong style="color: #10b981;">Disponível</strong></span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                <i class="bi bi-clock-fill" style="color: #f59e0b;"></i>
+                                <span>Streaming HLS: <strong style="color: #f59e0b;">Em Configuração</strong></span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="bi bi-gear-fill" style="color: #3b82f6;"></i>
+                                <span>Servidor RTMP: <strong style="color: #3b82f6;">Aguardando Setup</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="tentarSnapshot('${camera.camera_id}')" style="
+                            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                            color: white;
+                            border: none;
+                            padding: 14px 28px;
+                            border-radius: 12px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            font-size: 15px;
+                            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+                            transition: all 0.2s;
+                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(16,185,129,0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 16px rgba(16,185,129,0.3)'">
+                            <i class="bi bi-camera-fill"></i>
+                            Tentar Snapshot
+                        </button>
+                        
+                        <button onclick="verNoMapa(${camera.lat}, ${camera.lng})" style="
+                            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                            color: white;
+                            border: none;
+                            padding: 14px 28px;
+                            border-radius: 12px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            font-size: 15px;
+                            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+                            transition: all 0.2s;
+                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(59,130,246,0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 16px rgba(59,130,246,0.3)'">
+                            <i class="bi bi-map-fill"></i>
+                            Ver no Mapa
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            statusText.textContent = 'EM DESENVOLVIMENTO';
+            statusBadge.style.background = 'rgba(251, 191, 36, 0.9)';
+        }
+
+        function tentarSnapshot(camera_id) {
+            const camera = todasCameras.find(c => c.camera_id === camera_id);
+            if (!camera) {
+                console.error('❌ Câmera não encontrada:', camera_id);
+                return;
+            }
+
+            console.log('📸 Tentando snapshot da câmera:', camera_id);
+
+            const container = document.getElementById('video-container');
+            const statusBadge = document.getElementById('status-badge');
+            const statusText = document.getElementById('stream-status');
+            const modeBadge = document.getElementById('mode-badge');
+
+            container.innerHTML = `
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; background: #000;">
+                    <img 
+                        id="snapshot-img"
+                        style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;"
+                        alt="Snapshot da câmera"
+                    >
+                    <div id="snapshot-loading" style="text-align: center; color: #94a3b8;">
+                        <div style="width: 80px; height: 80px; margin: 0 auto 24px; position: relative;">
+                            <div style="
+                                width: 80px;
+                                height: 80px;
+                                border: 4px solid rgba(16, 185, 129, 0.2);
+                                border-top-color: #10b981;
+                                border-radius: 50%;
+                                animation: spin 1s linear infinite;
+                            "></div>
+                            <i class="bi bi-camera-fill" style="
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                font-size: 32px;
+                                color: #10b981;
+                            "></i>
+                        </div>
+                        <h3 style="color: #f8fafc; font-size: 20px; margin-bottom: 12px; font-weight: 600;">
+                            Capturando Snapshot
+                        </h3>
+                        <p style="font-size: 14px; opacity: 0.8;">Câmera ID: ${camera.camera_id}</p>
+                        <div style="margin-top: 16px; font-size: 13px; opacity: 0.6;">
+                            <i class="bi bi-hourglass-split"></i> Buscando imagem mais recente...
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            statusText.textContent = 'SNAPSHOT MODE';
+            statusBadge.style.background = 'rgba(16, 185, 129, 0.9)';
+
+            if (modeBadge) {
+                modeBadge.style.display = 'flex';
+                modeBadge.querySelector('#mode-text').textContent = 'MODO SNAPSHOT - Atualização a cada 3s';
+            }
+
+            const img = document.getElementById('snapshot-img');
+            const loading = document.getElementById('snapshot-loading');
+
+            const snapshotUrl = `/api/camera/${camera.camera_id}/snapshot/`;
+
+            function atualizarSnapshot() {
+                const timestamp = Date.now();
+                img.src = `${snapshotUrl}?t=${timestamp}`;
+            }
+
+            img.onload = function () {
+                img.style.display = 'block';
+                if (loading) loading.style.display = 'none';
+                console.log('✅ Snapshot carregado com sucesso');
+            };
+
+            img.onerror = function () {
+                console.warn('⚠️ Snapshot indisponível');
+                if (loading) {
+                    loading.innerHTML = `
+                        <div style="width: 100px; height: 100px; margin: 0 auto 24px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid rgba(239, 68, 68, 0.3);">
+                            <i class="bi bi-camera-video-off" style="font-size: 48px; color: #ef4444;"></i>
+                        </div>
+                        <h3 style="color: #f8fafc; font-size: 20px; margin-bottom: 12px; font-weight: 600;">
+                            Snapshot Indisponível
+                        </h3>
+                        <p style="font-size: 15px; opacity: 0.9; margin-bottom: 8px;">
+                            A câmera <strong>${camera.camera_id}</strong> não possui imagem no momento
+                        </p>
+                        <p style="font-size: 13px; opacity: 0.6; margin-bottom: 24px;">
+                            Isso pode significar que a câmera está offline ou o servidor de snapshots não está configurado.
+                        </p>
+                        <button onclick="mostrarMensagemDesenvolvimento(todasCameras.find(c => c.id === ${id}))" style="
+                            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                            color: white;
+                            border: none;
+                            padding: 12px 28px;
+                            border-radius: 10px;
+                            cursor: pointer;
+                            font-weight: 600;
+                            font-size: 14px;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 8px;
+                            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                        ">
+                            <i class="bi bi-arrow-left"></i> Voltar
+                        </button>
+                    `;
+                }
+
+                statusText.textContent = 'OFFLINE';
+                statusBadge.style.background = 'rgba(239, 68, 68, 0.9)';
+            };
+
+            // Primeira tentativa
+            atualizarSnapshot();
+
+            // Limpar intervalo anterior
+            if (snapshotInterval) {
+                clearInterval(snapshotInterval);
+            }
+
+            // Atualizar a cada 3 segundos
+            snapshotInterval = setInterval(atualizarSnapshot, 3000);
+        }
+
+        function toggleFullscreen() {
+            const modal = document.getElementById('modal-player');
+
+            if (!document.fullscreenElement) {
+                // Entrar em tela cheia
+                if (modal.requestFullscreen) {
+                    modal.requestFullscreen();
+                } else if (modal.webkitRequestFullscreen) {
+                    modal.webkitRequestFullscreen();
+                } else if (modal.msRequestFullscreen) {
+                    modal.msRequestFullscreen();
+                }
+
+                // Atualizar ícone
+                const btn = event.target.closest('button');
+                if (btn) {
+                    btn.innerHTML = '<i class="bi bi-fullscreen-exit"></i>';
+                    btn.title = 'Sair da Tela Cheia';
+                }
+            } else {
+                // Sair de tela cheia
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        // Atualizar ícone quando sair de tela cheia
+        document.addEventListener('fullscreenchange', () => {
+            const btns = document.querySelectorAll('.control-btn');
+            btns.forEach(btn => {
+                if (btn.title && btn.title.includes('Tela')) {
+                    if (document.fullscreenElement) {
+                        btn.innerHTML = '<i class="bi bi-fullscreen-exit"></i>';
+                        btn.title = 'Sair da Tela Cheia';
+                    } else {
+                        btn.innerHTML = '<i class="bi bi-arrows-fullscreen"></i>';
+                        btn.title = 'Tela Cheia';
+                    }
+                }
+            });
+        });
+
+        function tentarReconectar() {
+            const camera = todasCameras.find(c => c.id === cameraAtual);
+            if (camera) {
+                console.log('🔄 Reconectando câmera...');
+                inicializarPlayer(camera);
+            }
+        }
+
+        function verNoMapa(lat, lng) {
+            fecharPlayer();
+            abrirMapa();
+
+            setTimeout(() => {
+                if (camerasMap) {
+                    camerasMap.setView([lat, lng], 16);
+                }
+            }, 500);
+        }
+
+        function inicializarPlayer(camera) {
+            const container = document.getElementById('camera-info-container');
+
+            // Limpar intervalo de snapshot anterior
+            if (snapshotInterval) {
+                clearInterval(snapshotInterval);
+                snapshotInterval = null;
+            }
+
+            container.innerHTML = `
+                <!-- ÁREA DE VÍDEO GRANDE (70vh) -->
+                <div style="width: 100%; position: relative; margin-bottom: 20px;">
+                    <div id="video-container" style="
+                        width: 100%;
+                        height: 70vh;
+                        min-height: 500px;
+                        max-height: 800px;
+                        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                        border-radius: 12px;
+                        overflow: hidden;
+                        position: relative;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+                    ">
+                        <!-- Conteúdo Padrão -->
+                        <div style="text-align: center; color: #94a3b8; padding: 40px; max-width: 600px;">
+                            <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 50%; margin: 0 auto 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);">
+                                <i class="bi bi-camera-video-fill" style="font-size: 56px; color: white;"></i>
+                            </div>
+                            <h3 style="color: #f8fafc; font-size: 24px; margin-bottom: 16px; font-weight: 700;">
+                                Sistema de Streaming
+                            </h3>
+                            <p style="font-size: 16px; margin-bottom: 24px; line-height: 1.6; color: #cbd5e1;">
+                                O servidor de streaming HLS está sendo configurado.
+                            </p>
+                            <button onclick="tentarSnapshot('${camera.camera_id}')" style="
+                                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                                color: white;
+                                border: none;
+                                padding: 14px 28px;
+                                border-radius: 12px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                font-size: 15px;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 10px;
+                                box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+                            ">
+                                <i class="bi bi-camera-fill"></i> Tentar Snapshot
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- BARRA DE CONTROLES INFERIOR -->
+                    <div style="
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 70%, transparent 100%);
+                        padding: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 12px;
+                        z-index: 10;
+                    ">
+                        <!-- Status Badge -->
+                        <div id="status-badge" style="
+                            background: rgba(251, 191, 36, 0.9);
+                            color: white;
+                            padding: 8px 16px;
+                            border-radius: 8px;
+                            font-size: 13px;
+                            font-weight: 600;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        ">
+                            <span style="width: 10px; height: 10px; background: white; border-radius: 50%; animation: pulse 2s ease-in-out infinite;"></span>
+                            <span id="stream-status">EM DESENVOLVIMENTO</span>
+                        </div>
+                        
+                        <!-- Botão Tela Cheia -->
+                        <button onclick="toggleFullscreen()" style="
+                            background: rgba(255, 255, 255, 0.15);
+                            backdrop-filter: blur(10px);
+                            border: 1px solid rgba(255, 255, 255, 0.2);
+                            color: white;
+                            width: 44px;
+                            height: 44px;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 18px;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'" title="Tela Cheia">
+                            <i class="bi bi-arrows-fullscreen"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- CARDS DE INFORMAÇÃO -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;">
+                    <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 16px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                        <div style="font-size: 28px; margin-bottom: 8px;"><i class="bi bi-hash"></i></div>
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 4px;">ID</div>
+                        <div style="font-size: 16px; font-weight: 700;">${camera.camera_id}</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 16px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                        <div style="font-size: 28px; margin-bottom: 8px;"><i class="bi bi-broadcast"></i></div>
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 4px;">STATUS</div>
+                        <div style="font-size: 16px; font-weight: 700;">● ATIVA</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 16px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                        <div style="font-size: 28px; margin-bottom: 8px;"><i class="bi bi-camera-fill"></i></div>
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 4px;">TIPO</div>
+                        <div style="font-size: 16px; font-weight: 700;">${camera.tipo.toUpperCase()}</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 16px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                        <div style="font-size: 28px; margin-bottom: 8px;"><i class="bi bi-geo-alt-fill"></i></div>
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 4px;">COORDENADAS</div>
+                        <div style="font-size: 11px; font-weight: 700;">${camera.lat.toFixed(4)}, ${camera.lng.toFixed(4)}</div>
+                    </div>
+                </div>
+                
+                <!-- LOCALIZAÇÃO COMPLETA -->
+                <div style="margin-top: 16px; padding: 16px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 48px; height: 48px; background: rgba(59, 130, 246, 0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="bi bi-pin-map-fill" style="color: #3b82f6; font-size: 24px;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase; margin-bottom: 4px; font-weight: 600;">
+                                LOCALIZAÇÃO COMPLETA
+                            </div>
+                            <div style="color: #f8fafc; font-weight: 600; font-size: 15px;">
+                                ${camera.localizacao}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function fecharPlayer() {
+            // Limpar intervalo de snapshot
+            if (snapshotInterval) {
+                clearInterval(snapshotInterval);
+                snapshotInterval = null;
+            }
+
+            // Destruir player se existir
+            if (player) {
+                try {
+                    player.dispose();
+                    player = null;
+                } catch (error) {
+                    console.error('Erro ao destruir player:', error);
+                }
+            }
+
+            document.getElementById('camera-info-container').innerHTML = '';
+            document.getElementById('modal-player').classList.remove('active');
+        }
+
+        // TELA CHEIA
+        function toggleFullscreen() {
+            const modal = document.getElementById('modal-player');
+
+            if (!document.fullscreenElement) {
+                // Entrar em tela cheia
+                if (modal.requestFullscreen) {
+                    modal.requestFullscreen();
+                } else if (modal.webkitRequestFullscreen) {
+                    modal.webkitRequestFullscreen();
+                } else if (modal.msRequestFullscreen) {
+                    modal.msRequestFullscreen();
+                }
+            } else {
+                // Sair de tela cheia
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        // SNAPSHOT MODE
+        function tentarSnapshot(camera_id) {
+            const camera = todasCameras.find(c => c.camera_id === camera_id);
+            if (!camera) {
+                console.error('❌ Câmera não encontrada:', camera_id);
+                return;
+            }
+
+            console.log('📸 Tentando snapshot da câmera:', camera_id);
+
+            const container = document.getElementById('video-container');
+            const statusBadge = document.getElementById('status-badge');
+            const statusText = document.getElementById('stream-status');
+
+            container.innerHTML = `
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000; position: relative;">
+                    <img 
+                        id="snapshot-img"
+                        style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;"
+                        alt="Snapshot da câmera"
+                    >
+                    <div id="snapshot-loading" style="text-align: center; color: #94a3b8;">
+                        <div style="width: 80px; height: 80px; margin: 0 auto 24px; position: relative;">
+                            <div style="
+                                width: 80px;
+                                height: 80px;
+                                border: 4px solid rgba(16, 185, 129, 0.2);
+                                border-top-color: #10b981;
+                                border-radius: 50%;
+                                animation: spin 1s linear infinite;
+                            "></div>
+                            <i class="bi bi-camera-fill" style="
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                font-size: 32px;
+                                color: #10b981;
+                            "></i>
+                        </div>
+                        <h3 style="color: #f8fafc; font-size: 20px; margin-bottom: 12px; font-weight: 600;">
+                            Capturando Snapshot
+                        </h3>
+                        <p style="font-size: 14px; opacity: 0.8;">Câmera ID: ${camera.camera_id}</p>
+                    </div>
+                </div>
+            `;
+
+            statusText.textContent = 'SNAPSHOT MODE';
+            statusBadge.style.background = 'rgba(16, 185, 129, 0.9)';
+
+            const img = document.getElementById('snapshot-img');
+            const loading = document.getElementById('snapshot-loading');
+            const snapshotUrl = `/api/camera/${camera.camera_id}/snapshot/`;
+
+            function atualizarSnapshot() {
+                img.src = `${snapshotUrl}?t=${Date.now()}`;
+            }
+
+            img.onload = function () {
+                img.style.display = 'block';
+                if (loading) loading.style.display = 'none';
+                console.log('✅ Snapshot carregado');
+            };
+
+            img.onerror = function () {
+                console.warn('⚠️ Snapshot indisponível');
+                if (loading) {
+                    loading.innerHTML = `
+                        <div style="width: 100px; height: 100px; margin: 0 auto 24px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid rgba(239, 68, 68, 0.3);">
+                            <i class="bi bi-camera-video-off" style="font-size: 48px; color: #ef4444;"></i>
+                        </div>
+                        <h3 style="color: #f8fafc; font-size: 20px; margin-bottom: 12px;">
+                            Snapshot Indisponível
+                        </h3>
+                        <p style="font-size: 15px; opacity: 0.9; margin-bottom: 8px;">
+                            A câmera <strong>${camera.camera_id}</strong> não possui imagem
+                        </p>
+                    `;
+                }
+
+                statusText.textContent = 'OFFLINE';
+                statusBadge.style.background = 'rgba(239, 68, 68, 0.9)';
+            };
+
+            // Primeira tentativa
+            atualizarSnapshot();
+
+            // Limpar intervalo anterior
+            if (snapshotInterval) {
+                clearInterval(snapshotInterval);
+            }
+
+            // Atualizar a cada 3 segundos
+            snapshotInterval = setInterval(atualizarSnapshot, 3000);
+        }
+
+        function abrirMapa() {
+            document.getElementById('modal-mapa').classList.add('active');
+            if (!mapaInicializado) {
+                inicializarMapa();
+                mapaInicializado = true;
+            } else {
+                camerasMap.invalidateSize();
+            }
+        }
+
+        function fecharMapa() {
+            document.getElementById('modal-mapa').classList.remove('active');
+        }
+
+        function inicializarMapa() {
+            camerasMap = L.map('cameras-map').setView([-22.9068, -43.1729], 11);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 18
+            }).addTo(camerasMap);
+
+            todasCameras.forEach(cam => {
+                if (cam.lat && cam.lng) {
+                    const estaOnline = cam.status === 'online';
+                    const cor = estaOnline ? '#10b981' : '#ef4444';
+                    const marker = L.marker([cam.lat, cam.lng], {
+                        icon: L.divIcon({
+                            html: `<div style="background:${cor};width:30px;height:30px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;"><i class="bi bi-camera-video-fill" style="color:white;font-size:14px;"></i></div>`,
+                            iconSize: [30, 30],
+                            iconAnchor: [15, 15]
+                        })
+                    }).addTo(camerasMap);
+                    marker.bindPopup(`<strong>${cam.nome}</strong><br><span style="color:${cor};">${estaOnline ? 'Online' : 'Offline'}</span>`);
+                }
+            });
+        }
+
+        // ========================================
+        // FILTROS
+        // ========================================
+        function extrairBairros() {
+            const bairrosSet = new Set();
+            todasCameras.forEach(cam => {
+                let bairro = '';
+                if (cam.localizacao) {
+                    const partes = cam.localizacao.split('-');
+                    bairro = partes[0].trim();
+                } else if (cam.nome) {
+                    const partes = cam.nome.split('-');
+                    bairro = partes[0].trim();
+                }
+                if (bairro) bairrosSet.add(bairro);
+            });
+            bairrosDisponiveis = Array.from(bairrosSet).sort();
+            popularDropdownBairros();
+        }
+
+        function popularDropdownBairros() {
+            const select = document.getElementById('filtro-bairro');
+            if (!select) return;
+            select.innerHTML = '<option value="">Todos os Bairros</option>';
+            let bairrosFiltrados = bairrosDisponiveis;
+            if (zonaAtual) {
+                const bairrosDaZona = ZONAS_RIO[zonaAtual] || [];
+                bairrosFiltrados = bairrosDisponiveis.filter(b => bairrosDaZona.some(bz => b.toLowerCase().includes(bz.toLowerCase())));
+            }
+            bairrosFiltrados.forEach(bairro => {
+                const option = document.createElement('option');
+                option.value = bairro;
+                const count = todasCameras.filter(cam => {
+                    const localCam = (cam.localizacao || cam.nome || '').split('-')[0].trim();
+                    return localCam === bairro;
+                }).length;
+                option.textContent = `${bairro} (${count})`;
+                select.appendChild(option);
+            });
+        }
+
+        function identificarZona(bairro) {
+            for (const [zona, bairros] of Object.entries(ZONAS_RIO)) {
+                if (bairros.some(b => bairro.toLowerCase().includes(b.toLowerCase()))) {
+                    return zona;
+                }
+            }
+            return null;
+        }
+
+        function filtrarPorZona(zona) {
+            zonaAtual = zona;
+            bairroAtual = '';
+            document.getElementById('filtro-bairro').value = '';
+            popularDropdownBairros();
+            aplicarFiltros();
+        }
+
+        function filtrarPorBairro(bairro) {
+            bairroAtual = bairro;
+            aplicarFiltros();
+        }
+
+        function filtrarPorStatus(status) {
+            statusAtual = status;
+            aplicarFiltros();
+        }
+
+        function filtrarPorTipo(tipo) {
+            tipoAtual = tipo;
+            aplicarFiltros();
+        }
+
+        function aplicarFiltros() {
+            const termoBusca = document.getElementById('search-input').value.toLowerCase().trim();
+            camerasOnline = todasCameras.filter(cam => {
+                const estaOnline = cam.status === 'online';
+                if (statusAtual === 'online' && !estaOnline) return false;
+                if (statusAtual === 'offline' && estaOnline) return false;
+                const bairroCam = (cam.localizacao || cam.nome || '').split('-')[0].trim();
+                if (zonaAtual) {
+                    const zonaCam = identificarZona(bairroCam);
+                    if (zonaCam !== zonaAtual) return false;
+                }
+                if (bairroAtual && bairroCam !== bairroAtual) return false;
+                if (termoBusca) {
+                    const matchNome = (cam.nome || '').toLowerCase().includes(termoBusca);
+                    const matchLocal = (cam.localizacao || '').toLowerCase().includes(termoBusca);
+                    if (!matchNome && !matchLocal) return false;
+                }
+                return true;
+            });
+            atualizarContadores();
+            atualizarBadgesFiltros();
+            renderizarGrid();
+        }
+
+        function atualizarContadores() {
+            const contadorTotal = document.getElementById('contador-cameras');
+            const contadorOnline = document.getElementById('contador-online');
+            const contadorOffline = document.getElementById('contador-offline');
+            if (contadorTotal) contadorTotal.textContent = camerasOnline.length;
+            const online = camerasOnline.filter(c => c.status === 'online').length;
+            const offline = camerasOnline.length - online;
+            if (contadorOnline) contadorOnline.textContent = online;
+            if (contadorOffline) contadorOffline.textContent = offline;
+        }
+
+        function atualizarBadgesFiltros() {
+            const container = document.getElementById('filtros-ativos');
+            if (!container) return;
+            container.innerHTML = '';
+            const filtros = [];
+            if (zonaAtual) {
+                const nome = document.querySelector(`#filtro-zona option[value="${zonaAtual}"]`).textContent;
+                filtros.push({ tipo: 'zona', valor: zonaAtual, nome: nome });
+            }
+            if (bairroAtual) {
+                filtros.push({ tipo: 'bairro', valor: bairroAtual, nome: bairroAtual });
+            }
+            if (statusAtual) {
+                const nome = statusAtual === 'online' ? 'Online' : 'Offline';
+                filtros.push({ tipo: 'status', valor: statusAtual, nome: nome });
+            }
+            filtros.forEach(f => {
+                const badge = document.createElement('div');
+                badge.className = 'filtro-badge';
+                badge.innerHTML = `<span>${f.nome}</span><i class="bi bi-x-circle-fill" onclick="removerFiltro('${f.tipo}')"></i>`;
+                container.appendChild(badge);
+            });
+        }
+
+        function removerFiltro(tipo) {
+            if (tipo === 'zona') {
+                zonaAtual = '';
+                document.getElementById('filtro-zona').value = '';
+                popularDropdownBairros();
+            } else if (tipo === 'bairro') {
+                bairroAtual = '';
+                document.getElementById('filtro-bairro').value = '';
+            } else if (tipo === 'status') {
+                statusAtual = '';
+                document.getElementById('filtro-status').value = '';
+            }
+            aplicarFiltros();
+        }
+
+        function limparFiltros() {
+            zonaAtual = '';
+            bairroAtual = '';
+            statusAtual = '';
+            document.getElementById('filtro-zona').value = '';
+            document.getElementById('filtro-bairro').value = '';
+            document.getElementById('filtro-status').value = '';
+            document.getElementById('search-input').value = '';
+            popularDropdownBairros();
+            aplicarFiltros();
+        }
+
+        function filtrarCameras(termo) {
+            aplicarFiltros();
+        }
+
+        function atualizarCameras() {
+            carregarCameras();
+        }
+
+        // ========================================
+        // DASHBOARD
+        // ========================================
+        function abrirDashboardMonitoramento() {
+            document.getElementById('modal-dashboard').classList.add('active');
+            gerarDashboard();
+            dashboardInterval = setInterval(() => {
+                console.log('🔄 Atualizando dashboard...');
+                gerarDashboard();
+            }, 60000);
+        }
+
+        function fecharDashboard() {
+            document.getElementById('modal-dashboard').classList.remove('active');
+            if (dashboardInterval) {
+                clearInterval(dashboardInterval);
+                dashboardInterval = null;
+            }
+            if (chartSaude) { chartSaude.destroy(); chartSaude = null; }
+            if (chartResolucao) { chartResolucao.destroy(); chartResolucao = null; }
+            if (chartTipo) { chartTipo.destroy(); chartTipo = null; }
+            if (chartMaisAcessadas) { chartMaisAcessadas.destroy(); chartMaisAcessadas = null; }
+            if (chartHistorico) { chartHistorico.destroy(); chartHistorico = null; }
+        }
+
+        function gerarDashboard() {
+            const stats = calcularEstatisticas();
+            renderizarCards(stats);
+            renderizarGraficos(stats);
+            renderizarDistribuicaoZona();
+        }
+
+        function calcularEstatisticas() {
+            const total = todasCameras.length;
+            const online = todasCameras.filter(c => c.status === 'online').length;
+            const offline = todasCameras.filter(c => c.status === 'offline').length;
+            const invalidas = camerasInvalidas.length;
+            const fixas = todasCameras.filter(c => c.tipo === 'fixa');
+            const fixasOnline = fixas.filter(c => c.status === 'online').length;
+            const moveis = todasCameras.filter(c => c.tipo === 'móvel');
+            const moveisOnline = moveis.filter(c => c.status === 'online').length;
+            const ptz = todasCameras.filter(c => c.tipo === 'ptz');
+            const ptzOnline = ptz.filter(c => c.status === 'online').length;
+            const saudePercentual = ((online / total) * 100).toFixed(1);
+            const falhando = Math.floor(total * 0.03);
+            return { total, online, offline, invalidas, fixas: fixas.length, fixasOnline, moveis: moveis.length, moveisOnline, ptz: ptz.length, ptzOnline, saudePercentual, falhando };
+        }
+
+        function renderizarCards(stats) {
+            const container = document.getElementById('dashboard-stats');
+            const cards = [
+                { icon: 'bi-truck', value: stats.moveisOnline, label: 'Câmeras Móveis', subtitle: 'Online', colorFrom: '#10b981', colorTo: '#059669' },
+                { icon: 'bi-camera-video-fill', value: stats.fixasOnline, label: 'Câmeras Fixas Online', subtitle: `${stats.fixas} câmeras no total`, colorFrom: '#3b82f6', colorTo: '#2563eb' },
+                { icon: 'bi-broadcast', value: stats.online, label: 'Câmeras', subtitle: 'Online', colorFrom: '#22c55e', colorTo: '#16a34a' },
+                { icon: 'bi-exclamation-triangle-fill', value: stats.falhando, label: 'Câmeras', subtitle: 'Falhando', colorFrom: '#eab308', colorTo: '#ca8a04' },
+                { icon: 'bi-x-circle-fill', value: stats.offline, label: 'Câmeras', subtitle: 'Offline', colorFrom: '#ef4444', colorTo: '#dc2626' },
+                { icon: 'bi-slash-circle', value: stats.invalidas, label: 'Câmeras', subtitle: 'Desativadas', colorFrom: '#6b7280', colorTo: '#4b5563' },
+                { icon: 'bi-speedometer', value: `${stats.saudePercentual}%`, label: 'Saúde', subtitle: 'do Sistema', colorFrom: '#8b5cf6', colorTo: '#7c3aed' },
+                { icon: 'bi-grid-3x3', value: stats.total, label: 'Total', subtitle: 'de Câmeras', colorFrom: '#06b6d4', colorTo: '#0891b2' }
+            ];
+            container.innerHTML = cards.map(card => `
+                <div class="dashboard-stat-card" style="--color-from: ${card.colorFrom}; --color-to: ${card.colorTo}; color: white;">
+                    <div class="dashboard-stat-icon"><i class="bi ${card.icon}"></i></div>
+                    <div class="dashboard-stat-value">${card.value}</div>
+                    <div class="dashboard-stat-label">${card.label}</div>
+                    <div class="dashboard-stat-subtitle">${card.subtitle}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderizarGraficos(stats) {
+            renderizarGraficoSaude(stats);
+            renderizarGraficoResolucao();
+            renderizarGraficoTipo(stats);
+            renderizarGraficoMaisAcessadas();
+            renderizarGraficoHistorico();
+        }
+
+        function renderizarGraficoSaude(stats) {
+            const ctx = document.getElementById('chart-saude');
+            if (!ctx) return;
+            if (chartSaude) chartSaude.destroy();
+            chartSaude = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Alta', 'Baixa'],
+                    datasets: [{ data: [stats.online, stats.offline + stats.falhando], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#f8fafc', font: { size: 12 } } } } }
+            });
+        }
+
+        function renderizarGraficoResolucao() {
+            const ctx = document.getElementById('chart-resolucao');
+            if (!ctx) return;
+            if (chartResolucao) chartResolucao.destroy();
+            chartResolucao = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Full HD', 'HD', 'Outras'],
+                    datasets: [{ data: [Math.floor(todasCameras.length * 0.88), Math.floor(todasCameras.length * 0.06), Math.floor(todasCameras.length * 0.06)], backgroundColor: ['#3b82f6', '#f59e0b', '#8b5cf6'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#f8fafc', font: { size: 12 } } } } }
+            });
+        }
+
+        function renderizarGraficoTipo(stats) {
+            const ctx = document.getElementById('chart-tipo');
+            if (!ctx) return;
+            if (chartTipo) chartTipo.destroy();
+            chartTipo = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Fixas', 'Móveis', 'PTZ'],
+                    datasets: [{ data: [stats.fixas, stats.moveis, stats.ptz], backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#f8fafc', font: { size: 12 } } } } }
+            });
+        }
+
+        function renderizarGraficoMaisAcessadas() {
+            const ctx = document.getElementById('chart-mais-acessadas');
+            if (!ctx) return;
+            if (chartMaisAcessadas) chartMaisAcessadas.destroy();
+            const cameras = todasCameras.slice(0, 5);
+            const acessos = cameras.map(() => Math.floor(Math.random() * 200));
+            chartMaisAcessadas = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: cameras.map(c => c.camera_id),
+                    datasets: [{ label: 'Acessos', data: acessos, backgroundColor: '#f59e0b', borderRadius: 6 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } } }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function renderizarGraficoHistorico() {
+            const ctx = document.getElementById('chart-historico');
+            if (!ctx) return;
+            if (chartHistorico) chartHistorico.destroy();
+            const labels = [];
+            const dataOnline = [];
+            const dataOffline = [];
+            for (let i = 6; i >= 0; i--) {
+                const data = new Date();
+                data.setDate(data.getDate() - i);
+                labels.push(data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+                const total = todasCameras.length;
+                const variation = Math.floor(Math.random() * 100);
+                dataOnline.push(total - variation);
+                dataOffline.push(variation);
+            }
+            chartHistorico = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Online', data: dataOnline, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4 },
+                        { label: 'Offline', data: dataOffline, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.1)' } } }, plugins: { legend: { position: 'bottom', labels: { color: '#f8fafc', font: { size: 12 } } } } }
+            });
+        }
+
+        function renderizarDistribuicaoZona() {
+            const container = document.getElementById('zona-distribution');
+            const zonasStats = Object.keys(ZONAS_RIO).map(zona => {
+                const cameras = todasCameras.filter(cam => {
+                    const bairro = (cam.localizacao || cam.nome || '').split('-')[0].trim();
+                    return identificarZona(bairro) === zona;
+                });
+                const online = cameras.filter(c => c.status === 'online').length;
+                const offline = cameras.length - online;
+                const percentual = cameras.length > 0 ? ((online / cameras.length) * 100).toFixed(0) : 0;
+                return { zona: zona.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()), total: cameras.length, online, offline, percentual };
+            });
+            const maxCameras = Math.max(...zonasStats.map(z => z.total));
+            container.innerHTML = zonasStats.map(z => `
+                <div class="zona-item">
+                    <div class="zona-item-header">
+                        <span class="zona-item-name">${z.zona}</span>
+                        <span class="zona-item-count">${z.total}</span>
+                    </div>
+                    <div class="zona-item-bar">
+                        <div class="zona-item-bar-fill" style="width: ${(z.total / maxCameras) * 100}%"></div>
+                    </div>
+                    <div class="zona-item-stats">
+                        <span><i class="bi bi-check-circle-fill" style="color: #10b981;"></i> ${z.online} online</span>
+                        <span><i class="bi bi-x-circle-fill" style="color: #ef4444;"></i> ${z.offline} offline</span>
+                        <span><i class="bi bi-percent"></i> ${z.percentual}% saúde</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ========================================
+        // INICIALIZAÇÃO
+        // ========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarCameras();
+            setInterval(carregarCameras, 2 * 60 * 1000);
+        });
+
+        console.log('✅ Script carregado');
+    </script>
+
+    <!-- SISTEMA DE TEMA -->
+    <script>
+        (function () {
+            let currentTheme = localStorage.getItem('cor-theme') || 'light';
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+            function applyTheme(theme) {
+                currentTheme = theme;
+                if (theme === 'dark') {
+                    document.body.classList.add('dark-theme');
+                    updateThemeButton('sun', 'Tema Claro');
+                } else {
+                    document.body.classList.remove('dark-theme');
+                    updateThemeButton('moon', 'Tema Escuro');
+                }
+                localStorage.setItem('cor-theme', theme);
+            }
+            function toggleTheme() {
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                applyTheme(newTheme);
+            }
+            function updateThemeButton(icon, tooltip) {
+                const button = document.getElementById('theme-toggle');
+                if (!button) return;
+                const iconElement = button.querySelector('i');
+                const spanElement = button.querySelector('span');
+                if (iconElement) iconElement.className = `bi bi-${icon}-fill`;
+                if (spanElement) spanElement.textContent = tooltip;
+                button.setAttribute('title', tooltip);
+            }
+            function init() {
+                const themeButton = document.getElementById('theme-toggle');
+                if (themeButton) {
+                    themeButton.addEventListener('click', toggleTheme);
+                    applyTheme(currentTheme);
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</body>
+
+</html>

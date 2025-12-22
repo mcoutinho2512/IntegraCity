@@ -1,0 +1,43 @@
+<nav class="cor-menu">
+    <ul class="cor-menu-items">
+        <!-- Visão Geral -->
+        <li class="cor-menu-item">
+            <a href="{% url 'cor_dashboard' %}" class="cor-menu-link {% if request.resolver_match.url_name == 'cor_dashboard' %}active{% endif %}">
+                <i class="bi bi-house-fill"></i>
+                Visão Geral
+            </a>
+        </li>
+
+        <!-- Mobilidade Urbana -->
+        <li class="cor-menu-item">
+            <a href="{% url 'mobilidade_dashboard' %}" class="cor-menu-link {% if request.resolver_match.url_name == 'mobilidade_dashboard' %}active{% endif %}">
+                <i class="bi bi-car-front"></i>
+                Mobilidade Urbana
+            </a>
+        </li>
+
+        <!-- Meteorologia -->
+        <li class="cor-menu-item">
+            <a href="{% url 'meteorologia_dashboard' %}" class="cor-menu-link {% if request.resolver_match.url_name == 'meteorologia_dashboard' %}active{% endif %}">
+                <i class="bi bi-cloud-sun"></i>
+                Meteorologia
+            </a>
+        </li>
+
+        <!-- Videomonitoramento -->
+        <li class="cor-menu-item">
+            <a href="{% url 'videomonitoramento' %}" class="cor-menu-link {% if request.resolver_match.url_name == 'videomonitoramento' %}active{% endif %}">
+                <i class="bi bi-camera-video"></i>
+                Videomonitoramento
+            </a>
+        </li>
+
+        <!-- NOVO: Matriz Decisória -->
+        <li class="cor-menu-item">
+            <a href="{% url 'matriz_decisoria' %}" class="cor-menu-link {% if request.resolver_match.url_name == 'matriz_decisoria' %}active{% endif %}">
+                <i class="bi bi-grid-3x3-gap-fill"></i>
+                Matriz Decisória
+            </a>
+        </li>
+    </ul>
+</nav>

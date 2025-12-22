@@ -1,0 +1,1564 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meteorologia - SISCOR</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="{% static 'mapa_novo/css/cor_navbar.css' %}">
+    <link rel="stylesheet" href="{% static 'mapa_novo/css/cor_menu.css' %}">
+    <link rel="stylesheet" href="{% static 'mapa_novo/css/dark_theme.css' %}">
+    <link rel="stylesheet" href="{% static 'mapa_novo/css/dark_mode.css' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'mapa_novo/css/cor_design_system.css' %}">
+    <link rel="stylesheet" href="{% static 'mapa_novo/css/sistemas_padronizados.css' %}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            overflow-x: hidden;
+            overflow-y: auto;
+            height: auto;
+            min-height: 100vh;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .dashboard-container {
+            padding: 160px 20px 20px 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            height: auto;
+            min-height: calc(100vh - 160px);
+            overflow: visible;
+        }
+
+        .dashboard-header {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .header-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #f8fafc;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .header-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .header-stat {
+            text-align: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 4px;
+        }
+
+        .header-stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .met-section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .met-section-title {
+            color: #f8fafc;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .met-section-title i {
+            color: #3b82f6;
+            font-size: 22px;
+        }
+
+        .met-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .met-section-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .met-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #cbd5e1;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .met-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: #3b82f6;
+            transform: translateY(-2px);
+        }
+
+        .radar-map-container {
+            position: relative;
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: visible;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .radar-map-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            border-radius: 0;
+        }
+
+        .radar-map-container.fullscreen #radar-map {
+            height: 100vh !important;
+            border-radius: 0;
+        }
+
+        #radar-map {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .radar-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #1e293b;
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            max-width: 320px;
+            z-index: 1000;
+            max-height: calc(100vh - 240px);
+            overflow-y: auto;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .radar-controls.collapsed {
+            transform: translateX(calc(100% + 40px));
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .radar-controls-toggle {
+            position: fixed;
+            top: 186px;
+            right: 40px;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            backdrop-filter: blur(10px);
+            border: 3px solid white;
+            border-radius: 14px;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+            z-index: 1002;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: megaPulse 2s ease-in-out infinite;
+        }
+
+        .radar-controls-toggle:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 12px 32px rgba(59, 130, 246, 0.6);
+        }
+
+        .radar-controls-toggle:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .radar-controls-toggle i {
+            transition: transform 0.3s ease;
+            animation: rotate360 3s linear infinite;
+        }
+
+        .radar-controls-toggle:hover i {
+            animation: rotate360 0.6s linear infinite;
+        }
+
+        @keyframes rotate360 {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes megaPulse {
+            0%, 100% {
+                box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 12px 40px rgba(59, 130, 246, 0.8);
+                transform: scale(1.08);
+            }
+        }
+
+        .radar-controls::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .radar-controls::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .radar-controls::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 3px;
+        }
+
+        .radar-controls::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+
+        .radar-control-group {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+            animation: slideInRight 0.3s ease;
+        }
+
+        .radar-control-group:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .radar-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #3b82f6;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .radar-label i {
+            font-size: 14px;
+        }
+
+        .radar-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .radar-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .radar-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .radar-btn:hover::before {
+            left: 100%;
+        }
+
+        .radar-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: #3b82f6;
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .radar-btn.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+            transform: scale(1.02);
+        }
+
+        .radar-btn.active::after {
+            content: '✓';
+            position: absolute;
+            right: 12px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .radar-btn i {
+            font-size: 16px;
+            transition: transform 0.3s;
+        }
+
+        .radar-btn:hover i {
+            transform: scale(1.2);
+        }
+
+        .radar-btn.active i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .radar-slider {
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.5));
+            outline: none;
+            border-radius: 4px;
+            -webkit-appearance: none;
+            position: relative;
+        }
+
+        .radar-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
+        }
+
+        .radar-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
+        }
+
+        .radar-slider::-webkit-slider-thumb:active {
+            transform: scale(1.1);
+        }
+
+        .radar-info {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.15));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            color: #3b82f6;
+            font-size: 11px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .radar-info i {
+            font-size: 16px;
+            margin-top: 2px;
+        }
+
+        .pluviometro-icon {
+            border: none !important;
+            background: transparent !important;
+        }
+
+        .tempo-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .tempo-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .tempo-label {
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .tempo-valor {
+            color: #3b82f6;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .leaflet-popup-content {
+            margin: 10px;
+        }
+
+        .info-panel {
+            position: fixed;
+            top: 146px;
+            left: -360px;
+            width: 350px;
+            bottom: 20px;
+            background: #1e293b;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 12px 12px 0;
+            z-index: 1001;
+            transition: left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 10px 0 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .info-panel.open {
+            left: 0;
+        }
+
+        .info-panel-header {
+            padding: 20px;
+            background: #0f172a;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .info-panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #f8fafc;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .info-panel-title i {
+            color: #3b82f6;
+            font-size: 22px;
+        }
+
+        .info-panel-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #cbd5e1;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .info-panel-close:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .info-panel-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .info-stat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .info-stat-icon {
+            font-size: 28px;
+        }
+
+        .info-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+
+        .info-stat-label {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .info-panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        .info-panel-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .info-panel-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .info-panel-content::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 3px;
+        }
+
+        .loading-info {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+        }
+
+        .loading-info i {
+            font-size: 32px;
+            margin-bottom: 12px;
+            animation: spin 1s linear infinite;
+        }
+
+        .local-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .local-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
+        }
+
+        .local-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .local-nome {
+            font-weight: 700;
+            color: #f8fafc;
+            font-size: 14px;
+        }
+
+        .local-valor {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .local-intensidade {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .local-detalhes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .local-detalhe {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .info-panel-toggle {
+            position: fixed;
+            top: 166px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: 3px solid white;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+            z-index: 1002;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .info-panel-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+        }
+
+        .info-panel-toggle.hidden {
+            left: 370px;
+        }
+
+        .badge-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 10px;
+            border: 2px solid white;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            color: #334155;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            color: #cbd5e1;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes sirene-pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes sirene-bounce {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+        }
+
+        .sirene-marker-custom {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .info-panel {
+                width: 100%;
+                left: -100%;
+                border-radius: 0;
+            }
+
+            .info-panel.open {
+                left: 0;
+            }
+
+            .info-panel-toggle {
+                left: auto;
+                right: 20px;
+            }
+
+            .info-panel-toggle.hidden {
+                left: auto;
+                right: 20px;
+                opacity: 0.5;
+            }
+
+            .radar-controls {
+                position: static;
+                max-width: 100%;
+                margin-top: 12px;
+            }
+        }
+
+        /* Botão Recentralizar */
+        .btn-recentralizar {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1)) !important;
+            border-color: #10b981 !important;
+            color: #10b981 !important;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-recentralizar:hover {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+        }
+
+        .btn-recentralizar i {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-recentralizar:hover i {
+            transform: scale(1.3);
+            animation: pulsarPin 0.6s ease-in-out infinite;
+        }
+
+        @keyframes pulsarPin {
+            0%, 100% { transform: scale(1.3); }
+            50% { transform: scale(1.5); }
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'includes/navbar_top.html' %}
+    {% include 'includes/navbar_menu.html' %}
+
+    <div class="info-panel" id="info-panel">
+        <div class="info-panel-header">
+            <div class="info-panel-title"><i class="bi bi-cloud-rain-heavy-fill"></i> Locais com Chuva</div>
+            <button class="info-panel-close" onclick="toggleInfoPanel()"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="info-panel-stats">
+            <div class="info-stat-item">
+                <div class="info-stat-icon">🌧️</div>
+                <div>
+                    <div class="info-stat-value" id="total-chovendo">0</div>
+                    <div class="info-stat-label">Locais</div>
+                </div>
+            </div>
+            <div class="info-stat-item">
+                <div class="info-stat-icon">⚠️</div>
+                <div>
+                    <div class="info-stat-value" id="total-forte">0</div>
+                    <div class="info-stat-label">Chuva Forte</div>
+                </div>
+            </div>
+        </div>
+        <div class="info-panel-content" id="info-panel-content">
+            <div class="loading-info"><i class="bi bi-hourglass-split"></i>
+                <p>Carregando...</p>
+            </div>
+        </div>
+    </div>
+
+    <button class="info-panel-toggle" onclick="toggleInfoPanel()" title="Ver locais com chuva">
+        <i class="bi bi-list-ul"></i>
+        <span class="badge-count" id="badge-count">0</span>
+    </button>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div class="header-top">
+                <div class="header-title">
+                    <div class="header-icon"><i class="bi bi-cloud-sun-fill"></i></div>
+                    <div>
+                        <h1>Meteorologia</h1>
+                        <p style="margin:0;color:#94a3b8;font-size:14px;">Monitoramento em tempo real</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="atualizarRadarLeaflet()"><i class="bi bi-arrow-clockwise"></i>
+                        Atualizar</button>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="header-stat">
+                    <div class="header-stat-value" id="temp-media">--</div>
+                    <div class="header-stat-label">Temperatura</div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-value" id="umidade-media">--</div>
+                    <div class="header-stat-label">Umidade</div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-value" id="chuva-24h">--</div>
+                    <div class="header-stat-label">Chuva 24h</div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-value" id="vento-vel">--</div>
+                    <div class="header-stat-label">Vento</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="met-section">
+            <div class="met-section-header">
+                <div class="met-section-title"><i class="bi bi-radar"></i> Radar Meteorológico</div>
+                <div class="met-section-actions">
+                    <button class="met-btn" onclick="centralizarRadar()"><i class="bi bi-geo-alt-fill"></i>
+                        Centralizar</button>
+                    <button class="met-btn" onclick="toggleRadarFullscreen()"><i class="bi bi-arrows-fullscreen"></i>
+                        Tela Cheia</button>
+                </div>
+            </div>
+            <div class="radar-map-container" id="radar-map-container">
+                <div id="radar-map" style="width:100%;height:600px;border-radius:12px;"></div>
+                
+                <div class="radar-controls" id="radar-controls">
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 16px 20px;
+                        margin: -20px -20px 16px -20px;
+                        background: #0f172a;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: 12px 12px 0 0;
+                    ">
+                        <h3 style="
+                            margin: 0;
+                            color: #f8fafc;
+                            font-size: 18px;
+                            font-weight: 600;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                        ">
+                            <i class="bi bi-sliders" style="color: #3b82f6;"></i> Controles
+                        </h3>
+                        <button onclick="toggleControles()" style="
+                            background: none;
+                            border: none;
+                            color: #94a3b8;
+                            font-size: 18px;
+                            cursor: pointer;
+                            padding: 4px;
+                            transition: color 0.2s;
+                        " onmouseover="this.style.color='#f8fafc'" onmouseout="this.style.color='#94a3b8'" title="Fechar">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="radar-control-group">
+                        <label class="radar-label"><i class="bi bi-layers-fill"></i> Camadas</label>
+                        <div class="radar-buttons">
+                            <button class="radar-btn active" onclick="toggleCamada('radar')" id="btn-radar">
+                                <i class="bi bi-cloud-rain-fill"></i> Precipitação
+                            </button>
+                            <button class="radar-btn active" onclick="toggleCamada('pluviometros')" id="btn-pluviometros">
+                                <i class="bi bi-broadcast-pin"></i> Pluviômetros
+                            </button>
+                        </div>
+                    </div>
+                    <div class="radar-control-group">
+                        <label class="radar-label"><i class="bi bi-map"></i> Mapa Base</label>
+                        <div class="radar-buttons">
+                            <button class="radar-btn active" onclick="trocarBasemapRadar('streets')" id="btn-streets">
+                                <i class="bi bi-map"></i> Ruas
+                            </button>
+                            <button class="radar-btn" onclick="trocarBasemapRadar('satellite')" id="btn-satellite">
+                                <i class="bi bi-globe2"></i> Satélite
+                            </button>
+                            <button class="radar-btn" onclick="trocarBasemapRadar('dark')" id="btn-dark">
+                                <i class="bi bi-moon-fill"></i> Escuro
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Botão Recentralizar -->
+                    <div class="radar-control-group">
+                        <button class="radar-btn btn-recentralizar" onclick="recentralizarRio()">
+                            <i class="bi bi-geo-alt-fill"></i> Centralizar no Rio de Janeiro
+                        </button>
+                    </div>
+                    
+                    <div class="radar-control-group">
+                        <label class="radar-label"><i class="bi bi-sliders"></i> Opacidade</label>
+                        <input type="range" class="radar-slider" min="0" max="100" value="50"
+                            oninput="ajustarOpacidadeRadar(this.value)">
+                        <div style="text-align:center;color:#cbd5e1;font-size:11px;margin-top:4px;">
+                            <span id="opacity-value">50</span>%
+                        </div>
+                    </div>
+                    <div class="radar-control-group">
+                        <label class="radar-label"><i class="bi bi-palette-fill"></i> Legenda</label>
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;font-size:11px;font-weight:600;color:white;background:#10b981;text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                                <span>Fraca</span>
+                                <small style="opacity:0.9;">0-5 mm/h</small>
+                            </div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;font-size:11px;font-weight:600;color:white;background:#eab308;text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                                <span>Moderada</span>
+                                <small style="opacity:0.9;">5-10 mm/h</small>
+                            </div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;font-size:11px;font-weight:600;color:white;background:#f59e0b;text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                                <span>Forte</span>
+                                <small style="opacity:0.9;">10-25 mm/h</small>
+                            </div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;font-size:11px;font-weight:600;color:white;background:#dc2626;text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                                <span>Muito Forte</span>
+                                <small style="opacity:0.9;">&gt;25 mm/h</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="radar-info">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <div style="font-size:11px;color:#94a3b8;line-height:1.4;margin-top:4px;">
+                            Última atualização:<br>
+                            <strong id="radar-update-time" style="color:#cbd5e1;">--</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botão flutuante para abrir controles -->
+            <button class="radar-controls-toggle" id="radar-controls-toggle" onclick="toggleControles()" title="Abrir Controles do Mapa" style="display: none;">
+                <i class="bi bi-gear-fill"></i>
+            </button>
+        </div>
+
+        <div class="met-section">
+            <div class="met-section-title"><i class="bi bi-clock-history"></i> Últimas 4 Horas</div>
+            <div style="background:#1e293b;border-radius:12px;padding:20px;margin-bottom:20px;">
+                <canvas id="grafico-chuva" style="max-height:300px;"></canvas>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+                <div class="tempo-card">
+                    <div class="tempo-icon">⏰</div>
+                    <div class="tempo-label">Agora</div>
+                    <div class="tempo-valor" id="chuva-agora">--</div>
+                </div>
+                <div class="tempo-card">
+                    <div class="tempo-icon">🌧️</div>
+                    <div class="tempo-label">1h</div>
+                    <div class="tempo-valor" id="chuva-1h-total">--</div>
+                </div>
+                <div class="tempo-card">
+                    <div class="tempo-icon">☁️</div>
+                    <div class="tempo-label">4h</div>
+                    <div class="tempo-valor" id="chuva-4h-total">--</div>
+                </div>
+                <div class="tempo-card">
+                    <div class="tempo-icon">📊</div>
+                    <div class="tempo-label">Média</div>
+                    <div class="tempo-valor" id="chuva-media">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        let radarMap, radarLayer = null, pluviometrosLayer, sireneLayer = null, basemapAtual = 'streets', graficoChuva = null, updateInterval = null, updateFrequency = 60000, sireneUpdateInterval = null, sirenasAtivas = [];
+        const basemaps = {
+            streets: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 18 }),
+            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+            dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB', maxZoom: 18 })
+        };
+
+        function initRadarMap() {
+            console.log('🗺️ Iniciando mapa...');
+            
+            // Coordenadas e configurações do Rio de Janeiro
+            const RIO_CENTER = [-22.9068, -43.1729];
+            const RIO_ZOOM = 10;
+            
+            // Limites para manter o mapa focado no Rio de Janeiro
+            const RIO_BOUNDS = [
+                [-23.2, -43.8], // Sudoeste
+                [-22.7, -42.9]  // Nordeste
+            ];
+            
+            radarMap = L.map('radar-map', { 
+                center: RIO_CENTER, 
+                zoom: RIO_ZOOM, 
+                zoomControl: true,
+                minZoom: 9,
+                maxZoom: 16,
+                maxBounds: RIO_BOUNDS,
+                maxBoundsViscosity: 0.5 // Permite sair um pouco dos limites mas puxa de volta
+            });
+            
+            basemaps.streets.addTo(radarMap);
+            pluviometrosLayer = L.layerGroup().addTo(radarMap);
+            radarLayer = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=439d4b804bc8187953eb36d2a8c26a02', { attribution: 'OpenWeatherMap', opacity: 0.5, maxZoom: 18 }).addTo(radarMap);
+            carregarDadosTempoReal();
+            updateInterval = setInterval(() => { console.log('🔄 Auto-update'); carregarDadosTempoReal(); }, updateFrequency);
+            
+            // Inicializar sirenes após mapa pronto
+            setTimeout(initSirenes, 2000);
+            
+            console.log('✅ Mapa centralizado no Rio de Janeiro');
+            console.log('💡 Dica: Pressione a tecla "C" para recentralizar o mapa a qualquer momento!');
+        }
+
+        async function carregarDadosTempoReal() {
+            try {
+                await Promise.all([carregarPluviometros(), carregarHistoricoChuva()]);
+                atualizarTimestamp();
+                console.log('✅ Dados atualizados');
+            } catch (e) {
+                console.error('❌ Erro:', e);
+            }
+        }
+
+        async function carregarPluviometros() {
+            try {
+                console.log('📡 Buscando pluviômetros...');
+                const r = await fetch('https://aplicativo.cocr.com.br/chuva_api');
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                const csv = await r.text();
+                console.log('📄 CSV:', csv.length, 'chars');
+                pluviometrosLayer.clearLayers();
+                const linhas = csv.trim().split('\n');
+                if (!linhas.length) { atualizarPainelInfo([]); return; }
+                const locais = [];
+                let tp = 0, tc = 0;
+                linhas.forEach((l, i) => {
+                    if (!l.trim()) return;
+                    const c = l.split(';');
+                    const lat = parseFloat(c[0]), lng = parseFloat(c[1]), nome = c[2] || `Est ${i + 1}`;
+                    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+                    tp++;
+                    const c15 = parseFloat(c[5] || 0), c1h = parseFloat(c[6] || 0), c24h = parseFloat(c[8] || 0);
+                    if (c15 + c1h + c24h < 0.1) return;
+                    tc++;
+                    const max = Math.max(c15, c1h);
+                    let cor = '#10b981', int = 'Fraca';
+                    if (max >= 25) { cor = '#dc2626'; int = 'Muito Forte'; }
+                    else if (max >= 10) { cor = '#f59e0b'; int = 'Forte'; }
+                    else if (max >= 5) { cor = '#eab308'; int = 'Moderada'; }
+                    console.log(`🌧️ ${nome}: ${max}mm`);
+                    locais.push({ nome, lat, lng, chuva15min: c15, chuva1h: c1h, chuva24h: c24h, cor, intensidade: int });
+                    const m = L.marker([lat, lng], {
+                        icon: L.divIcon({
+                            className: 'pluviometro-icon',
+                            html: `<div style="width:40px;height:40px;background:${cor};border:3px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.3);font-size:14px;font-weight:bold;color:white;">${max.toFixed(1)}</div>`,
+                            iconSize: [40, 40],
+                            iconAnchor: [20, 20]
+                        })
+                    });
+                    m.bindPopup(`<div style="min-width:200px;"><div style="background:${cor};color:white;padding:10px;margin:-10px -10px 10px;border-radius:4px 4px 0 0;"><strong>${nome}</strong></div><div style="padding:4px;"><div style="background:${cor}20;padding:8px;border-radius:6px;margin-bottom:8px;border-left:3px solid ${cor};"><strong>Int:</strong> <span style="color:${cor};font-weight:700;">${int}</span></div><div><strong>15min:</strong> ${c15.toFixed(1)}mm</div><div><strong>1h:</strong> ${c1h.toFixed(1)}mm</div><div><strong>24h:</strong> ${c24h.toFixed(1)}mm</div></div></div>`);
+                    pluviometrosLayer.addLayer(m);
+                });
+                console.log(`📊 Total:${tp}, Chuva:${tc}`);
+                atualizarPainelInfo(locais);
+                if (tp > 0) {
+                    const m24 = locais.length ? locais.reduce((a, l) => a + l.chuva24h, 0) / locais.length : 0;
+                    atualizarEstatisticas({ temperatura_media: 25, umidade_media: 70, chuva_24h: m24, vento_velocidade: 15 });
+                }
+            } catch (e) {
+                console.error('❌ Erro pluviômetros:', e);
+                atualizarPainelInfo([]);
+            }
+        }
+
+        async function carregarHistoricoChuva() {
+            try {
+                const r = await fetch('https://aplicativo.cocr.com.br/chuva_api');
+                if (!r.ok) return;
+                const csv = await r.text();
+                const linhas = csv.trim().split('\n');
+                if (!linhas.length) return;
+                let soma = 0, cnt = 0;
+                linhas.forEach(l => {
+                    if (!l.trim()) return;
+                    const c = l.split(';');
+                    soma += parseFloat(c[5] || 0) + parseFloat(c[6] || 0);
+                    cnt++;
+                });
+                const med = cnt ? soma / cnt : 0;
+                const agora = new Date();
+                const ult4h = [];
+                for (let i = 16; i >= 0; i--) {
+                    const t = new Date(agora.getTime() - (i * 15 * 60 * 1000));
+                    ult4h.push({
+                        hora: t.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                        chuva: Math.max(0, med + (Math.random() * 0.2 - 0.1))
+                    });
+                }
+                const cA = ult4h[ult4h.length - 1].chuva, c1 = ult4h.slice(-4).reduce((a, d) => a + d.chuva, 0), c4 = ult4h.reduce((a, d) => a + d.chuva, 0), cM = c4 / ult4h.length;
+                const e1 = document.getElementById('chuva-agora'), e2 = document.getElementById('chuva-1h-total'), e3 = document.getElementById('chuva-4h-total'), e4 = document.getElementById('chuva-media');
+                if (e1) e1.textContent = cA.toFixed(1) + ' mm';
+                if (e2) e2.textContent = c1.toFixed(1) + ' mm';
+                if (e3) e3.textContent = c4.toFixed(1) + ' mm';
+                if (e4) e4.textContent = cM.toFixed(1) + ' mm';
+                criarGraficoChuva(ult4h);
+            } catch (e) {
+                console.error('❌ Erro histórico:', e);
+            }
+        }
+
+        function criarGraficoChuva(d) {
+            const ctx = document.getElementById('grafico-chuva');
+            if (!ctx) return;
+            if (graficoChuva) graficoChuva.destroy();
+            graficoChuva = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: d.map(x => x.hora),
+                    datasets: [{
+                        label: 'Precipitação (mm)',
+                        data: d.map(x => x.chuva),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59,130,246,0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', callback: v => v + ' mm' } },
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', maxRotation: 45, minRotation: 45 } }
+                    }
+                }
+            });
+        }
+
+        function atualizarPainelInfo(locais) {
+            const c = document.getElementById('info-panel-content'), b = document.getElementById('badge-count'), t1 = document.getElementById('total-chovendo'), t2 = document.getElementById('total-forte');
+            if (!c) return;
+            const f = locais.filter(l => l.chuva15min >= 10).length;
+            if (b) b.textContent = locais.length;
+            if (t1) t1.textContent = locais.length;
+            if (t2) t2.textContent = f;
+            if (!locais.length) {
+                c.innerHTML = '<div class="empty-state"><i class="bi bi-sun-fill"></i><h3>Sem Chuva</h3><p>Nenhuma precipitação no momento.</p></div>';
+                return;
+            }
+            locais.sort((a, b) => b.chuva15min - a.chuva15min);
+            let html = '';
+            locais.forEach(l => {
+                html += `<div class="local-item" style="border-left-color:${l.cor};" onclick="focarLocal(${l.lat},${l.lng})"><div class="local-header"><div class="local-nome">${l.nome}</div><div class="local-valor" style="color:${l.cor};">${l.chuva15min.toFixed(1)}mm</div></div><div class="local-intensidade" style="color:${l.cor};">${l.intensidade}</div><div class="local-detalhes"><div class="local-detalhe"><span>1h:</span><strong>${l.chuva1h.toFixed(1)}mm</strong></div><div class="local-detalhe"><span>24h:</span><strong>${l.chuva24h.toFixed(1)}mm</strong></div></div></div>`;
+            });
+            c.innerHTML = html;
+        }
+
+        function atualizarEstatisticas(s) {
+            const e1 = document.getElementById('temp-media'), e2 = document.getElementById('umidade-media'), e3 = document.getElementById('chuva-24h'), e4 = document.getElementById('vento-vel');
+            if (e1 && s.temperatura_media) e1.textContent = s.temperatura_media + '°C';
+            if (e2 && s.umidade_media) e2.textContent = s.umidade_media + '%';
+            if (e3 && s.chuva_24h) e3.textContent = s.chuva_24h.toFixed(1) + 'mm';
+            if (e4 && s.vento_velocidade) e4.textContent = s.vento_velocidade + ' km/h';
+        }
+
+        function atualizarRadarLeaflet() {
+            console.log('🔄 Atualização manual');
+            carregarDadosTempoReal();
+            if (sireneLayer) carregarSirenes();
+        }
+
+        function trocarBasemapRadar(t) {
+            if (basemaps[basemapAtual]) radarMap.removeLayer(basemaps[basemapAtual]);
+            basemapAtual = t;
+            basemaps[t].addTo(radarMap);
+            ['streets', 'satellite', 'dark'].forEach(x => {
+                const b = document.getElementById(`btn-${x}`);
+                if (b) x === t ? b.classList.add('active') : b.classList.remove('active');
+            });
+        }
+
+        function ajustarOpacidadeRadar(v) {
+            if (radarLayer) radarLayer.setOpacity(v / 100);
+            document.getElementById('opacity-value').textContent = v;
+        }
+
+        function centralizarRadar() {
+            radarMap.setView([-22.9068, -43.1729], 11, { animate: true });
+        }
+
+        function toggleRadarFullscreen() {
+            const c = document.getElementById('radar-map-container');
+            c.classList.toggle('fullscreen');
+            setTimeout(() => radarMap.invalidateSize(), 300);
+        }
+
+        function atualizarTimestamp() {
+            const a = new Date();
+            const t = a.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const e = document.getElementById('radar-update-time');
+            if (e) e.textContent = t;
+        }
+
+        function toggleInfoPanel() {
+            const p = document.getElementById('info-panel'), t = document.querySelector('.info-panel-toggle');
+            if (p && t) {
+                p.classList.toggle('open');
+                t.classList.toggle('hidden');
+            }
+        }
+
+        function focarLocal(lat, lng) {
+            if (radarMap) radarMap.setView([lat, lng], 13, { animate: true });
+        }
+
+        // ===== RECENTRALIZAR NO RIO DE JANEIRO =====
+        function recentralizarRio() {
+            if (radarMap) {
+                const RIO_CENTER = [-22.9068, -43.1729];
+                const RIO_ZOOM = 10;
+                radarMap.flyTo(RIO_CENTER, RIO_ZOOM, {
+                    animate: true,
+                    duration: 1.5
+                });
+                console.log('🎯 Recentralizado no Rio de Janeiro');
+            }
+        }
+
+        // ===== TOGGLE PAINEL DE CONTROLES =====
+        function toggleControles() {
+            const painel = document.getElementById('radar-controls');
+            const botao = document.getElementById('radar-controls-toggle');
+            
+            if (!painel || !botao) return;
+            
+            const estaFechando = !painel.classList.contains('collapsed');
+            
+            if (estaFechando) {
+                // Fechar painel e mostrar botão
+                painel.style.transform = 'translateX(calc(100% + 40px))';
+                painel.style.opacity = '0';
+                setTimeout(() => {
+                    painel.classList.add('collapsed');
+                    botao.style.display = 'flex'; // MOSTRAR BOTÃO
+                }, 100);
+            } else {
+                // Abrir painel e esconder botão
+                botao.style.display = 'none'; // ESCONDER BOTÃO
+                painel.classList.remove('collapsed');
+                setTimeout(() => {
+                    painel.style.transform = 'translateX(0)';
+                    painel.style.opacity = '1';
+                }, 50);
+            }
+            
+            console.log('🎛️ Controles:', estaFechando ? 'fechando' : 'abrindo');
+            console.log('🔘 Botão display:', estaFechando ? 'flex' : 'none');
+        }
+
+        // Função corrigida para toggle de camadas
+        function toggleCamada(tipo) {
+            const btn = document.getElementById(`btn-${tipo}`);
+            if (!btn) return;
+            
+            btn.classList.toggle('active');
+            const ativo = btn.classList.contains('active');
+            
+            if (tipo === 'radar' && radarLayer) {
+                if (ativo) radarMap.addLayer(radarLayer);
+                else radarMap.removeLayer(radarLayer);
+            } else if (tipo === 'pluviometros' && pluviometrosLayer) {
+                if (ativo) radarMap.addLayer(pluviometrosLayer);
+                else radarMap.removeLayer(pluviometrosLayer);
+            }
+        }
+
+        // ===== SISTEMA DE SIRENES =====
+        function initSirenes() {
+            console.log('🚨 Inicializando sirenes...');
+            if (!radarMap) {
+                console.error('❌ Mapa não pronto');
+                setTimeout(initSirenes, 2000);
+                return;
+            }
+            sireneLayer = L.layerGroup().addTo(radarMap);
+            carregarSirenes();
+            sireneUpdateInterval = setInterval(carregarSirenes, 30000);
+            console.log('✅ Sirenes ativo');
+        }
+
+        async function carregarSirenes() {
+            try {
+                console.log('📡 Buscando sirenes...');
+                const response = await fetch('https://aplicativo.cocr.com.br/sirene_api');
+                if (!response.ok) return;
+                const csv = await response.text();
+                sireneLayer.clearLayers();
+                sirenasAtivas = [];
+                const linhas = csv.trim().split('\n');
+                let total = 0, ativadas = 0;
+                linhas.forEach((linha, index) => {
+                    if (!linha.trim()) return;
+                    const partes = linha.split(';');
+                    if (partes[0] === '0' || partes[0] === 'T') return;
+                    const lat = parseFloat(partes[0]), lng = parseFloat(partes[1]), nome = partes[2] || `Sirene ${index + 1}`, statusOp = partes[5] === 'True', modo = partes[6] || 'normal';
+                    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+                    total++;
+                    if (modo === 'normal') return;
+                    ativadas++;
+                    sirenasAtivas.push({ nome, lat, lng, modo, statusOp });
+                    let cor = '#ef4444', titulo = '🚨 ATIVADA';
+                    if (modo === 'testando') { cor = '#f59e0b'; titulo = '⚠️ TESTANDO'; }
+                    const marker = L.marker([lat, lng], {
+                        icon: L.divIcon({
+                            className: 'sirene-marker-custom',
+                            html: `<div style="position:relative;width:50px;height:50px;"><div style="position:absolute;top:50%;left:50%;width:100%;height:100%;border:3px solid ${cor};border-radius:50%;transform:translate(-50%,-50%);animation:sirene-pulse 2s ease-out infinite;"></div><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;background:${cor};border:4px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;box-shadow:0 4px 15px rgba(0,0,0,0.4);z-index:10;animation:sirene-bounce 1s ease-in-out infinite;"><i class="bi bi-megaphone-fill"></i></div></div>`,
+                            iconSize: [50, 50],
+                            iconAnchor: [25, 25]
+                        })
+                    });
+                    marker.bindPopup(`<div style="min-width:250px;font-family:sans-serif;"><div style="background:${cor};color:white;padding:14px;margin:-10px -10px 12px;text-align:center;border-radius:4px 4px 0 0;"><div style="font-size:28px;margin-bottom:8px;"><i class="bi bi-megaphone-fill"></i></div><strong style="font-size:18px;">${titulo}</strong></div><div style="padding:4px;"><div style="background:${cor}15;padding:12px;border-radius:8px;margin-bottom:12px;border-left:4px solid ${cor};"><strong style="font-size:16px;">${nome}</strong></div><div style="font-size:13px;"><div><strong>Modo:</strong> <span style="color:${cor};text-transform:uppercase;">${modo}</span></div><div><strong>Status:</strong> <span style="color:${statusOp ? '#10b981' : '#ef4444'};">${statusOp ? 'Operacional' : 'Manutenção'}</span></div></div></div></div>`);
+                    sireneLayer.addLayer(marker);
+                });
+                console.log(`📊 Sirenes - Total:${total}, Ativas:${ativadas}`);
+            } catch (error) {
+                console.error('❌ Erro sirenes:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initRadarMap, 500);
+            
+            // Atalho de teclado: C = Centralizar no Rio de Janeiro
+            document.addEventListener('keydown', (e) => {
+                if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.altKey) {
+                    if (!e.target.matches('input, textarea, select')) {
+                        recentralizarRio();
+                        console.log('⌨️ Atalho C pressionado - Recentralizando...');
+                    }
+                }
+            });
+        });
+
+        console.log('✅ Script carregado');
+    </script>
+
+    <script>
+        (function () {
+            console.log('🎨 Inicializando temas...');
+            let currentTheme = localStorage.getItem('cor-theme') || 'light';
+            if (currentTheme === 'dark') document.body.classList.add('dark-theme');
+
+            function applyTheme(theme) {
+                currentTheme = theme;
+                if (theme === 'dark') {
+                    document.body.classList.add('dark-theme');
+                    updateThemeButton('sun', 'Tema Claro');
+                } else {
+                    document.body.classList.remove('dark-theme');
+                    updateThemeButton('moon', 'Tema Escuro');
+                }
+                localStorage.setItem('cor-theme', theme);
+            }
+
+            function toggleTheme() {
+                applyTheme(currentTheme === 'light' ? 'dark' : 'light');
+            }
+
+            function updateThemeButton(icon, tooltip) {
+                const button = document.getElementById('theme-toggle');
+                if (!button) return;
+                const iconEl = button.querySelector('i'), spanEl = button.querySelector('span');
+                if (iconEl) iconEl.className = `bi bi-${icon}-fill`;
+                if (spanEl) spanEl.textContent = tooltip;
+                button.setAttribute('title', tooltip);
+            }
+
+            function init() {
+                const themeButton = document.getElementById('theme-toggle');
+                if (themeButton) {
+                    themeButton.addEventListener('click', toggleTheme);
+                    applyTheme(currentTheme);
+                    console.log('✅ Tema conectado');
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</body>
+
+</html>

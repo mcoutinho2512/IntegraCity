@@ -1,0 +1,147 @@
+﻿/* layer_control.css - Painel de Controle de Camadas */
+
+.layer-control-panel {
+    position: absolute;
+    top: 80px;
+    right: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    padding: 20px;
+    width: 280px;
+    z-index: 1000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.panel-header i {
+    font-size: 20px;
+    color: #2563eb;
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.layer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: #f8fafc;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.layer-item:hover {
+    background: #e2e8f0;
+    transform: translateX(-2px);
+}
+
+.layer-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.layer-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+}
+
+.layer-details {
+    flex: 1;
+}
+
+.layer-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 2px;
+}
+
+.layer-count {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.layer-toggle {
+    position: relative;
+    width: 48px;
+    height: 24px;
+    background: #cbd5e1;
+    border-radius: 12px;
+    transition: background 0.3s;
+}
+
+.layer-toggle.active {
+    background: #22c55e;
+}
+
+.layer-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+}
+
+.layer-toggle.active::after {
+    transform: translateX(24px);
+}
+
+/* Cores por tipo */
+.icon-sirene { background: #dc3545; }
+.icon-evento { background: #fd7e14; }
+.icon-ocorrencia { background: #ffc107; }
+.icon-estagio { background: #28a745; }
+
+/* Estágio de Mobilidade */
+.estagio-badge {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    color: white;
+}
+
+.estagio-normalidade { background: #94c842; }
+.estagio-mobilizacao { background: #b1b1b3; }
+.estagio-atencao { background: #f7ce12; color: #000; }
+.estagio-alerta { background: #d72d2e; }
+.estagio-crise { background: #a155a0; }
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .layer-control-panel {
+        top: 60px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+    }
+}

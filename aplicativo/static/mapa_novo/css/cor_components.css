@@ -1,0 +1,169 @@
+/**
+ * COR Components - Componentes Reutilizáveis
+ */
+
+/* ========================================
+   BOTÕES
+   ======================================== */
+.cor-btn {
+    padding: var(--cor-spacing-sm) var(--cor-spacing-md);
+    border-radius: var(--cor-radius-md);
+    font-family: var(--cor-font-family);
+    font-size: var(--cor-font-size-md);
+    font-weight: var(--cor-font-weight-medium);
+    cursor: pointer;
+    transition: all var(--cor-transition-normal);
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--cor-spacing-sm);
+}
+
+.cor-btn-primary {
+    background: var(--cor-primary);
+    color: var(--cor-white);
+}
+
+.cor-btn-primary:hover {
+    background: var(--cor-primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--cor-shadow-md);
+}
+
+.cor-btn-success {
+    background: var(--cor-success);
+    color: var(--cor-white);
+}
+
+.cor-btn-warning {
+    background: var(--cor-warning);
+    color: var(--cor-white);
+}
+
+.cor-btn-danger {
+    background: var(--cor-danger);
+    color: var(--cor-white);
+}
+
+/* ========================================
+   CARDS
+   ======================================== */
+.cor-card {
+    background: var(--cor-white);
+    border-radius: var(--cor-radius-lg);
+    padding: var(--cor-spacing-lg);
+    box-shadow: var(--cor-shadow-md);
+    transition: all var(--cor-transition-normal);
+}
+
+.cor-card:hover {
+    box-shadow: var(--cor-shadow-lg);
+    transform: translateY(-2px);
+}
+
+.cor-card-header {
+    font-size: var(--cor-font-size-xl);
+    font-weight: var(--cor-font-weight-bold);
+    color: var(--cor-primary);
+    margin-bottom: var(--cor-spacing-md);
+}
+
+.cor-card-body {
+    color: var(--cor-gray-700);
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+.cor-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--cor-radius-full);
+    font-size: var(--cor-font-size-xs);
+    font-weight: var(--cor-font-weight-bold);
+    text-transform: uppercase;
+}
+
+.cor-badge-success { background: var(--cor-nivel-1); color: white; }
+.cor-badge-warning { background: var(--cor-nivel-2); color: white; }
+.cor-badge-danger { background: var(--cor-nivel-4); color: white; }
+
+/* ========================================
+   ALERTAS
+   ======================================== */
+.cor-alert {
+    padding: var(--cor-spacing-md);
+    border-radius: var(--cor-radius-md);
+    border-left: 4px solid;
+    margin-bottom: var(--cor-spacing-md);
+}
+
+.cor-alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--cor-success);
+    color: #065f46;
+}
+
+.cor-alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--cor-warning);
+    color: #92400e;
+}
+
+.cor-alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--cor-danger);
+    color: #991b1b;
+}
+
+/* ========================================
+   TABELAS
+   ======================================== */
+.cor-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--cor-white);
+    border-radius: var(--cor-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--cor-shadow-md);
+}
+
+.cor-table thead {
+    background: var(--cor-primary);
+    color: var(--cor-white);
+}
+
+.cor-table th,
+.cor-table td {
+    padding: var(--cor-spacing-md);
+    text-align: left;
+}
+
+.cor-table tbody tr:hover {
+    background: var(--cor-gray-50);
+}
+
+/* ========================================
+   LOADING
+   ======================================== */
+.cor-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--cor-spacing-2xl);
+}
+
+.cor-spinner {
+    border: 4px solid var(--cor-gray-200);
+    border-top: 4px solid var(--cor-primary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: cor-spin 1s linear infinite;
+}
+
+@keyframes cor-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

@@ -1,0 +1,89 @@
+﻿/* dark_theme.css - Tema Escuro */
+
+body.dark-theme {
+    background: #0f172a;
+    color: #e2e8f0;
+}
+
+/* Navbar no dark mode */
+body.dark-theme .cor-navbar {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* Menu no dark mode */
+body.dark-theme .cor-menu {
+    background: #1e293b;
+    border-bottom-color: #334155;
+}
+
+body.dark-theme .cor-menu-link {
+    color: #cbd5e1;
+}
+
+body.dark-theme .cor-menu-link:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
+body.dark-theme .cor-submenu {
+    background: #1e293b;
+    border: 1px solid #334155;
+}
+
+/* Painel de alertas no dark mode */
+body.dark-theme .cor-alerts-panel {
+    background: #1e293b;
+    border-left-color: #334155;
+}
+
+body.dark-theme .cor-alerts-header {
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+}
+
+body.dark-theme .cor-alert-item {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+/* Painel de monitoramento no dark mode */
+body.dark-theme .cor-monitoring-panel {
+    background: #1e293b;
+    border-top-color: #334155;
+}
+
+body.dark-theme .cor-monitoring-header {
+    background: #0f172a;
+    border-bottom-color: #334155;
+}
+
+body.dark-theme .cor-status-card {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+/* Cards laterais no dark mode */
+body.dark-theme .layer-control,
+body.dark-theme .dashboard-stats {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+/* Input de busca no dark mode */
+body.dark-theme .cor-search-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark-theme .cor-search-input::placeholder {
+    color: #64748b;
+}
+
+/* Animação de transição */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+* {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}

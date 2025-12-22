@@ -1,0 +1,131 @@
+/**
+ * COR Design System - Variáveis Globais
+ * Sistema de Design Unificado para todos os sistemas COR
+ */
+
+:root {
+    /* ========================================
+       CORES PRINCIPAIS
+       ======================================== */
+    --cor-primary: #1e3a8a;           /* Azul Escuro Principal */
+    --cor-primary-light: #1e40af;     /* Azul Médio */
+    --cor-primary-dark: #1e293b;      /* Azul Muito Escuro */
+    
+    /* ========================================
+       CORES DE STATUS
+       ======================================== */
+    --cor-success: #10b981;           /* Verde - Sucesso */
+    --cor-warning: #f59e0b;           /* Laranja - Atenção */
+    --cor-danger: #ef4444;            /* Vermelho - Perigo */
+    --cor-info: #3b82f6;              /* Azul - Informação */
+    
+    /* ========================================
+       NÍVEIS DE ALERTA
+       ======================================== */
+    --cor-nivel-0: #94a3b8;           /* Cinza - Normal */
+    --cor-nivel-1: #10b981;           /* Verde - Nível 1 */
+    --cor-nivel-2: #f59e0b;           /* Amarelo - Nível 2 */
+    --cor-nivel-3: #f97316;           /* Laranja - Nível 3 */
+    --cor-nivel-4: #ef4444;           /* Vermelho - Nível 4 */
+    --cor-nivel-5: #dc2626;           /* Vermelho Escuro - Nível 5 */
+    
+    /* ========================================
+       CORES NEUTRAS
+       ======================================== */
+    --cor-white: #ffffff;
+    --cor-gray-50: #f8fafc;
+    --cor-gray-100: #f1f5f9;
+    --cor-gray-200: #e2e8f0;
+    --cor-gray-300: #cbd5e1;
+    --cor-gray-400: #94a3b8;
+    --cor-gray-500: #64748b;
+    --cor-gray-600: #475569;
+    --cor-gray-700: #334155;
+    --cor-gray-800: #1e293b;
+    --cor-gray-900: #0f172a;
+    
+    /* ========================================
+       TEMA ESCURO
+       ======================================== */
+    --cor-dark-bg: #0f172a;
+    --cor-dark-surface: #1e293b;
+    --cor-dark-border: #334155;
+    
+    /* ========================================
+       SOMBRAS
+       ======================================== */
+    --cor-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --cor-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --cor-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --cor-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+    
+    /* ========================================
+       ESPAÇAMENTOS
+       ======================================== */
+    --cor-spacing-xs: 4px;
+    --cor-spacing-sm: 8px;
+    --cor-spacing-md: 16px;
+    --cor-spacing-lg: 24px;
+    --cor-spacing-xl: 32px;
+    --cor-spacing-2xl: 48px;
+    
+    /* ========================================
+       BORDAS
+       ======================================== */
+    --cor-radius-sm: 4px;
+    --cor-radius-md: 8px;
+    --cor-radius-lg: 12px;
+    --cor-radius-xl: 16px;
+    --cor-radius-full: 9999px;
+    
+    /* ========================================
+       TIPOGRAFIA
+       ======================================== */
+    --cor-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    
+    --cor-font-size-xs: 11px;
+    --cor-font-size-sm: 13px;
+    --cor-font-size-md: 14px;
+    --cor-font-size-lg: 16px;
+    --cor-font-size-xl: 18px;
+    --cor-font-size-2xl: 24px;
+    --cor-font-size-3xl: 32px;
+    --cor-font-size-4xl: 42px;
+    
+    --cor-font-weight-normal: 400;
+    --cor-font-weight-medium: 500;
+    --cor-font-weight-semibold: 600;
+    --cor-font-weight-bold: 700;
+    
+    /* ========================================
+       TRANSIÇÕES
+       ======================================== */
+    --cor-transition-fast: 0.15s ease;
+    --cor-transition-normal: 0.3s ease;
+    --cor-transition-slow: 0.5s ease;
+    
+    /* ========================================
+       Z-INDEX
+       ======================================== */
+    --cor-z-base: 0;
+    --cor-z-dropdown: 1000;
+    --cor-z-modal: 1500;
+    --cor-z-navbar: 2000;
+    --cor-z-tooltip: 2500;
+}
+
+/* ========================================
+   TEMA ESCURO - Sobrescrever variáveis
+   ======================================== */
+body.dark-theme {
+    --cor-gray-50: #1e293b;
+    --cor-gray-100: #334155;
+    --cor-gray-200: #475569;
+    --cor-gray-300: #64748b;
+    --cor-gray-400: #94a3b8;
+    --cor-gray-500: #cbd5e1;
+    --cor-gray-600: #e2e8f0;
+    --cor-gray-700: #f1f5f9;
+    --cor-gray-800: #f8fafc;
+    --cor-gray-900: #ffffff;
+}

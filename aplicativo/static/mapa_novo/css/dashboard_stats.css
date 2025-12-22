@@ -1,0 +1,104 @@
+﻿/* dashboard_stats.css - Cards de Estatísticas */
+
+.dashboard-stats {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    display: flex;
+    gap: 16px;
+    z-index: 1000;
+    flex-wrap: wrap;
+    max-width: 800px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    min-width: 180px;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    font-size: 24px;
+    color: white;
+}
+
+.stat-icon.sirene { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+.stat-icon.evento { background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%); }
+.stat-icon.ocorrencia { background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%); }
+.stat-icon.estagio { background: linear-gradient(135deg, #28a745 0%, #218838 100%); }
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-change {
+    font-size: 12px;
+    margin-top: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.stat-change.up {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.stat-change.down {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.stat-timestamp {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .dashboard-stats {
+        top: 60px;
+        left: 10px;
+        right: 10px;
+        max-width: none;
+    }
+    
+    .stat-card {
+        min-width: 140px;
+        padding: 16px;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+    }
+}

@@ -1,0 +1,199 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Login - SISCOR</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 450px;
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .logo { text-align: center; margin-bottom: 40px; }
+        .logo i { font-size: 64px; color: #3b82f6; margin-bottom: 16px; }
+        .logo h1 { font-size: 32px; font-weight: 700; color: #f8fafc; margin-bottom: 8px; }
+        .logo p { font-size: 14px; color: #94a3b8; }
+        .form-group { margin-bottom: 24px; }
+        .form-label { display: block; font-size: 14px; font-weight: 600; color: #cbd5e1; margin-bottom: 8px; }
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: #0f172a;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #f8fafc;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        .form-input::placeholder { color: #64748b; }
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+        }
+        .btn-login:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .security-badge {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #64748b;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="bi bi-globe"></i>
+            <h1>SISCOR</h1>
+            <p>Sistema de Controle e Monitoramento</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'error' %}
+                    <div class="error-message">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        {{ message }}
+                    </div>
+                {% else %}
+                    <div class="success-message">
+                        <i class="bi bi-check-circle-fill"></i>
+                        {{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" id="loginForm" autocomplete="off">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Usuário</label>
+                <input type="text" name="username" class="form-input" placeholder="Digite seu usuário" required autofocus maxlength="150" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Senha</label>
+                <input type="password" name="password" class="form-input" placeholder="Digite sua senha" required autocomplete="off">
+            </div>
+            <button type="submit" class="btn-login" id="btnLogin">
+                <i class="bi bi-box-arrow-in-right"></i>
+                Entrar
+            </button>
+        </form>
+
+        <div class="security-badge">
+            <i class="bi bi-shield-check"></i>
+            Conexão segura e criptografada
+        </div>
+    </div>
+
+    <script>
+        // Limpar console ao carregar (segurança)
+        console.clear();
+        
+        // Prevenir F12 e click direito
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+                (e.ctrlKey && e.key === 'u')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Proteção contra injeção
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const username = document.querySelector('input[name="username"]').value;
+            const password = document.querySelector('input[name="password"]').value;
+            
+            // Validação básica
+            if (!username.trim() || !password) {
+                e.preventDefault();
+                alert('Por favor, preencha todos os campos.');
+                return false;
+            }
+            
+            // Desabilitar botão para evitar múltiplos envios
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Entrando...';
+        });
+        
+        // Limpar console periodicamente
+        setInterval(() => console.clear(), 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SISCOR - Sistema Integrado{% endblock %}</title>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- CSS Base -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/css/siscor-base.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    {% include 'core/navbar.html' %}
+    
+    <!-- Conteúdo Principal -->
+    <main class="siscor-main">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Scripts -->
+    <script src="{% static 'core/js/siscor-core.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,163 @@
+/**
+ * dark_mode.css - Tema Escuro Completo
+ */
+
+/* Variáveis de Cores */
+:root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+}
+
+body.dark-theme {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+}
+
+/* Body Dark */
+body.dark-theme {
+    background: #0f172a;
+    color: #f1f5f9;
+}
+
+/* Header Dark */
+body.dark-theme .top-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+}
+
+body.dark-theme .header-title {
+    color: #f1f5f9;
+}
+
+body.dark-theme .header-subtitle {
+    color: #cbd5e1;
+}
+
+/* Navbar Dark */
+body.dark-theme .navbar {
+    background: #1e293b;
+    border-bottom-color: #334155;
+}
+
+body.dark-theme .nav-link {
+    color: #cbd5e1;
+}
+
+body.dark-theme .nav-link:hover,
+body.dark-theme .nav-link.active {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* Botões Dark */
+body.dark-theme .btn-primary {
+    background: #3b82f6;
+    border-color: #3b82f6;
+}
+
+body.dark-theme .btn-primary:hover {
+    background: #2563eb;
+}
+
+body.dark-theme .theme-toggle {
+    background: rgba(30, 41, 59, 0.9);
+    color: #fbbf24;
+}
+
+/* Painel de Camadas Dark */
+body.dark-theme .layer-control-panel-novo {
+    background: #1e293b;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-theme .layer-control-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+}
+
+body.dark-theme .layer-group {
+    border-bottom-color: #334155;
+}
+
+body.dark-theme .layer-item-novo {
+    background: #0f172a;
+}
+
+body.dark-theme .layer-item-novo:hover {
+    background: #334155;
+}
+
+body.dark-theme .layer-item-name {
+    color: #f1f5f9;
+}
+
+body.dark-theme .layer-item-count {
+    color: #94a3b8;
+}
+
+/* Popups Dark */
+body.dark-theme .leaflet-popup-content-wrapper {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+body.dark-theme .custom-popup {
+    background: #1e293b;
+}
+
+body.dark-theme .popup-body {
+    color: #cbd5e1;
+}
+
+body.dark-theme .popup-body p {
+    color: #cbd5e1;
+}
+
+body.dark-theme .leaflet-popup-tip {
+    background: #1e293b;
+}
+
+/* Controles do Mapa Dark */
+body.dark-theme .leaflet-control-zoom a {
+    background: #1e293b;
+    color: #f1f5f9;
+    border-color: #334155;
+}
+
+body.dark-theme .leaflet-control-zoom a:hover {
+    background: #334155;
+}
+
+body.dark-theme .leaflet-bar {
+    border: 1px solid #334155;
+}
+
+/* Search Bar Dark */
+body.dark-theme .search-container input {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+body.dark-theme .search-container input::placeholder {
+    color: #64748b;
+}
+
+/* Notificações Dark */
+body.dark-theme .notification {
+    background: #1e293b;
+    border-left-color: #3b82f6;
+    color: #f1f5f9;
+}
+
+body.dark-theme .notification-title {
+    color: #f1f5f9;
+}
+
+body.dark-theme .notification-message {
+    color: #cbd5e1;
+}

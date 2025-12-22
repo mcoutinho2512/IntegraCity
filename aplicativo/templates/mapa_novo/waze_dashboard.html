@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'mapa_novo/css/dashboard_stats.css' %}">
+  <link rel="stylesheet" href="{% static 'mapa_novo/css/notifications.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">  
+  <link rel="stylesheet" href="{% static 'mapa_novo/css/layer_control.css' %}">
+  
+  <title>Mapa Waze - Dashboard</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+  
+  <!-- CSS Customizado -->
+  <link rel="stylesheet" href="{% static 'mapa_novo/css/mapa.css' %}">
+  
+  <!-- Design System Padronizado COR -->
+<link rel="stylesheet" href="{% static 'mapa_novo/css/cor_design_system.css' %}">
+<link rel="stylesheet" href="{% static 'mapa_novo/css/cor_components.css' %}">
+<link rel="stylesheet" href="{% static 'mapa_novo/css/sistemas_padronizados.css' %}">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+    
+    .navbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(33, 37, 41, 0.95) !important;
+    }
+    
+    .map-container {
+      padding-top: 56px;
+    }
+    
+
+    
+
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">
+        <strong>Dashboard Mapa Waze</strong>
+      </a>
+      <div class="d-flex align-items-center">
+        <span class="text-white me-3">
+          <i class="bi bi-clock"></i> 
+          <span id="current-time"></span>
+        </span>
+        <button class="btn btn-sm btn-outline-light" onclick="togglePanel()">
+          <i class="bi bi-list"></i> Painel
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Botão toggle painel -->
+  <button class="toggle-panel-btn" onclick="togglePanel()" id="toggleBtn" style="display: none;">
+    ☰ Info
+  </button>
+
+  <!-- Painel Lateral -->
+  <div class="side-panel" id="sidePanel">
+    <h5>Informações</h5>
+    <hr>
+    <div id="panel-content">
+      <p class="text-muted">Clique em um marcador para ver detalhes</p>
+    </div>
+  </div>
+
+  <!-- Mapa -->
+  <div class="map-container">
+    <div id="map"></div>
+  </div>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Leaflet JS (APENAS UMA VEZ!) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+  <!-- Dados do Django -->
+  <script>
+    window.MAP_DATA = {
+      escolas: {{ escolas|safe|default:"[]" }},
+      hospitais: {{ hospitais|safe|default:"[]" }},
+      eventos: {{ eventos|safe|default:"[]" }},
+      ocorrencias: {{ ocorrencias|safe|default:"[]" }},
+      sirenes: {{ sirenes|safe|default:"[]" }},
+      abrigos: {{ abrigos|safe|default:"[]" }},
+      alagamentos: {{ alagamentos|safe|default:"[]" }},
+      chuva: {{ chuva|safe|default:"[]" }},
+    };
+    window.STATIC_URL = "{% static '' %}";
+    window.csrf_token = "{{ csrf_token }}";
+    console.log('Dados carregados:', window.MAP_DATA);
+  </script>
+
+  <!-- Scripts do Mapa (ORDEM CORRETA) -->
+  <script src="{% static 'mapa_novo/js/core/map_utils.js' %}"></script>
+  <script src="{% static 'mapa_novo/js/core/map_init.js' %}"></script>
+  <script src="{% static 'mapa_novo/js/core/map_interactions.js' %}"></script>
+  
+  <!-- Features -->
+  <script src="{% static 'mapa_novo/js/features/layer_control.js' %}"></script>
+  <script src="{% static 'mapa_novo/js/features/dashboard_stats.js' %}"></script>
+  <script src="{% static 'mapa_novo/js/features/notifications.js' %}"></script>
+  
+  <!-- Waze Integration (DEPOIS DE TUDO) -->
+  <script>
+console.log('🔵 Carregando Waze Integration INLINE...');
+
+// Aguardar o mapa estar pronto
+setTimeout(() => {
+    if (typeof map === 'undefined') {
+        console.error('❌ Map não encontrado!');
+        return;
+    }
+
+    console.log('✅ Map encontrado, iniciando Waze...');
+
+    // Criar camadas Waze
+    const wazeAlertas = L.layerGroup().addTo(map);
+    const wazeJams = L.layerGroup().addTo(map);
+
+    // Função para carregar dados
+    async function loadWazeData() {
+        try {
+            console.log('🔄 Buscando dados Waze...');
+            const response = await fetch('/api/waze/');
+            const data = await response.json();
+
+            if (data.success) {
+                console.log(`✅ Waze: ${data.alertas.length} alertas, ${data.congestionamentos.length} jams`);
+                
+                // Plotar alertas
+                wazeAlertas.clearLayers();
+                data.alertas.slice(0, 50).forEach(alerta => {
+                    if (alerta.lat && alerta.lng) {
+                        const icon = L.divIcon({
+                            html: '<div style="font-size:20px;">⚠️</div>',
+                            className: '',
+                            iconSize: [25, 25]
+                        });
+                        const marker = L.marker([alerta.lat, alerta.lng], { icon });
+                        marker.bindPopup(`<b>${alerta.tipo}</b><br>${alerta.subtipo}<br>${alerta.rua}`);
+                        marker.addTo(wazeAlertas);
+                    }
+                });
+
+                // Plotar congestionamentos
+                wazeJams.clearLayers();
+                data.congestionamentos.slice(0, 30).forEach(jam => {
+                    if (jam.linha && jam.linha.length > 0) {
+                        const points = jam.linha.map(p => [p.y, p.x]);
+                        const colors = ['#00ff00', '#ffff00', '#ffa500', '#ff4500', '#ff0000'];
+                        const color = colors[jam.nivel] || '#808080';
+                        
+                        const line = L.polyline(points, { 
+                            color: color, 
+                            weight: 5, 
+                            opacity: 0.7 
+                        });
+                        line.bindPopup(`<b>Congestionamento</b><br>${jam.rua}<br>Vel: ${jam.velocidade}km/h`);
+                        line.addTo(wazeJams);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar Waze:', error);
+        }
+    }
+
+    // Carregar agora
+    loadWazeData();
+
+    // Atualizar a cada 5 minutos
+    setInterval(loadWazeData, 300000);
+
+    console.log('✅ Waze Integration ativada!');
+}, 3000); // Aguardar 3 segundos para garantir que o mapa esteja pronto
+</script>
+
+  <!-- Scripts Inline -->
+  <script>
+    // Atualizar relógio
+    function updateClock() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('pt-BR');
+      document.getElementById('current-time').textContent = timeString;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Toggle painel lateral
+    function togglePanel() {
+      const panel = document.getElementById('sidePanel');
+      panel.classList.toggle('active');
+    }
+  </script>
+
+</body>
+</html>

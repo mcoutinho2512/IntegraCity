@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="description" content="SISCOR - Sistema Integrado de Comando e Operações">
+    <title>{% block title %}SISCOR - Command Center{% endblock %}</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- High-Tech CSS -->
+    <link rel="stylesheet" href="{% static 'css/hightech.css' %}?v={% now 'U' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- ============================================
+         HEADER
+         ============================================ -->
+    <header class="top-header">
+        <div class="header-left">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <div>
+                    <div class="logo-text">SISCOR</div>
+                    <div class="logo-subtitle">Command Center</div>
+                </div>
+            </div>
+
+            <div class="system-status">
+                <span class="status-dot"></span>
+                <span>Sistema Online</span>
+            </div>
+        </div>
+
+        <div class="header-center">
+            <div class="header-stat">
+                <span class="stat-label">Data</span>
+                <span class="stat-value" id="systemDate">--</span>
+            </div>
+            <div class="header-stat">
+                <span class="stat-label">Hora</span>
+                <span class="stat-value" id="systemClock">--:--:--</span>
+            </div>
+            <div class="header-stat">
+                <span class="stat-label">Ocorrencias</span>
+                <span class="stat-value {% if ocorrencias_count > 50 %}alert{% endif %}" id="headerOcorrencias">{{ ocorrencias_count|default:"0" }}</span>
+            </div>
+            <div class="header-stat">
+                <span class="stat-label">Eventos</span>
+                <span class="stat-value" id="headerEventos">{{ eventos_count|default:"0" }}</span>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <button class="header-btn" onclick="refreshData()" title="Atualizar dados">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+
+            <button class="header-btn" onclick="showNotifications()" title="Notificacoes">
+                <i class="fas fa-bell"></i>
+                {% if notifications_count %}
+                <span class="notification-badge">{{ notifications_count }}</span>
+                {% endif %}
+            </button>
+
+            <button class="header-btn" onclick="showSettings()" title="Configuracoes">
+                <i class="fas fa-cog"></i>
+            </button>
+
+            <div class="user-info">
+                <div class="user-avatar">
+                    {% if user.first_name %}
+                        {{ user.first_name.0|upper }}{{ user.last_name.0|upper|default:"" }}
+                    {% else %}
+                        <i class="fas fa-user"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="user-name">{{ user.get_full_name|default:user.username|default:"Operador" }}</div>
+                    <div class="user-role">{{ user.profile.cargo|default:"Operador" }}</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ============================================
+         SIDEBAR
+         ============================================ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">
+                <i class="fas fa-chart-line"></i> Monitoramento
+            </div>
+            <div class="sidebar-subtitle">Dados em tempo real</div>
+        </div>
+
+        <div class="monitoring-cards">
+            {% block monitoring_cards %}
+            <!-- Cards serao inseridos aqui -->
+            {% endblock %}
+        </div>
+    </aside>
+
+    <!-- ============================================
+         TOGGLE BUTTON
+         ============================================ -->
+    <button class="toggle-sidebar" id="toggleBtn" onclick="toggleSidebar()" title="Recolher/Expandir painel">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+
+    <!-- ============================================
+         MAP WRAPPER (CONTEUDO PRINCIPAL)
+         ============================================ -->
+    <div class="map-wrapper" id="mapWrapper">
+        {% block content %}
+        <!-- Conteudo principal -->
+        {% endblock %}
+    </div>
+
+    <!-- ============================================
+         TOAST CONTAINER
+         ============================================ -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ============================================
+         LOADING OVERLAY
+         ============================================ -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div>
+            <div class="loader"></div>
+            <div class="loading-text">PROCESSANDO...</div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         SCRIPTS
+         ============================================ -->
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- High-Tech JS -->
+    <script src="{% static 'js/hightech.js' %}?v={% now 'U' %}"></script>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

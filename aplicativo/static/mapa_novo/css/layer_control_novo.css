@@ -1,0 +1,487 @@
+/* Painel de Camadas Retrátil - Estilo Alerta Rio */
+
+/* ESCONDER TODOS OS BOTÕES DE CAMADAS EXCETO O OFICIAL */
+button:not(#layers-toggle):not(.cor-alerts-toggle):not(.cor-monitoring-toggle) {
+    /* Verificar se é botão de camadas */
+}
+
+/* Específico: esconder qualquer botão fixo redondo que não seja os oficiais */
+/* button[style*="position: fixed"][style*="border-radius"]:not(#layers-toggle):not(#alerts-toggle):not(#monitoring-toggle) {
+    display: none !important;
+}
+ */
+/* Esconder botões com ícone de layers que não sejam o oficial */
+button:has(.bi-layers-fill):not(#layers-toggle),
+button:has(.bi-layers):not(#layers-toggle) {
+    display: none !important;
+}
+
+.layer-control-panel-novo{
+  position: fixed;
+  top: 110px;
+  right: 90px;        /* deixa espaço pro painel de alertas */
+  width: 340px;
+  max-height: calc(100vh - 140px);
+  overflow: auto;
+  background: var(--panel-bg, #0f172a);
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.35);
+  z-index: 1001;
+  transform: translateX(0);
+  transition: transform .3s ease;
+}
+
+.layer-control-panel-novo.collapsed {
+   transform: translateX(120%);
+}
+
+/* Categorias e itens */
+.layer-category-novo{ padding:12px 10px; }
+.layer-category-header-novo{
+  display:flex; align-items:center; gap:8px;
+  font-weight:600; opacity:.9; margin:6px 4px 8px;
+}
+
+.layer-item-novo{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 12px; margin:6px 4px; border-radius:12px;
+  background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06);
+}
+.layer-item-info-novo{ display:flex; align-items:center; gap:10px; }
+.layer-icon-novo{
+  width:28px; height:28px; display:grid; place-items:center;
+  border-radius:8px; background: rgba(255,255,255,.08);
+}
+.layer-item-text-novo .layer-name-novo{ display:block; font-weight:600; }
+.layer-item-text-novo .layer-count-novo{ display:block; font-size:12px; opacity:.7; }
+
+/* Switch bonito */
+.layer-toggle-switch-novo{ position:relative; width:44px; height:24px; }
+.layer-toggle-switch-novo input{ display:none; }
+.layer-toggle-switch-novo .slider-novo{
+  position:absolute; inset:0; background:#64748b; border-radius:999px; transition:.2s;
+}
+.layer-toggle-switch-novo .slider-novo::before{
+  content:""; position:absolute; top:3px; left:3px; width:18px; height:18px;
+  background:#fff; border-radius:50%; transition:.2s;
+}
+.layer-toggle-switch-novo input:checked + .slider-novo{ background:#22c55e; }
+.layer-toggle-switch-novo input:checked + .slider-novo::before{ transform: translateX(20px); }
+
+/* Botão de Toggle Melhorado */
+.layer-toggle-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.layer-toggle-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+}
+
+.layer-toggle-button:active {
+    transform: scale(0.95);
+}
+
+.layer-toggle-button i {
+    font-size: 20px;
+    color: white;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animação do ícone do botão */
+@keyframes pulse-icon {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.layer-toggle-button:hover i {
+    animation: pulse-icon 1.5s ease-in-out infinite;
+}
+
+/* Indicador visual quando fechado */
+.layer-control-panel-novo.collapsed {
+    cursor: pointer;
+}
+
+.layer-control-panel-novo.collapsed::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    opacity: 0.1;
+    animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(1);
+        opacity: 0.3;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Quando colapsado */
+.layer-control-panel-novo.collapsed .layer-toggle-button {
+    top: 50%;
+    right: 50%;
+    transform: translate(50%, -50%);
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #cdd1df 0%, #3b82f6 100%);
+    box-shadow: 0 8px 24px rgba(235, 240, 255, 0.3);
+}
+
+.layer-control-panel-novo.collapsed .layer-toggle-button:hover {
+    transform: translate(50%, -50%) scale(1.1);
+}
+
+.layer-control-panel-novo.collapsed .layer-toggle-button i {
+    transform: rotate(180deg);
+    font-size: 24px;
+}
+
+/* Dark mode */
+body.dark-theme .layer-toggle-button {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-color: #334155;
+}
+
+body.dark-theme .layer-toggle-button:hover {
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+body.dark-theme .layer-control-panel-novo.collapsed .layer-toggle-button {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+}
+.layer-control-panel-novo.collapsed .layer-toggle-button {
+    top: 50%;
+    right: 50%;
+    transform: translate(50%, -50%);
+}
+
+.layer-control-panel-novo.collapsed .layer-toggle-button i {
+    transform: rotate(180deg);
+}
+
+.layer-control-content {
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.layer-control-panel-novo.collapsed .layer-control-content {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.layer-control-header {
+    padding: 20px;
+    border-bottom: 1px solid #e2e8f0;
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+    border-radius: 16px 16px 0 0;
+}
+
+.layer-control-title {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.layer-control-title i {
+    font-size: 20px;
+}
+
+.layer-control-body {
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+}
+
+.layer-group {
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.layer-group:last-child {
+    border-bottom: none;
+}
+
+.layer-group-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.layer-item-novo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #f8fafc;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.layer-item-novo:hover {
+    background: #e2e8f0;
+    transform: translateX(-2px);
+}
+
+.layer-item-novo:last-child {
+    margin-bottom: 0;
+}
+
+.layer-item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.layer-item-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.layer-item-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.layer-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.layer-item-count {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.layer-item-toggle {
+    width: 44px;
+    height: 24px;
+    background: #cbd5e1;
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.3s;
+    flex-shrink: 0;
+}
+
+.layer-item-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.layer-item-toggle.active {
+    background: #22c55e;
+}
+
+.layer-item-toggle.active::after {
+    transform: translateX(20px);
+}
+
+.status-badge {
+    width: 100%;
+    padding: 16px;
+    text-align: center;
+    font-weight: 700;
+    border-radius: 12px;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    margin: 16px;
+    width: calc(100% - 32px);
+}
+
+.status-normalidade {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+}
+
+/* Dark mode */
+body.dark-theme .layer-control-panel-novo {
+    background: #1e293b;
+}
+
+body.dark-theme .layer-group {
+    border-bottom-color: #334155;
+}
+
+body.dark-theme .layer-item-novo {
+    background: #0f172a;
+}
+
+body.dark-theme .layer-item-novo:hover {
+    background: #334155;
+}
+
+body.dark-theme .layer-item-name {
+    color: #f1f5f9;
+}
+
+body.dark-theme .layer-item-count {
+    color: #94a3b8;
+}
+
+body.dark-theme .layer-toggle-button {
+    background: rgba(30, 41, 59, 0.9);
+}
+
+body.dark-theme .layer-toggle-button:hover {
+    background: #1e293b;
+}
+
+body.dark-theme .layer-toggle-button i {
+    color: #60a5fa;
+}
+
+/* Scrollbar */
+.layer-control-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.layer-control-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.layer-control-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+body.dark-theme .layer-control-body::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+/* Animação de entrada */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.layer-control-panel-novo {
+    animation: slideIn 0.4s ease-out;
+    top: 166px;
+    right: 20px;
+    width: 320px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    max-height: calc(100vh - 200px);
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.layer-control-panel-novo.collapsed {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(30, 64, 175, 0.3);
+}
+
+/* Botão Toggle de Camadas - Igual ao de Alertas */
+.cor-layers-toggle {
+    position: fixed;
+    top: 220px; /* Abaixo do botão de alertas */
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 1002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(30, 64, 175, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cor-layers-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 24px rgba(30, 64, 175, 0.6);
+    background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+}
+
+.cor-layers-toggle:active {
+    transform: scale(0.95);
+}
+
+.cor-layers-toggle i {
+    transition: transform 0.3s;
+}
+
+/* Quando painel está fechado, girar ícone */
+.layer-control-panel-novo.collapsed ~ .cor-layers-toggle i {
+    transform: rotate(180deg);
+}
+
+/* Ajustar quando alertas está fechado */
+#alerts-panel.collapsed ~ .cor-layers-toggle {
+    right: 20px;
+}

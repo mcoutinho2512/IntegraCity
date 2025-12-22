@@ -1,0 +1,305 @@
+/**
+ * Loading States - Spinners, Skeletons e Estados de Carregamento
+ * SISCOR Design System
+ */
+
+/* ========================================
+   SPINNER PADRÃO
+   ======================================== */
+.cor-spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(59, 130, 246, 0.2);
+    border-radius: 50%;
+    border-top-color: #3b82f6;
+    animation: cor-spin 0.8s linear infinite;
+}
+
+.cor-spinner-sm {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+}
+
+.cor-spinner-lg {
+    width: 40px;
+    height: 40px;
+    border-width: 4px;
+}
+
+.cor-spinner-xl {
+    width: 64px;
+    height: 64px;
+    border-width: 5px;
+}
+
+@keyframes cor-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   LOADING OVERLAY
+   ======================================== */
+.cor-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.cor-loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.cor-loading-overlay .loading-text {
+    color: #f1f5f9;
+    margin-top: 16px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* ========================================
+   SKELETON LOADING
+   ======================================== */
+.cor-skeleton {
+    background: linear-gradient(
+        90deg,
+        #1e293b 25%,
+        #334155 50%,
+        #1e293b 75%
+    );
+    background-size: 200% 100%;
+    animation: cor-skeleton-pulse 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+.cor-skeleton-text {
+    height: 14px;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.cor-skeleton-text-sm {
+    height: 12px;
+    width: 60%;
+}
+
+.cor-skeleton-title {
+    height: 20px;
+    width: 40%;
+    margin-bottom: 12px;
+}
+
+.cor-skeleton-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.cor-skeleton-card {
+    height: 120px;
+    border-radius: 8px;
+}
+
+.cor-skeleton-btn {
+    height: 36px;
+    width: 100px;
+    border-radius: 6px;
+}
+
+@keyframes cor-skeleton-pulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Light theme skeleton */
+body:not(.dark-theme) .cor-skeleton {
+    background: linear-gradient(
+        90deg,
+        #e2e8f0 25%,
+        #f1f5f9 50%,
+        #e2e8f0 75%
+    );
+    background-size: 200% 100%;
+}
+
+/* ========================================
+   LOADING CARD
+   ======================================== */
+.cor-loading-card {
+    padding: 16px;
+    background: var(--cor-dark-surface, #1e293b);
+    border-radius: 8px;
+    border: 1px solid var(--cor-dark-border, #334155);
+}
+
+.cor-loading-card .skeleton-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.cor-loading-card .skeleton-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ========================================
+   PULSE ANIMATION
+   ======================================== */
+.cor-pulse {
+    animation: cor-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cor-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ========================================
+   LOADING DOTS
+   ======================================== */
+.cor-loading-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+}
+
+.cor-loading-dots span {
+    width: 8px;
+    height: 8px;
+    background: #3b82f6;
+    border-radius: 50%;
+    animation: cor-dot-bounce 1.4s ease-in-out infinite;
+}
+
+.cor-loading-dots span:nth-child(1) { animation-delay: 0s; }
+.cor-loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.cor-loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes cor-dot-bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+/* ========================================
+   PROGRESS BAR
+   ======================================== */
+.cor-progress {
+    height: 4px;
+    background: rgba(59, 130, 246, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.cor-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.cor-progress-indeterminate .cor-progress-bar {
+    width: 30%;
+    animation: cor-progress-indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes cor-progress-indeterminate {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+}
+
+/* ========================================
+   FADE IN ANIMATION
+   ======================================== */
+.cor-fade-in {
+    animation: cor-fade-in 0.3s ease-out;
+}
+
+@keyframes cor-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================
+   DATA LOADING PLACEHOLDER
+   ======================================== */
+.cor-data-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: #64748b;
+}
+
+.cor-data-placeholder i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.cor-data-placeholder h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #94a3b8;
+}
+
+.cor-data-placeholder p {
+    font-size: 14px;
+    max-width: 300px;
+}
+
+/* ========================================
+   API STATUS INDICATORS
+   ======================================== */
+.cor-api-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(30, 41, 59, 0.5);
+}
+
+.cor-api-status.loading {
+    color: #60a5fa;
+}
+
+.cor-api-status.success {
+    color: #10b981;
+}
+
+.cor-api-status.error {
+    color: #ef4444;
+}
+
+.cor-api-status .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.cor-api-status.loading .status-dot {
+    animation: cor-pulse 1s ease-in-out infinite;
+}

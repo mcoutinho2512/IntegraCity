@@ -1,0 +1,106 @@
+.blue-gray {
+  background-color: #37474f;
+}
+
+.submissao {
+  background-color: #ff231d;
+}
+
+.clique {
+  background-color: #ff9800;
+}
+
+.aberto {
+  background-color: #ffeb3b;
+}
+
+.enviados {
+  background-color: #14f48f;
+}
+
+.usu {
+  background-color: #18ffff;
+}
+
+.simulacao {
+  background-color: #d0d0d0;
+}
+
+.quest {
+  background-color: #d0d0d0;
+}
+
+.media {
+  background-color: #ffeb3b;
+}
+
+.enga {
+  background-color: #7c4dff;
+}
+
+.grau {
+  background-color: #d0d0d0;
+}
+
+.red {
+  background-color: #ff231d;
+}
+
+/* .card label {
+  color: #333;
+}
+
+.card h1,
+.card h2,
+.card h3,
+.card h4,
+.card h5,
+.card h6,
+.card p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: #2c2c2c;
+} */
+
+.card {
+  box-shadow: 0 10px 15px 0 rgba(0, 0, 0, 0.6);
+}
+
+.card-title-container {
+  padding: 15px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: 80px;
+  background-color: #161616;
+}
+
+.card-text-container {
+  padding: 15px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+}
+
+#colaboradoresTable {
+  font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#colaboradoresTable td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  color: #000000;
+  text-transform: inherit;
+  margin-bottom: 0.75rem;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+}
