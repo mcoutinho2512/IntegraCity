@@ -1,16 +1,16 @@
 /**
  * API Cache System - Sistema de Cache para APIs
- * SISCOR - Reduz chamadas repetidas e melhora performance
+ * IntegraCity - Reduz chamadas repetidas e melhora performance
  */
 
-const SISCORCache = (function() {
+const IntegraCityCache = (function() {
     'use strict';
 
     // Configurações
     const CONFIG = {
         defaultTTL: 60000,        // 1 minuto padrão
         maxCacheSize: 100,        // Máximo de itens em cache
-        storageKey: 'siscor_api_cache',
+        storageKey: 'integracity_api_cache',
         enablePersistence: true,   // Salvar em localStorage
         debug: false
     };
@@ -49,7 +49,7 @@ const SISCORCache = (function() {
      */
     function log(...args) {
         if (CONFIG.debug) {
-            console.log('[SISCORCache]', ...args);
+            console.log('[IntegraCityCache]', ...args);
         }
     }
 
@@ -330,6 +330,6 @@ const SISCORCache = (function() {
 })();
 
 // Expor globalmente
-window.SISCORCache = SISCORCache;
+window.IntegraCityCache = IntegraCityCache;
 
 console.log('✅ api_cache.js carregado');

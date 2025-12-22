@@ -31,7 +31,7 @@ body {
 }
 
 /* Navbar */
-.siscor-navbar {
+.integracity-navbar {
     height: var(--navbar-height);
     background: var(--bg-primary);
     border-bottom: 1px solid var(--border);
@@ -46,13 +46,13 @@ body {
     gap: 32px;
 }
 
-.siscor-navbar-left {
+.integracity-navbar-left {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.siscor-logo {
+.integracity-logo {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -61,14 +61,14 @@ body {
     color: var(--primary);
 }
 
-.siscor-subtitle {
+.integracity-subtitle {
     font-size: 12px;
     color: var(--text-secondary);
     padding-left: 12px;
     border-left: 1px solid var(--border);
 }
 
-.siscor-navbar-center {
+.integracity-navbar-center {
     flex: 1;
     display: flex;
     gap: 4px;
@@ -97,7 +97,7 @@ body {
     color: white;
 }
 
-.siscor-navbar-right {
+.integracity-navbar-right {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -135,7 +135,7 @@ body {
 }
 
 /* Main Content */
-.siscor-main {
+.integracity-main {
     margin-top: var(--navbar-height);
     min-height: calc(100vh - var(--navbar-height));
     padding: 24px;

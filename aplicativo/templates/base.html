@@ -8,9 +8,9 @@
     <meta name="theme-color" content="#1e3a8a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SISCOR">
-    <meta name="description" content="Sistema Integrado de Sala de Controle Operacional do Rio de Janeiro">
-    <title>{% block title %}SISCOR - Centro de Operações{% endblock %}</title>
+    <meta name="apple-mobile-web-app-title" content="IntegraCity">
+    <meta name="description" content="Sistema Integrado de Gestao de Crises do Rio de Janeiro">
+    <title>{% block title %}IntegraCity - Centro de Operacoes{% endblock %}</title>
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="{% static 'manifest.json' %}">
@@ -128,7 +128,7 @@
     <!-- PWA Install Banner -->
     <div class="pwa-install-banner" id="pwa-install-banner">
         <div class="pwa-text">
-            <div class="pwa-title">Instalar SISCOR</div>
+            <div class="pwa-title">Instalar IntegraCity</div>
             <div class="pwa-desc">Acesse rapidamente da sua tela inicial</div>
         </div>
         <button class="pwa-btn" id="pwa-install-btn">Instalar</button>
@@ -149,7 +149,7 @@
     <!-- JavaScript do Menu -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('🚀 SISCOR inicializado');
+            console.log('IntegraCity inicializado');
 
             // Selecionar todos os itens com submenu
             const menuItems = document.querySelectorAll('.cor-menu-item');
@@ -214,7 +214,7 @@
         // ========================================
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/siscor/static/sw.js')
+                navigator.serviceWorker.register('/integracity/static/sw.js')
                     .then(registration => {
                         console.log('✅ Service Worker registrado:', registration.scope);
                     })
@@ -227,7 +227,7 @@
         // ========================================
         // Loading Helper Functions
         // ========================================
-        window.SISCORLoading = {
+        window.IntegraCityLoading = {
             show: function(element, text = 'Carregando...') {
                 if (typeof element === 'string') {
                     element = document.querySelector(element);

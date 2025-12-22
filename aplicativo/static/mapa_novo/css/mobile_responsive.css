@@ -1,6 +1,6 @@
 /**
  * Mobile Responsive - Estilos de Responsividade
- * SISCOR Design System
+ * IntegraCity Design System
  */
 
 /* ========================================
@@ -43,7 +43,7 @@
         height: 35px !important;
     }
 
-    .cor-siscor-logo {
+    .cor-integracity-logo {
         font-size: 16px !important;
     }
 
@@ -67,11 +67,11 @@
         height: 28px !important;
     }
 
-    .cor-siscor-logo {
+    .cor-integracity-logo {
         font-size: 14px !important;
     }
 
-    .cor-siscor-logo i {
+    .cor-integracity-logo i {
         display: none;
     }
 

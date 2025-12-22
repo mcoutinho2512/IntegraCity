@@ -1,9 +1,9 @@
 /**
  * Real-time Notifications System
- * SISCOR - Sistema de Notificações em Tempo Real
+ * IntegraCity - Sistema de Notificacoes em Tempo Real
  */
 
-const SISCORNotifications = (function() {
+const IntegraCityNotifications = (function() {
     'use strict';
 
     // Configurações
@@ -12,11 +12,11 @@ const SISCORNotifications = (function() {
         maxNotifications: 50,          // Máximo de notificações em memória
         soundEnabled: true,
         desktopEnabled: true,
-        storageKey: 'siscor_notifications',
+        storageKey: 'integracity_notifications',
         endpoints: {
-            alertas: '/siscor/api/alertas/',
-            ocorrencias: '/siscor/api/ocorrencias/hoje/',
-            estagio: '/siscor/api/estagio-atual/'
+            alertas: '/integracity/api/alertas/',
+            ocorrencias: '/integracity/api/ocorrencias/hoje/',
+            estagio: '/integracity/api/estagio-atual/'
         }
     };
 
@@ -632,7 +632,7 @@ const SISCORNotifications = (function() {
      * Salvar configurações
      */
     function saveSettings() {
-        localStorage.setItem('siscor_notif_settings', JSON.stringify({
+        localStorage.setItem('integracity_notif_settings', JSON.stringify({
             soundEnabled: CONFIG.soundEnabled,
             desktopEnabled: CONFIG.desktopEnabled
         }));
@@ -784,5 +784,5 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-window.SISCORNotifications = SISCORNotifications;
+window.IntegraCityNotifications = IntegraCityNotifications;
 console.log('✅ realtime_notifications.js carregado');

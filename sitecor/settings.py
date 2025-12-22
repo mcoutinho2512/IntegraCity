@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'aplicativo',
 
-# ===== NOVOS MÓDULOS SISCOR =====
+# ===== NOVOS MODULOS INTEGRACITY =====
     'core',
 ]
 
@@ -128,7 +128,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = '/siscor/static/'
+STATIC_URL = '/integracity/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'aplicativo' / 'static',
@@ -141,7 +141,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Proxy settings
 USE_X_FORWARDED_HOST = True
-FORCE_SCRIPT_NAME = '/siscor'  # Prefixo para nginx
+FORCE_SCRIPT_NAME = '/integracity'  # Prefixo para nginx
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

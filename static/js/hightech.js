@@ -1,5 +1,5 @@
 /* ============================================
-   SISCOR / INTEGRACITY - HIGH-TECH JAVASCRIPT
+   INTEGRACITY - HIGH-TECH JAVASCRIPT
    Funcionalidades do Command Center
    ============================================ */
 
@@ -425,7 +425,7 @@ function handleWebSocketMessage(data) {
 // ============================================
 // 21. EXPORT FOR GLOBAL USE
 // ============================================
-window.SISCOR = {
+window.IntegraCity = {
     showToast,
     toggleSidebar,
     showLoading,

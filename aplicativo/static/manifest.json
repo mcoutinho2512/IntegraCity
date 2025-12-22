@@ -1,9 +1,9 @@
 {
-  "name": "SISCOR - Sistema Integrado COR",
-  "short_name": "SISCOR",
-  "description": "Sistema Integrado de Sala de Controle Operacional do Rio de Janeiro",
-  "start_url": "/siscor/",
-  "scope": "/siscor/",
+  "name": "IntegraCity - Centro de Operacoes Rio",
+  "short_name": "IntegraCity",
+  "description": "Sistema Integrado de Gestao de Crises e Operacoes do Rio de Janeiro",
+  "start_url": "/integracity/",
+  "scope": "/integracity/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0f172a",
@@ -12,49 +12,49 @@
   "categories": ["utilities", "productivity", "government"],
   "icons": [
     {
-      "src": "/siscor/static/images/siscor-icon-72.png",
+      "src": "/integracity/static/images/siscor-icon-72.png",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/siscor/static/images/siscor-icon-96.png",
+      "src": "/integracity/static/images/siscor-icon-96.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/siscor/static/images/siscor-icon-128.png",
+      "src": "/integracity/static/images/siscor-icon-128.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/siscor/static/images/siscor-icon-144.png",
+      "src": "/integracity/static/images/siscor-icon-144.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/siscor/static/images/siscor-icon-152.png",
+      "src": "/integracity/static/images/siscor-icon-152.png",
       "sizes": "152x152",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/siscor/static/images/siscor-icon-192.png",
+      "src": "/integracity/static/images/siscor-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/siscor/static/images/siscor-icon-384.png",
+      "src": "/integracity/static/images/siscor-icon-384.png",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/siscor/static/images/siscor-icon-512.png",
+      "src": "/integracity/static/images/siscor-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -62,13 +62,13 @@
   ],
   "screenshots": [
     {
-      "src": "/siscor/static/images/screenshot-wide.png",
+      "src": "/integracity/static/images/screenshot-wide.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide"
     },
     {
-      "src": "/siscor/static/images/screenshot-mobile.png",
+      "src": "/integracity/static/images/screenshot-mobile.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow"
@@ -79,22 +79,22 @@
       "name": "Dashboard COR",
       "short_name": "Dashboard",
       "description": "Acessar o dashboard principal",
-      "url": "/siscor/cor/",
-      "icons": [{ "src": "/siscor/static/images/dashboard-icon.png", "sizes": "96x96" }]
+      "url": "/integracity/cor/",
+      "icons": [{ "src": "/integracity/static/images/dashboard-icon.png", "sizes": "96x96" }]
     },
     {
       "name": "Meteorologia",
       "short_name": "Meteo",
       "description": "Ver condições meteorológicas",
-      "url": "/siscor/meteorologia/",
-      "icons": [{ "src": "/siscor/static/images/weather-icon.png", "sizes": "96x96" }]
+      "url": "/integracity/meteorologia/",
+      "icons": [{ "src": "/integracity/static/images/weather-icon.png", "sizes": "96x96" }]
     },
     {
       "name": "Mobilidade",
       "short_name": "Trânsito",
       "description": "Ver status da mobilidade urbana",
-      "url": "/siscor/mobilidade/",
-      "icons": [{ "src": "/siscor/static/images/traffic-icon.png", "sizes": "96x96" }]
+      "url": "/integracity/mobilidade/",
+      "icons": [{ "src": "/integracity/static/images/traffic-icon.png", "sizes": "96x96" }]
     }
   ],
   "related_applications": [],

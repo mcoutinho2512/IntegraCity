@@ -1,25 +1,25 @@
 /**
- * Service Worker - SISCOR PWA
- * Versão: 1.0.0
+ * Service Worker - IntegraCity PWA
+ * Versao: 1.0.0
  */
 
-const CACHE_NAME = 'siscor-cache-v1';
-const RUNTIME_CACHE = 'siscor-runtime-v1';
+const CACHE_NAME = 'integracity-cache-v1';
+const RUNTIME_CACHE = 'integracity-runtime-v1';
 
 // Arquivos para cache estático
 const STATIC_ASSETS = [
-    '/siscor/',
-    '/siscor/login/',
-    '/siscor/static/mapa_novo/css/cor_design_system.css',
-    '/siscor/static/mapa_novo/css/cor_components.css',
-    '/siscor/static/mapa_novo/css/cor_navbar.css',
-    '/siscor/static/mapa_novo/css/dark_mode.css',
-    '/siscor/static/mapa_novo/css/loading_states.css',
-    '/siscor/static/mapa_novo/css/mobile_responsive.css',
-    '/siscor/static/mapa_novo/js/core/api_cache.js',
-    '/siscor/static/mapa_novo/js/features/theme_toggle.js',
-    '/siscor/static/mapa_novo/js/features/realtime_notifications.js',
-    '/siscor/static/images/RIOPREFEITURA_COR_horizontal_azul.png',
+    '/integracity/',
+    '/integracity/login/',
+    '/integracity/static/mapa_novo/css/cor_design_system.css',
+    '/integracity/static/mapa_novo/css/cor_components.css',
+    '/integracity/static/mapa_novo/css/cor_navbar.css',
+    '/integracity/static/mapa_novo/css/dark_mode.css',
+    '/integracity/static/mapa_novo/css/loading_states.css',
+    '/integracity/static/mapa_novo/css/mobile_responsive.css',
+    '/integracity/static/mapa_novo/js/core/api_cache.js',
+    '/integracity/static/mapa_novo/js/features/theme_toggle.js',
+    '/integracity/static/mapa_novo/js/features/realtime_notifications.js',
+    '/integracity/static/images/RIOPREFEITURA_COR_horizontal_azul.png',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css',
     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
     'https://code.jquery.com/jquery-3.6.0.min.js',
@@ -28,12 +28,12 @@ const STATIC_ASSETS = [
 
 // URLs para cache de API (com estratégia network-first)
 const API_ROUTES = [
-    '/siscor/api/estagio-atual/',
-    '/siscor/api/cameras/',
-    '/siscor/api/sirenes/',
-    '/siscor/api/alertas/',
-    '/siscor/api/chuva/',
-    '/siscor/api/ocorrencias/'
+    '/integracity/api/estagio-atual/',
+    '/integracity/api/cameras/',
+    '/integracity/api/sirenes/',
+    '/integracity/api/alertas/',
+    '/integracity/api/chuva/',
+    '/integracity/api/ocorrencias/'
 ];
 
 /**
@@ -179,13 +179,13 @@ async function networkFirst(request) {
 
         // Retornar página offline para navegação
         if (request.headers.get('accept')?.includes('text/html')) {
-            return caches.match('/siscor/offline/') || new Response(
+            return caches.match('/integracity/offline/') || new Response(
                 `<!DOCTYPE html>
                 <html lang="pt-BR">
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>SISCOR - Offline</title>
+                    <title>IntegraCity - Offline</title>
                     <style>
                         body {
                             font-family: -apple-system, system-ui, sans-serif;
@@ -262,11 +262,11 @@ self.addEventListener('push', (event) => {
 
         const options = {
             body: data.body || data.message,
-            icon: '/siscor/static/images/siscor-icon-192.png',
-            badge: '/siscor/static/images/siscor-badge.png',
+            icon: '/integracity/static/images/siscor-icon-192.png',
+            badge: '/integracity/static/images/siscor-badge.png',
             vibrate: [100, 50, 100],
             data: {
-                url: data.url || '/siscor/cor/',
+                url: data.url || '/integracity/cor/',
                 timestamp: Date.now()
             },
             actions: [
@@ -276,7 +276,7 @@ self.addEventListener('push', (event) => {
         };
 
         event.waitUntil(
-            self.registration.showNotification(data.title || 'SISCOR', options)
+            self.registration.showNotification(data.title || 'IntegraCity', options)
         );
     } catch (error) {
         console.error('[SW] Erro ao processar notificação push:', error);
@@ -293,14 +293,14 @@ self.addEventListener('notificationclick', (event) => {
         return;
     }
 
-    const url = event.notification.data?.url || '/siscor/cor/';
+    const url = event.notification.data?.url || '/integracity/cor/';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })
             .then((clientList) => {
                 // Tentar focar em janela existente
                 for (const client of clientList) {
-                    if (client.url.includes('/siscor/') && 'focus' in client) {
+                    if (client.url.includes('/integracity/') && 'focus' in client) {
                         client.navigate(url);
                         return client.focus();
                     }

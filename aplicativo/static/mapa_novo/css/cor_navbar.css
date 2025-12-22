@@ -54,7 +54,7 @@ body.dark-theme .cor-navbar {
     transform: translateX(-50%);
 }
 
-.cor-siscor-logo {
+.cor-integracity-logo {
     font-size: 42px;
     font-weight: 700;
     color: white;
@@ -64,7 +64,7 @@ body.dark-theme .cor-navbar {
     cursor: pointer;
 }
 
-.cor-siscor-logo:hover {
+.cor-integracity-logo:hover {
     transform: scale(1.05);
     text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.5);
 }
@@ -224,7 +224,7 @@ body.dark-theme .cor-user-avatar {
         display: none;
     }
     
-    .cor-siscor-logo {
+    .cor-integracity-logo {
         font-size: 28px;
         letter-spacing: 2px;
     }
@@ -249,7 +249,7 @@ body.dark-theme .cor-user-avatar {
         padding: 0 12px;
     }
     
-    .cor-siscor-logo {
+    .cor-integracity-logo {
         font-size: 24px;
     }
     
