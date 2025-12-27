@@ -109,3 +109,51 @@ class RateLimitMiddleware(MiddlewareMixin):
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip
+
+
+class LoginSecurityMiddleware(MiddlewareMixin):
+    """Middleware para segurança de login baseada em UserProfile"""
+
+    def process_request(self, request):
+        """Verificar se usuário está bloqueado ou precisa trocar senha"""
+        if not request.user.is_authenticated:
+            return None
+
+        path = getattr(request, 'path_info', request.path)
+
+        # Ignorar URLs estáticas e de logout
+        ignore_paths = ['/static/', '/media/', '/logout/', '/admin/']
+        if any(path.startswith(p) for p in ignore_paths):
+            return None
+
+        try:
+            from aplicativo.models import UserProfile
+            profile, created = UserProfile.objects.get_or_create(user=request.user)
+
+            # Verificar se conta está bloqueada
+            if profile.is_locked():
+                from django.contrib.auth import logout
+                from django.contrib import messages
+                logout(request)
+                messages.error(request, 'Sua conta está temporariamente bloqueada. Tente novamente mais tarde.')
+                return redirect('login')
+
+            # Atualizar último IP de login
+            ip = self.get_client_ip(request)
+            if profile.last_login_ip != ip:
+                profile.last_login_ip = ip
+                profile.save(update_fields=['last_login_ip'])
+
+        except Exception:
+            pass
+
+        return None
+
+    def get_client_ip(self, request):
+        """Obter IP real do cliente"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip = request.META.get('REMOTE_ADDR', '0.0.0.0')
+        return ip

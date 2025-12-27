@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
 from aplicativo import views
+from aplicativo import views_users
 
 urlpatterns = [
     # LOGIN - PÁGINA PRINCIPAL
@@ -11,6 +12,27 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
+
+    # ============================================
+    # GERENCIAMENTO DE USUÁRIOS
+    # ============================================
+    path('users/', views_users.user_management, name='user_management'),
+    path('users/create/', views_users.user_create, name='user_create'),
+    path('users/<int:user_id>/', views_users.user_detail, name='user_detail'),
+    path('users/<int:user_id>/edit/', views_users.user_edit, name='user_edit'),
+    path('users/<int:user_id>/delete/', views_users.user_delete, name='user_delete'),
+    path('users/<int:user_id>/toggle/', views_users.user_toggle_status, name='user_toggle_status'),
+    path('users/<int:user_id>/unlock/', views_users.user_unlock, name='user_unlock'),
+    path('users/<int:user_id>/reset-password/', views_users.user_reset_password, name='user_reset_password'),
+    path('users/<int:user_id>/permissions/', views_users.user_permissions, name='user_permissions'),
+
+    # APIs de Usuários
+    path('api/users/', views_users.api_users_list, name='api_users_list'),
+    path('api/users/stats/', views_users.api_users_stats, name='api_users_stats'),
+
+    # Logs de Auditoria
+    path('audit/', views_users.audit_logs, name='audit_logs'),
+    path('audit/<uuid:log_id>/detail/', views_users.audit_log_detail, name='audit_log_detail'),
 
     # Páginas
     path('home/', views.waze_dashboard_view, name='home'),

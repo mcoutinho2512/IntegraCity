@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'aplicativo.middleware.LoginSecurityMiddleware',  # Segurança de login após autenticação
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -105,6 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -113,6 +115,14 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# ============================================
+# CONFIGURAÇÕES DE SEGURANÇA DE LOGIN
+# ============================================
+# Máximo de tentativas de login antes de bloquear
+MAX_LOGIN_ATTEMPTS = 5
+# Tempo de bloqueio em minutos
+LOCKOUT_DURATION_MINUTES = 30
 
 
 # Internationalization

@@ -5140,12 +5140,317 @@ class ChatMessage(models.Model):
         ('user', 'Usuário'),
         ('assistant', 'Assistente'),
     ]
-    
+
     session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name='messages')
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     query_data = models.JSONField(null=True, blank=True)
-    
+
     class Meta:
         ordering = ['timestamp']
+
+
+# ============================================
+# SISTEMA DE USUÁRIOS E PERMISSÕES - INTEGRACITY
+# ============================================
+import uuid
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+class UserProfile(models.Model):
+    """Perfil estendido do usuário do INTEGRACITY"""
+
+    ROLES = [
+        ('superadmin', 'Super Administrador'),
+        ('admin', 'Administrador'),
+        ('operator_senior', 'Operador Senior'),
+        ('operator', 'Operador'),
+        ('viewer', 'Visualizador'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField('Perfil', max_length=20, choices=ROLES, default='viewer')
+    phone = models.CharField('Telefone', max_length=20, blank=True, null=True)
+    department = models.CharField('Departamento', max_length=100, blank=True, null=True)
+    cargo = models.CharField('Cargo', max_length=100, blank=True, null=True)
+    avatar = models.ImageField('Avatar', upload_to='avatars/', blank=True, null=True)
+
+    # Segurança
+    failed_login_attempts = models.IntegerField('Tentativas falhas', default=0)
+    locked_until = models.DateTimeField('Bloqueado até', blank=True, null=True)
+    must_change_password = models.BooleanField('Deve trocar senha', default=False)
+    password_changed_at = models.DateTimeField('Última troca de senha', auto_now_add=True)
+
+    # Auditoria
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    updated_at = models.DateTimeField('Atualizado em', auto_now=True)
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='users_created', verbose_name='Criado por'
+    )
+    last_login_ip = models.GenericIPAddressField('Último IP', blank=True, null=True)
+
+    # Observações
+    notes = models.TextField('Observações', blank=True)
+
+    class Meta:
+        db_table = 'user_profiles'
+        verbose_name = 'Perfil de Usuário'
+        verbose_name_plural = 'Perfis de Usuários'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} ({self.get_role_display()})"
+
+    def is_locked(self):
+        """Verifica se conta está bloqueada"""
+        from django.utils import timezone
+        if self.locked_until and self.locked_until > timezone.now():
+            return True
+        return False
+
+    def lock_account(self, minutes=30):
+        """Bloqueia a conta por X minutos"""
+        from django.utils import timezone
+        from datetime import timedelta
+        self.locked_until = timezone.now() + timedelta(minutes=minutes)
+        self.save(update_fields=['locked_until'])
+
+    def unlock_account(self):
+        """Desbloqueia a conta"""
+        self.locked_until = None
+        self.failed_login_attempts = 0
+        self.save(update_fields=['locked_until', 'failed_login_attempts'])
+
+    def increment_failed_attempts(self):
+        """Incrementa tentativas falhas e bloqueia se necessário"""
+        self.failed_login_attempts += 1
+        if self.failed_login_attempts >= 5:
+            self.lock_account(30)
+        self.save(update_fields=['failed_login_attempts'])
+
+    def reset_failed_attempts(self):
+        """Reseta tentativas falhas após login bem sucedido"""
+        self.failed_login_attempts = 0
+        self.save(update_fields=['failed_login_attempts'])
+
+    def is_admin(self):
+        """Verifica se é admin ou superadmin"""
+        return self.role in ['admin', 'superadmin']
+
+    def is_superadmin(self):
+        """Verifica se é superadmin"""
+        return self.role == 'superadmin'
+
+    def can_manage_users(self):
+        """Verifica se pode gerenciar usuários"""
+        return self.role in ['admin', 'superadmin']
+
+    def can_view_audit(self):
+        """Verifica se pode ver logs de auditoria"""
+        return self.role in ['admin', 'superadmin']
+
+    def has_permission(self, resource, action):
+        """Verifica se usuário tem permissão específica"""
+        # Superadmin tem todas as permissões
+        if self.role == 'superadmin':
+            return True
+
+        # Verificar permissões baseadas no role
+        role_permissions = ROLE_DEFAULT_PERMISSIONS.get(self.role, {})
+        if resource in role_permissions:
+            if action in role_permissions[resource]:
+                return True
+
+        # Verificar permissões customizadas
+        return UserPermission.objects.filter(
+            user=self.user,
+            resource=resource,
+            action=action
+        ).exists()
+
+
+# Permissões padrão por role
+ROLE_DEFAULT_PERMISSIONS = {
+    'superadmin': {
+        'users': ['view', 'add', 'edit', 'delete'],
+        'cameras': ['view_all', 'view_assigned', 'control'],
+        'mosaic': ['view', 'create', 'edit'],
+        'map': ['view', 'edit_layers', 'add_markers'],
+        'reports': ['view', 'export', 'generate'],
+        'audit': ['view_own', 'view_all'],
+        'settings': ['view', 'edit'],
+    },
+    'admin': {
+        'users': ['view', 'add', 'edit'],
+        'cameras': ['view_all', 'view_assigned', 'control'],
+        'mosaic': ['view', 'create', 'edit'],
+        'map': ['view', 'edit_layers', 'add_markers'],
+        'reports': ['view', 'export', 'generate'],
+        'audit': ['view_all'],
+        'settings': ['view'],
+    },
+    'operator_senior': {
+        'cameras': ['view_all', 'view_assigned'],
+        'mosaic': ['view', 'create', 'edit'],
+        'map': ['view', 'add_markers'],
+        'reports': ['view', 'export'],
+        'audit': ['view_own'],
+    },
+    'operator': {
+        'cameras': ['view_assigned'],
+        'mosaic': ['view'],
+        'map': ['view'],
+        'reports': ['view'],
+    },
+    'viewer': {
+        'cameras': ['view_assigned'],
+        'map': ['view'],
+    },
+}
+
+
+class UserPermission(models.Model):
+    """Permissões granulares customizadas de usuário"""
+
+    RESOURCES = [
+        ('users', 'Usuários'),
+        ('cameras', 'Câmeras'),
+        ('mosaic', 'Mosaico'),
+        ('map', 'Mapa'),
+        ('reports', 'Relatórios'),
+        ('audit', 'Auditoria'),
+        ('settings', 'Configurações'),
+    ]
+
+    ACTIONS = [
+        ('view', 'Visualizar'),
+        ('view_all', 'Visualizar Todos'),
+        ('view_assigned', 'Visualizar Atribuídos'),
+        ('add', 'Adicionar'),
+        ('edit', 'Editar'),
+        ('delete', 'Excluir'),
+        ('control', 'Controlar'),
+        ('create', 'Criar'),
+        ('edit_layers', 'Editar Camadas'),
+        ('add_markers', 'Adicionar Marcadores'),
+        ('export', 'Exportar'),
+        ('generate', 'Gerar'),
+        ('view_own', 'Ver Próprios'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='custom_permissions')
+    resource = models.CharField('Recurso', max_length=50, choices=RESOURCES)
+    action = models.CharField('Ação', max_length=50, choices=ACTIONS)
+    scope = models.JSONField('Escopo', default=dict, blank=True)
+
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='permissions_granted', verbose_name='Criado por'
+    )
+
+    class Meta:
+        db_table = 'user_permissions'
+        verbose_name = 'Permissão de Usuário'
+        verbose_name_plural = 'Permissões de Usuários'
+        unique_together = ['user', 'resource', 'action']
+
+    def __str__(self):
+        return f"{self.user.username}: {self.resource}.{self.action}"
+
+
+class AuditLog(models.Model):
+    """Log de auditoria de ações do sistema"""
+
+    ACTIONS = [
+        ('login', 'Login'),
+        ('login_failed', 'Login Falhou'),
+        ('logout', 'Logout'),
+        ('user_create', 'Criação de Usuário'),
+        ('user_edit', 'Edição de Usuário'),
+        ('user_delete', 'Exclusão de Usuário'),
+        ('user_activate', 'Ativação de Usuário'),
+        ('user_deactivate', 'Desativação de Usuário'),
+        ('user_unlock', 'Desbloqueio de Usuário'),
+        ('permission_grant', 'Concessão de Permissão'),
+        ('permission_revoke', 'Revogação de Permissão'),
+        ('password_change', 'Alteração de Senha'),
+        ('password_reset', 'Reset de Senha'),
+        ('settings_change', 'Alteração de Configuração'),
+        ('camera_access', 'Acesso a Câmera'),
+        ('export_data', 'Exportação de Dados'),
+        ('report_generate', 'Geração de Relatório'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='audit_logs', verbose_name='Usuário'
+    )
+    action = models.CharField('Ação', max_length=50, choices=ACTIONS)
+    resource_type = models.CharField('Tipo de Recurso', max_length=100, blank=True)
+    resource_id = models.CharField('ID do Recurso', max_length=100, blank=True)
+    details = models.JSONField('Detalhes', default=dict)
+    ip_address = models.GenericIPAddressField('Endereço IP')
+    user_agent = models.TextField('User Agent', blank=True)
+    timestamp = models.DateTimeField('Data/Hora', auto_now_add=True)
+    success = models.BooleanField('Sucesso', default=True)
+    error_message = models.TextField('Mensagem de Erro', blank=True)
+
+    class Meta:
+        db_table = 'audit_logs'
+        verbose_name = 'Log de Auditoria'
+        verbose_name_plural = 'Logs de Auditoria'
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['user', 'timestamp']),
+            models.Index(fields=['action', 'timestamp']),
+            models.Index(fields=['timestamp']),
+        ]
+
+    def __str__(self):
+        user_str = self.user.username if self.user else 'Anônimo'
+        return f"[{self.timestamp}] {user_str}: {self.get_action_display()}"
+
+    @classmethod
+    def log(cls, request, action, resource_type='', resource_id='', details=None, success=True, error_message=''):
+        """Método helper para criar log de auditoria"""
+        user = request.user if request.user.is_authenticated else None
+
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip = request.META.get('REMOTE_ADDR', '0.0.0.0')
+
+        return cls.objects.create(
+            user=user,
+            action=action,
+            resource_type=resource_type,
+            resource_id=str(resource_id) if resource_id else '',
+            details=details or {},
+            ip_address=ip,
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
+            success=success,
+            error_message=error_message
+        )
+
+
+# Signal para criar UserProfile automaticamente quando User é criado
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Cria UserProfile automaticamente quando User é criado"""
+    if created:
+        UserProfile.objects.get_or_create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Salva UserProfile quando User é salvo"""
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
+    else:
+        UserProfile.objects.get_or_create(user=instance)

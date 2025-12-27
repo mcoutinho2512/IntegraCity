@@ -1,0 +1,545 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    .audit-container {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.8rem;
+        color: #00D4FF;
+    }
+
+    .page-title i {
+        margin-right: 15px;
+    }
+
+    .btn-back {
+        background: transparent;
+        border: 1px solid rgba(0, 212, 255, 0.5);
+        color: #00D4FF;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filters-section {
+        background: rgba(0, 20, 40, 0.6);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .filters-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 180px;
+    }
+
+    .filter-group label {
+        display: block;
+        font-size: 0.85rem;
+        color: #8892b0;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 10px 15px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 6px;
+        color: #fff;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+        outline: none;
+        border-color: #00D4FF;
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-filter {
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+    }
+
+    .btn-filter.primary {
+        background: #00D4FF;
+        color: #000;
+    }
+
+    .btn-filter.secondary {
+        background: transparent;
+        border: 1px solid rgba(0, 212, 255, 0.5);
+        color: #00D4FF;
+    }
+
+    .logs-table-container {
+        background: rgba(0, 20, 40, 0.6);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .logs-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .logs-table th {
+        background: rgba(0, 212, 255, 0.1);
+        padding: 15px;
+        text-align: left;
+        font-family: 'Orbitron', monospace;
+        font-size: 0.85rem;
+        color: #00D4FF;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .logs-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        color: #ccd6f6;
+        font-size: 0.9rem;
+    }
+
+    .logs-table tr:hover {
+        background: rgba(0, 212, 255, 0.05);
+        cursor: pointer;
+    }
+
+    .log-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .log-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00D4FF, #B537F2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .log-avatar.anonymous {
+        background: rgba(136, 146, 176, 0.3);
+    }
+
+    .action-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .action-badge.login { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+    .action-badge.login_failed { background: rgba(255, 0, 85, 0.2); color: #ff0055; }
+    .action-badge.logout { background: rgba(136, 146, 176, 0.2); color: #8892b0; }
+    .action-badge.user_create { background: rgba(0, 212, 255, 0.2); color: #00D4FF; }
+    .action-badge.user_edit { background: rgba(181, 55, 242, 0.2); color: #B537F2; }
+    .action-badge.user_delete { background: rgba(255, 0, 85, 0.2); color: #ff0055; }
+    .action-badge.user_activate { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+    .action-badge.user_deactivate { background: rgba(255, 152, 0, 0.2); color: #ff9800; }
+    .action-badge.password_reset { background: rgba(255, 152, 0, 0.2); color: #ff9800; }
+    .action-badge.password_change { background: rgba(255, 152, 0, 0.2); color: #ff9800; }
+    .action-badge.permission_grant { background: rgba(0, 212, 255, 0.2); color: #00D4FF; }
+
+    .status-icon {
+        font-size: 1rem;
+    }
+
+    .status-icon.success { color: #00ff88; }
+    .status-icon.error { color: #ff0055; }
+
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+        gap: 5px;
+    }
+
+    .pagination-container a,
+    .pagination-container span {
+        padding: 8px 14px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.3);
+        color: #8892b0;
+        text-decoration: none;
+        border: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .pagination-container a:hover {
+        background: rgba(0, 212, 255, 0.2);
+        color: #00D4FF;
+    }
+
+    .pagination-container .current {
+        background: #00D4FF;
+        color: #000;
+        border-color: #00D4FF;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #8892b0;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: rgba(0, 212, 255, 0.3);
+        margin-bottom: 20px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: #0a0f1a;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        padding: 25px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .modal-title {
+        font-family: 'Orbitron', monospace;
+        color: #00D4FF;
+        font-size: 1.1rem;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: #8892b0;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .detail-row {
+        display: flex;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        flex: 0 0 140px;
+        color: #8892b0;
+        font-size: 0.9rem;
+    }
+
+    .detail-value {
+        flex: 1;
+        color: #ccd6f6;
+        word-break: break-all;
+    }
+
+    .detail-value pre {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px;
+        border-radius: 6px;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        color: #00D4FF;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="audit-container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-history"></i>
+            {{ page_title }}
+        </h1>
+        <a href="{% url 'user_management' %}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+        <form method="get" class="filters-row">
+            <div class="filter-group">
+                <label>Usuario</label>
+                <input type="text" name="user" value="{{ user_filter }}" placeholder="Nome ou username...">
+            </div>
+            <div class="filter-group">
+                <label>Acao</label>
+                <select name="action">
+                    <option value="">Todas as acoes</option>
+                    {% for action_code, action_name in actions %}
+                    <option value="{{ action_code }}" {% if action_filter == action_code %}selected{% endif %}>{{ action_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Data Inicial</label>
+                <input type="date" name="date_from" value="{{ date_from }}">
+            </div>
+            <div class="filter-group">
+                <label>Data Final</label>
+                <input type="date" name="date_to" value="{{ date_to }}">
+            </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select name="success">
+                    <option value="">Todos</option>
+                    <option value="true" {% if success_filter == 'true' %}selected{% endif %}>Sucesso</option>
+                    <option value="false" {% if success_filter == 'false' %}selected{% endif %}>Falha</option>
+                </select>
+            </div>
+            <div class="filter-buttons">
+                <button type="submit" class="btn-filter primary">
+                    <i class="fas fa-search"></i> Filtrar
+                </button>
+                <a href="{% url 'audit_logs' %}" class="btn-filter secondary">Limpar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="logs-table-container">
+        {% if logs %}
+        <table class="logs-table">
+            <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Usuario</th>
+                    <th>Acao</th>
+                    <th>Recurso</th>
+                    <th>IP</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr onclick="showLogDetail('{{ log.id }}')">
+                    <td>{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
+                    <td>
+                        <div class="log-user">
+                            <div class="log-avatar {% if not log.user %}anonymous{% endif %}">
+                                {% if log.user %}
+                                {{ log.user.first_name.0|upper|default:log.user.username.0|upper }}
+                                {% else %}
+                                ?
+                                {% endif %}
+                            </div>
+                            <span>{{ log.user.username|default:"Anonimo" }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="action-badge {{ log.action }}">{{ log.get_action_display }}</span>
+                    </td>
+                    <td>
+                        {% if log.resource_type %}
+                        {{ log.resource_type }}
+                        {% if log.resource_id %}#{{ log.resource_id|truncatechars:10 }}{% endif %}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>{{ log.ip_address }}</td>
+                    <td>
+                        <i class="fas {% if log.success %}fa-check-circle status-icon success{% else %}fa-times-circle status-icon error{% endif %}"></i>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if logs.has_other_pages %}
+        <div class="pagination-container">
+            {% if logs.has_previous %}
+            <a href="?page=1{% if user_filter %}&user={{ user_filter }}{% endif %}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if success_filter %}&success={{ success_filter }}{% endif %}">&laquo;</a>
+            <a href="?page={{ logs.previous_page_number }}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if success_filter %}&success={{ success_filter }}{% endif %}">&lt;</a>
+            {% endif %}
+
+            {% for num in logs.paginator.page_range %}
+                {% if logs.number == num %}
+                <span class="current">{{ num }}</span>
+                {% elif num > logs.number|add:'-3' and num < logs.number|add:'3' %}
+                <a href="?page={{ num }}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if success_filter %}&success={{ success_filter }}{% endif %}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if logs.has_next %}
+            <a href="?page={{ logs.next_page_number }}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if success_filter %}&success={{ success_filter }}{% endif %}">&gt;</a>
+            <a href="?page={{ logs.paginator.num_pages }}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if success_filter %}&success={{ success_filter }}{% endif %}">&raquo;</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-history"></i>
+            <h3>Nenhum log encontrado</h3>
+            <p>Tente ajustar os filtros de busca.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Detalhes -->
+<div class="modal-overlay" id="logModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-info-circle"></i> Detalhes do Log</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="logModalBody">
+            <p style="color: #8892b0;">Carregando...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showLogDetail(logId) {
+        fetch(`/audit/${logId}/detail/`)
+            .then(response => response.json())
+            .then(data => {
+                const body = document.getElementById('logModalBody');
+                body.innerHTML = `
+                    <div class="detail-row">
+                        <span class="detail-label">Data/Hora</span>
+                        <span class="detail-value">${data.timestamp}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Usuario</span>
+                        <span class="detail-value">${data.user_full_name || data.user}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Acao</span>
+                        <span class="detail-value">${data.action}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Recurso</span>
+                        <span class="detail-value">${data.resource_type || '-'} ${data.resource_id ? '#' + data.resource_id : ''}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">IP</span>
+                        <span class="detail-value">${data.ip_address}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">User Agent</span>
+                        <span class="detail-value">${data.user_agent || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value">${data.success ? '<span style="color:#00ff88">Sucesso</span>' : '<span style="color:#ff0055">Falha</span>'}</span>
+                    </div>
+                    ${data.error_message ? `
+                    <div class="detail-row">
+                        <span class="detail-label">Erro</span>
+                        <span class="detail-value" style="color:#ff0055">${data.error_message}</span>
+                    </div>
+                    ` : ''}
+                    <div class="detail-row">
+                        <span class="detail-label">Detalhes</span>
+                        <span class="detail-value"><pre>${JSON.stringify(data.details, null, 2)}</pre></span>
+                    </div>
+                `;
+                document.getElementById('logModal').classList.add('active');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    function closeModal() {
+        document.getElementById('logModal').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    document.getElementById('logModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+</script>
+{% endblock %}

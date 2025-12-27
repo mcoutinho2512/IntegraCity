@@ -1,0 +1,458 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-container {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        color: #00D4FF;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-action-header {
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-action-header.primary {
+        background: linear-gradient(135deg, #00D4FF, #B537F2);
+        color: #fff;
+    }
+
+    .btn-action-header.secondary {
+        background: transparent;
+        border: 1px solid rgba(0, 212, 255, 0.5);
+        color: #00D4FF;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .profile-card {
+        background: rgba(0, 20, 40, 0.8);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00D4FF, #B537F2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 0 auto 20px;
+        border: 3px solid rgba(0, 212, 255, 0.5);
+    }
+
+    .profile-name {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.3rem;
+        color: #fff;
+        margin-bottom: 5px;
+    }
+
+    .profile-username {
+        color: #8892b0;
+        margin-bottom: 15px;
+    }
+
+    .profile-role {
+        display: inline-block;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+    }
+
+    .profile-role.superadmin {
+        background: rgba(181, 55, 242, 0.2);
+        color: #B537F2;
+        border: 1px solid #B537F2;
+    }
+
+    .profile-role.admin {
+        background: rgba(0, 212, 255, 0.2);
+        color: #00D4FF;
+        border: 1px solid #00D4FF;
+    }
+
+    .profile-role.operator_senior {
+        background: rgba(0, 255, 136, 0.2);
+        color: #00ff88;
+        border: 1px solid #00ff88;
+    }
+
+    .profile-role.operator {
+        background: rgba(255, 152, 0, 0.2);
+        color: #ff9800;
+        border: 1px solid #ff9800;
+    }
+
+    .profile-role.viewer {
+        background: rgba(136, 146, 176, 0.2);
+        color: #8892b0;
+        border: 1px solid #8892b0;
+    }
+
+    .profile-status {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .status-item {
+        text-align: center;
+    }
+
+    .status-item .status-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .status-item .status-label {
+        font-size: 0.8rem;
+        color: #8892b0;
+        text-transform: uppercase;
+    }
+
+    .status-item.active .status-value {
+        color: #00ff88;
+    }
+
+    .status-item.inactive .status-value {
+        color: #ff0055;
+    }
+
+    .status-item.locked .status-value {
+        color: #ff9800;
+    }
+
+    .info-card {
+        background: rgba(0, 20, 40, 0.8);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
+    }
+
+    .info-card-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+        color: #B537F2;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .info-row {
+        display: flex;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        flex: 0 0 150px;
+        color: #8892b0;
+        font-size: 0.9rem;
+    }
+
+    .info-value {
+        flex: 1;
+        color: #ccd6f6;
+    }
+
+    .permissions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .permission-card {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        padding: 15px;
+    }
+
+    .permission-resource {
+        font-weight: 600;
+        color: #00D4FF;
+        margin-bottom: 8px;
+        text-transform: capitalize;
+    }
+
+    .permission-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .permission-action {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        background: rgba(0, 255, 136, 0.2);
+        color: #00ff88;
+        border-radius: 10px;
+    }
+
+    .logs-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .log-item {
+        display: flex;
+        padding: 12px;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        gap: 15px;
+    }
+
+    .log-item:hover {
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .log-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .log-icon.login { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+    .log-icon.logout { background: rgba(136, 146, 176, 0.2); color: #8892b0; }
+    .log-icon.edit { background: rgba(0, 212, 255, 0.2); color: #00D4FF; }
+    .log-icon.error { background: rgba(255, 0, 85, 0.2); color: #ff0055; }
+
+    .log-content {
+        flex: 1;
+    }
+
+    .log-action {
+        color: #ccd6f6;
+        font-weight: 500;
+    }
+
+    .log-time {
+        color: #8892b0;
+        font-size: 0.85rem;
+    }
+
+    .log-ip {
+        color: #8892b0;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-user"></i>
+            {{ page_title }}
+        </h1>
+        <div class="header-actions">
+            <a href="{% url 'user_edit' user_obj.id %}" class="btn-action-header primary">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{% url 'user_permissions' user_obj.id %}" class="btn-action-header secondary">
+                <i class="fas fa-key"></i> Permissoes
+            </a>
+            <a href="{% url 'user_management' %}" class="btn-action-header secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="detail-grid">
+        <!-- Profile Card -->
+        <div>
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    {% if user_obj.first_name %}
+                    {{ user_obj.first_name.0|upper }}{{ user_obj.last_name.0|upper|default:"" }}
+                    {% else %}
+                    {{ user_obj.username.0|upper }}
+                    {% endif %}
+                </div>
+                <h2 class="profile-name">{{ user_obj.get_full_name|default:user_obj.username }}</h2>
+                <p class="profile-username">@{{ user_obj.username }}</p>
+                <span class="profile-role {{ profile.role }}">{{ profile.get_role_display }}</span>
+
+                <div class="profile-status">
+                    <div class="status-item {% if user_obj.is_active %}active{% else %}inactive{% endif %}">
+                        <div class="status-value">
+                            <i class="fas {% if user_obj.is_active %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+                        </div>
+                        <div class="status-label">{% if user_obj.is_active %}Ativo{% else %}Inativo{% endif %}</div>
+                    </div>
+                    {% if profile.is_locked %}
+                    <div class="status-item locked">
+                        <div class="status-value"><i class="fas fa-lock"></i></div>
+                        <div class="status-label">Bloqueado</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div>
+            <!-- Contact Info -->
+            <div class="info-card">
+                <h3 class="info-card-title">
+                    <i class="fas fa-address-card"></i> Informacoes de Contato
+                </h3>
+                <div class="info-row">
+                    <span class="info-label">E-mail</span>
+                    <span class="info-value">{{ user_obj.email|default:"-" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Telefone</span>
+                    <span class="info-value">{{ profile.phone|default:"-" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Departamento</span>
+                    <span class="info-value">{{ profile.department|default:"-" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Cargo</span>
+                    <span class="info-value">{{ profile.cargo|default:"-" }}</span>
+                </div>
+            </div>
+
+            <!-- Security Info -->
+            <div class="info-card">
+                <h3 class="info-card-title">
+                    <i class="fas fa-shield-alt"></i> Seguranca
+                </h3>
+                <div class="info-row">
+                    <span class="info-label">Ultimo Login</span>
+                    <span class="info-value">{{ user_obj.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Ultimo IP</span>
+                    <span class="info-value">{{ profile.last_login_ip|default:"-" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tentativas Falhas</span>
+                    <span class="info-value">{{ profile.failed_login_attempts }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Conta Criada</span>
+                    <span class="info-value">{{ user_obj.date_joined|date:"d/m/Y H:i" }}</span>
+                </div>
+                {% if profile.created_by %}
+                <div class="info-row">
+                    <span class="info-label">Criado por</span>
+                    <span class="info-value">{{ profile.created_by.get_full_name|default:profile.created_by.username }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Permissions -->
+            <div class="info-card">
+                <h3 class="info-card-title">
+                    <i class="fas fa-key"></i> Permissoes do Perfil
+                </h3>
+                <div class="permissions-grid">
+                    {% for resource, actions in role_permissions.items %}
+                    <div class="permission-card">
+                        <div class="permission-resource">{{ resource }}</div>
+                        <div class="permission-actions">
+                            {% for action in actions %}
+                            <span class="permission-action">{{ action }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p style="color: #8892b0;">Sem permissoes definidas para este perfil.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="info-card">
+                <h3 class="info-card-title">
+                    <i class="fas fa-history"></i> Atividade Recente
+                </h3>
+                <div class="logs-list">
+                    {% for log in recent_logs %}
+                    <div class="log-item">
+                        <div class="log-icon {% if 'login' in log.action %}login{% elif 'logout' in log.action %}logout{% elif log.success %}edit{% else %}error{% endif %}">
+                            <i class="fas {% if 'login' in log.action %}fa-sign-in-alt{% elif 'logout' in log.action %}fa-sign-out-alt{% elif log.success %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <div class="log-content">
+                            <div class="log-action">{{ log.get_action_display }}</div>
+                            <div class="log-time">{{ log.timestamp|date:"d/m/Y H:i:s" }}</div>
+                            <div class="log-ip">IP: {{ log.ip_address }}</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p style="color: #8892b0; padding: 20px; text-align: center;">Nenhuma atividade registrada.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

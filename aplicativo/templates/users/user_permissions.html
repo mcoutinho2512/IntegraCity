@@ -1,0 +1,407 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    .permissions-container {
+        padding: 20px;
+        max-width: 1000px;
+        margin: 0 auto;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        color: #00D4FF;
+    }
+
+    .btn-back {
+        background: transparent;
+        border: 1px solid rgba(0, 212, 255, 0.5);
+        color: #00D4FF;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .user-info-box {
+        background: rgba(0, 20, 40, 0.8);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .user-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00D4FF, #B537F2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .user-details .user-name {
+        font-size: 1.3rem;
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .user-details .user-role {
+        display: inline-block;
+        margin-top: 5px;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+
+    .user-role.superadmin { background: rgba(181, 55, 242, 0.2); color: #B537F2; border: 1px solid #B537F2; }
+    .user-role.admin { background: rgba(0, 212, 255, 0.2); color: #00D4FF; border: 1px solid #00D4FF; }
+    .user-role.operator_senior { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid #00ff88; }
+    .user-role.operator { background: rgba(255, 152, 0, 0.2); color: #ff9800; border: 1px solid #ff9800; }
+    .user-role.viewer { background: rgba(136, 146, 176, 0.2); color: #8892b0; border: 1px solid #8892b0; }
+
+    .info-note {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 25px;
+        color: #8892b0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .info-note i {
+        color: #00D4FF;
+        font-size: 1.2rem;
+    }
+
+    .permissions-card {
+        background: rgba(0, 20, 40, 0.8);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        padding: 25px;
+    }
+
+    .permissions-section {
+        margin-bottom: 30px;
+    }
+
+    .permissions-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+        color: #B537F2;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(181, 55, 242, 0.3);
+    }
+
+    .permissions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .permission-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .permission-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .permission-resource {
+        font-weight: 600;
+        color: #00D4FF;
+        font-size: 1.1rem;
+        text-transform: capitalize;
+    }
+
+    .permission-toggle-all {
+        font-size: 0.8rem;
+        color: #8892b0;
+        cursor: pointer;
+    }
+
+    .permission-toggle-all:hover {
+        color: #00D4FF;
+    }
+
+    .permission-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .permission-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .permission-checkbox {
+        width: 18px;
+        height: 18px;
+        accent-color: #00D4FF;
+        cursor: pointer;
+    }
+
+    .permission-checkbox:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .permission-label {
+        color: #ccd6f6;
+        cursor: pointer;
+        flex: 1;
+    }
+
+    .permission-label.disabled {
+        color: #8892b0;
+        cursor: not-allowed;
+    }
+
+    .permission-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: rgba(0, 255, 136, 0.2);
+        color: #00ff88;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #00D4FF, #B537F2);
+        color: #fff;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-cancel {
+        background: transparent;
+        border: 1px solid #8892b0;
+        color: #8892b0;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alert.success {
+        background: rgba(0, 255, 136, 0.1);
+        border: 1px solid #00ff88;
+        color: #00ff88;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="permissions-container">
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert {{ message.tags }}">
+            <i class="fas fa-check-circle"></i> {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-key"></i>
+            {{ page_title }}
+        </h1>
+        <a href="{% url 'user_management' %}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="user-info-box">
+        <div class="user-avatar">
+            {% if user_obj.first_name %}
+            {{ user_obj.first_name.0|upper }}{{ user_obj.last_name.0|upper|default:"" }}
+            {% else %}
+            {{ user_obj.username.0|upper }}
+            {% endif %}
+        </div>
+        <div class="user-details">
+            <div class="user-name">{{ user_obj.get_full_name|default:user_obj.username }}</div>
+            <span class="user-role {{ profile.role }}">{{ profile.get_role_display }}</span>
+        </div>
+    </div>
+
+    <div class="info-note">
+        <i class="fas fa-info-circle"></i>
+        <span>As permissoes marcadas com <span class="permission-badge">PADRAO</span> sao herdadas do perfil "{{ profile.get_role_display }}". Permissoes customizadas podem ser adicionadas abaixo.</span>
+    </div>
+
+    <form method="post" id="permissionsForm">
+        {% csrf_token %}
+        <input type="hidden" name="permissions" id="permissionsInput" value="{{ current_permissions_json }}">
+
+        <div class="permissions-card">
+            <!-- Role Permissions (readonly) -->
+            <div class="permissions-section">
+                <h3 class="section-title"><i class="fas fa-shield-alt"></i> Permissoes do Perfil (Somente Leitura)</h3>
+                <div class="permissions-grid">
+                    {% for resource, actions in role_permissions.items %}
+                    <div class="permission-card">
+                        <div class="permission-card-header">
+                            <span class="permission-resource">{{ resource }}</span>
+                        </div>
+                        <div class="permission-actions">
+                            {% for action in actions %}
+                            <div class="permission-item">
+                                <input type="checkbox" class="permission-checkbox" checked disabled>
+                                <span class="permission-label disabled">{{ action }}</span>
+                                <span class="permission-badge">PADRAO</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p style="color: #8892b0;">Nenhuma permissao padrao para este perfil.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Custom Permissions -->
+            <div class="permissions-section">
+                <h3 class="section-title"><i class="fas fa-plus-circle"></i> Permissoes Customizadas</h3>
+                <div class="permissions-grid">
+                    {% for resource_code, resource_name in all_resources %}
+                    <div class="permission-card">
+                        <div class="permission-card-header">
+                            <span class="permission-resource">{{ resource_name }}</span>
+                            <span class="permission-toggle-all" onclick="toggleAllActions('{{ resource_code }}')">Marcar/Desmarcar</span>
+                        </div>
+                        <div class="permission-actions" data-resource="{{ resource_code }}">
+                            {% for action_code, action_name in all_actions %}
+                            <div class="permission-item">
+                                <input type="checkbox"
+                                       class="permission-checkbox custom-perm"
+                                       data-resource="{{ resource_code }}"
+                                       data-action="{{ action_code }}"
+                                       id="perm_{{ resource_code }}_{{ action_code }}"
+                                       onchange="updatePermissions()">
+                                <label for="perm_{{ resource_code }}_{{ action_code }}" class="permission-label">{{ action_name }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'user_management' %}" class="btn-cancel">Cancelar</a>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-save"></i> Salvar Permissoes
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load current permissions
+    const currentPermissions = {{ current_permissions_json|safe }};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set checkboxes based on current permissions
+        for (const [resource, actions] of Object.entries(currentPermissions)) {
+            for (const action of actions) {
+                const checkbox = document.getElementById(`perm_${resource}_${action}`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            }
+        }
+    });
+
+    function updatePermissions() {
+        const permissions = {};
+        document.querySelectorAll('.custom-perm:checked').forEach(checkbox => {
+            const resource = checkbox.dataset.resource;
+            const action = checkbox.dataset.action;
+            if (!permissions[resource]) {
+                permissions[resource] = [];
+            }
+            permissions[resource].push(action);
+        });
+        document.getElementById('permissionsInput').value = JSON.stringify(permissions);
+    }
+
+    function toggleAllActions(resource) {
+        const checkboxes = document.querySelectorAll(`.custom-perm[data-resource="${resource}"]`);
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        checkboxes.forEach(cb => cb.checked = !allChecked);
+        updatePermissions();
+    }
+</script>
+{% endblock %}
