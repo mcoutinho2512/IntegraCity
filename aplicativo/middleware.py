@@ -1,20 +1,25 @@
 ﻿from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
+from django.conf import settings
 import time
 
 class SecurityMiddleware(MiddlewareMixin):
     """Middleware de segurança - APÓS AuthenticationMiddleware"""
     
-    # URLs públicas (que não precisam de login)
-    PUBLIC_URLS = [
+    # URLs publicas (que nao precisam de login)
+    # SEGURANCA: APIs restritas - apenas endpoints especificos sao publicos
+    PUBLIC_URLS = getattr(settings, 'PUBLIC_URLS', [
         '/login/',
         '/logout/',
         '/admin/',
         '/static/',
         '/media/',
-        '/api/',
-    ]
+        # APIs publicas especificas (apenas leitura, sem dados sensiveis)
+        '/api/estagio/',
+        '/api/estagio-atual/',
+        '/api/estagio-externo/',
+    ])
     
     def process_view(self, request, view_func, view_args, view_kwargs):
         """
@@ -36,6 +41,11 @@ class SecurityMiddleware(MiddlewareMixin):
     
     def process_response(self, request, response):
         """Adicionar headers de segurança"""
+        path = getattr(request, 'path_info', request.path)
+        if path.startswith('/api/camera/') and path.endswith('/stream/') and request.GET.get('embed') == '1':
+            response['X-Frame-Options'] = 'SAMEORIGIN'
+            return response
+
         # Prevenir clickjacking
         response['X-Frame-Options'] = 'DENY'
         

@@ -274,150 +274,6 @@ def api_eventos(request):
 
 
 # ============================================
-# APIs - OCORRÊNCIAS
-# ============================================
-
-@api_view(['GET'])
-def api_ocorrencias_hoje(request):
-    """
-    API REST - Ocorrências de HOJE
-    Usando o modelo Ocorrencias existente
-    """
-    try:
-        # Data de hoje
-        hoje = timezone.now().date()
-        inicio_dia = timezone.make_aware(datetime.combine(hoje, datetime.min.time()))
-        fim_dia = timezone.make_aware(datetime.combine(hoje, datetime.max.time()))
-        
-        # Buscar ocorrências ABERTAS (não concluídas)
-        ocorrencias = Ocorrencias.objects.exclude(
-        status='Concluído'
-        ).order_by('-data') 
-        
-        total = ocorrencias.count()
-        
-        # Mapear prioridades para cores
-        cores_prioridade = {
-            'SECUNDÁRIO': '#10b981',  # Verde
-            'BAIXO': '#10b981',        # Verde
-            'MEDIO': '#f59e0b',        # Amarelo
-            'ALTO': '#ef4444',         # Vermelho
-            'CRITICO': '#991b1b',      # Vermelho escuro
-        }
-        
-        # Mapear tipos para ícones
-        icones_tipo = {
-            'ACIDENTE': 'bi-car-front-fill',
-            'ALAGAMENTO': 'bi-water',
-            'DESLIZAMENTO': 'bi-exclamation-triangle-fill',
-            'QUEDA DE ÁRVORE': 'bi-tree-fill',
-            'INCÊNDIO': 'bi-fire',
-            'VAZAMENTO': 'bi-droplet-fill',
-            'BURACO': 'bi-sign-stop-fill',
-        }
-        
-        # Formatar dados
-        dados = []
-        for occ in ocorrencias:
-            # Determinar ícone baseado no tipo de incidente
-            icone = 'bi-exclamation-circle-fill'  # padrão
-            if occ.incidente:
-                incidente_upper = occ.incidente.upper()
-                for key, icon in icones_tipo.items():
-                    if key in incidente_upper:
-                        icone = icon
-                        break
-            
-            dados.append({
-                'id': occ.id,
-                'id_c': occ.id_c or '',
-                'tipo': occ.incidente or 'Outros',
-                'descricao': occ.obs or 'Sem descrição',
-                'endereco': occ.log or 'Endereço não informado',
-                'bairro': occ.bairro or '',
-                'lat': float(occ.lat) if occ.lat else None,
-                'lng': float(occ.lon) if occ.lon else None,
-                'prioridade': occ.prio or 'MEDIO',
-                'cor_prioridade': cores_prioridade.get(occ.prio, '#6b7280'),
-                'status': occ.status or 'Acionado',
-                'icone': icone,
-                'data_criacao': occ.data.isoformat() if occ.data else None,
-                'esta_aberta': occ.status != 'Concluído' if occ.status else True,
-            })
-        
-        # Estatísticas
-        abertas = ocorrencias.exclude(status='Concluído').count()
-        concluidas = ocorrencias.filter(status='Concluído').count()
-        
-        return Response({
-            'success': True,
-            'data': dados,
-            'estatisticas': {
-                'total': total,
-                'abertas': abertas,
-                'concluidas': concluidas,
-            },
-            'filtro': {
-                'tipo': 'hoje',
-                'data': hoje.isoformat(),
-            },
-            'timestamp': timezone.now().isoformat(),
-        })
-        
-    except Exception as e:
-        logger.error(f'❌ Erro ao buscar ocorrências: {str(e)}', exc_info=True)
-        return Response({
-            'success': False,
-            'error': str(e),
-            'data': [],
-        }, status=500)
-
-@csrf_exempt
-def api_ocorrencias(request):
-    """
-    API de ocorrências - APENAS DO DIA ATUAL
-    """
-    try:
-        from django.utils import timezone  # ← Importar do Django
-        
-        # MOSTRAR TODAS AS ABERTAS
-        ocorrencias = Ocorrencias.objects.exclude(
-        status='Concluído'
-        ).order_by('-data')  # Mais recentes primeiro   
-        
-        total = ocorrencias.count()
-        
-        data = []
-        for ocorrencia in ocorrencias:
-            data.append({
-                'id': ocorrencia.id,
-                'id_c': ocorrencia.id_c,
-                'incidente': ocorrencia.incidente,
-                'location': ocorrencia.location,
-                'lat': float(ocorrencia.lat) if ocorrencia.lat else None,
-                'lon': float(ocorrencia.lon) if ocorrencia.lon else None,
-                'prio': ocorrencia.prio,
-                'status': ocorrencia.status,
-                'data': ocorrencia.data.isoformat() if ocorrencia.data else None,
-            })
-        
-        return JsonResponse({
-            'success': True,
-            'data': data,
-            'count': total,
-            'filtro': 'hoje',
-            'data_filtro': hoje.isoformat()
-        })
-        
-    except Exception as e:
-        logger.error(f'Erro ao buscar ocorrências: {str(e)}')
-        return JsonResponse({
-            'success': False,
-            'error': str(e),
-            'data': []
-        }, status=500)
-
-# ============================================
 # APIs - OUTRAS (Placeholder para expansão futura)
 # ============================================
 
@@ -490,19 +346,6 @@ def cor_dashboard_hightech_view(request):
         estagio = 1
         estagio_label = 'Normalidade'
 
-    # Ocorrencias abertas (sem data_f)
-    try:
-        ocorrencias = Ocorrencias.objects.filter(data_f__isnull=True).order_by('-data')[:100]
-        ocorrencias_count = ocorrencias.count()
-        ocorrencias_hoje = Ocorrencias.objects.filter(
-            data__date=date.today(),
-            data_f__isnull=True
-        ).count()
-    except:
-        ocorrencias = []
-        ocorrencias_count = 0
-        ocorrencias_hoje = 0
-
     # Eventos de hoje
     try:
         eventos_count = Evento.objects.filter(data__gte=date.today()).count()
@@ -562,12 +405,6 @@ def cor_dashboard_hightech_view(request):
         # Estagio
         'estagio': estagio,
         'estagio_label': estagio_label,
-
-        # Ocorrencias
-        'ocorrencias': ocorrencias,
-        'ocorrencias_count': ocorrencias_count,
-        'ocorrencias_hoje': ocorrencias_hoje,
-        'ocorrencias_criticas': 0,
 
         # Eventos
         'eventos_count': eventos_count,
@@ -824,36 +661,6 @@ def api_estagio(request):
         }, status=500)
 
 
-@api_view(['GET'])
-def inserir_ocorrencia_mobile(request):
-    """
-    Endpoint compatível com o sistema antigo
-    Recebe via GET: ?lat=X&lon=Y&descricao=Z&tipo=W
-    """
-    try:
-        ocorrencia = Ocorrencias.objects.create(
-            incidente=request.GET.get('descricao', 'Ocorrência via mobile'),
-            lat=request.GET.get('lat'),
-            lon=request.GET.get('lon'),
-            tipo_forma=request.GET.get('tipo', 'Outros'),
-            prio=request.GET.get('prioridade', 'media'),
-            bairro=request.GET.get('bairro', ''),
-            status='Em andamento',
-            data=timezone.now()
-        )
-
-        return Response({
-            'success': True,
-            'message': 'Ocorrência registrada',
-            'id': ocorrencia.id
-        })
-
-    except Exception as e:
-        return Response({
-            'success': False,
-            'error': str(e)
-        }, status=400)
-
 @never_cache
 def calor_api(request):
     """
@@ -861,6 +668,16 @@ def calor_api(request):
     Retorna o alerta de calor atual
     """
     try:
+        # Fonte externa prioritaria
+        try:
+            response = requests.get('https://aplicativo.cocr.com.br/calor_api', timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, dict) and data.get('success') is True:
+                    return JsonResponse(data)
+        except Exception:
+            pass
+
         # Buscar último alerta ativo (sem data_f)
         alerta = Calor.objects.filter(data_f__isnull=True).latest('id')
         
@@ -1080,299 +897,6 @@ def waze_data_view(request):
             'traceback': traceback.format_exc()
         }, status=500)
         
-@csrf_exempt
-def api_ocorrencias(request):
-    """
-    API de ocorrências - APENAS DE HOJE
-    """
-    try:
-        from django.utils import timezone
-        from datetime import datetime
-        
-        # FILTRAR APENAS HOJE
-        hoje = timezone.now().date()
-        inicio_dia = timezone.make_aware(datetime.combine(hoje, datetime.min.time()))
-        fim_dia = timezone.make_aware(datetime.combine(hoje, datetime.max.time()))
-        
-        # MOSTRAR TODAS AS ABERTAS
-        ocorrencias = Ocorrencias.objects.exclude(
-        status='Concluído'
-        ).order_by('-data')
-        
-        total = ocorrencias.count()
-        
-        # Cores
-        cores_prioridade = {
-            'SECUNDÁRIO': '#10b981',
-            'BAIXO': '#10b981',
-            'MEDIO': '#f59e0b',
-            'ALTO': '#ef4444',
-            'CRITICO': '#991b1b',
-        }
-        
-        # Ícones
-        icones = {
-            'ACIDENTE': 'bi-car-front-fill',
-            'ALAGAMENTO': 'bi-water',
-            'DESLIZAMENTO': 'bi-exclamation-triangle-fill',
-            'QUEDA': 'bi-tree-fill',
-            'INCÊNDIO': 'bi-fire',
-            'VAZAMENTO': 'bi-droplet-fill',
-            'BURACO': 'bi-sign-stop-fill',
-        }
-        
-        data = []
-        for occ in ocorrencias:
-            # Determinar ícone
-            icone = 'bi-exclamation-circle-fill'
-            if occ.incidente:
-                for key, icon in icones.items():
-                    if key in occ.incidente.upper():
-                        icone = icon
-                        break
-            
-            data.append({
-                'id': occ.id,
-                'id_c': occ.id_c or '',
-                'tipo': occ.incidente or 'Outros',
-                'descricao': occ.obs or 'Sem descrição',
-                'endereco': occ.log or 'Endereço não informado',
-                'bairro': occ.bairro or '',
-                'lat': float(occ.lat) if occ.lat else None,
-                'lng': float(occ.lon) if occ.lon else None,
-                'prioridade': occ.prio or 'MEDIO',
-                'cor_prioridade': cores_prioridade.get(occ.prio, '#6b7280'),
-                'status': occ.status or 'Acionado',
-                'icone': icone,
-                'data_criacao': occ.data.isoformat() if occ.data else None,
-            })
-        
-        abertas = ocorrencias.exclude(status='Concluído').count()
-        
-        return JsonResponse({
-            'success': True,
-            'data': data,
-            'count': total,
-            'abertas': abertas,
-            'filtro': 'HOJE - ' + hoje.isoformat(),
-        })
-        
-    except Exception as e:
-        logger.error(f'Erro: {str(e)}')
-        return JsonResponse({
-            'success': False,
-            'error': str(e),
-            'data': []
-        }, status=500)
-    
-
-
-# ============================================
-# API OCORRÊNCIAS - TEMPO REAL (HEXAGON)
-# ============================================
-
-@csrf_exempt
-def api_ocorrencias_tempo_real(request):
-    """
-    API de ocorrências - BUSCA DIRETO DA API HEXAGON EM TEMPO REAL
-    Retorna apenas ocorrências ABERTAS de HOJE
-    """
-    import requests
-    from datetime import datetime, date
-    from django.utils import timezone
-    
-    HEXAGON_API_BASE_URL = "https://api.corio-oncall.com.br/hxgnEvents/api"
-    HEXAGON_API_USERNAME = "APIOpenedEvent"
-    HEXAGON_API_PASSWORD = "12345"
-    
-    # Mapeamento de tipos de eventos
-    EVENT_DICT = {
-        "POP01": "ACIDENTE SEM VITIMA",
-        "POP02": "ACIDENTE COM VITIMA",
-        "POP03": "ACIDENTE COM OBITO",
-        "POP04": "INCENDIO EM VEICULO",
-        "POP05": "BOLSAO DE AGUA EM VIA",
-        "POP06": "MANIFESTACAO EM LOCAL PUBLICO",
-        "POP07": "INCENDIO EM IMOVEL",
-        "POP08": "SINAIS DE TRANSITO COM MAU FUNCIONAMENTO",
-        "POP09": "REINTEGRACAO DE POSSE",
-        "POP10": "QUEDA DE ARVORE",
-        "POP11": "QUEDA DE POSTE",
-        "POP12": "ACIDENTE COM QUEDA DE CARGA",
-        "POP13": "INCENDIO NO ENTORNO DE VIAS PUBLICAS",
-        "POP14": "INCENDIO DENTRO DE TUNEIS",
-        "POP15": "VAZAMENTO DE AGUA E ESGOTO",
-        "POP16": "FALTA CRITICA DE ENERGIA OU APAGAO",
-        "POP17": "IMPLOSAO",
-        "POP18": "ESCAPAMENTO DE GAS",
-        "POP19": "EVENTO NAO PROGRAMADO",
-        "POP20": "ATROPELAMENTO",
-        "POP21": "AFUNDAMENTO DE PISTA OU BURACO NA VIA",
-        "POP22": "ABALROAMENTO",
-        "POP23": "OBRA/MANUTENÇÃO EM LOCAL PUBLICO",
-        "POP24": "OPERACAO POLICIAL",
-        "POP25": "ACIONAMENTO DE SIRENES",
-        "POP26": "ALAGAMENTO",
-        "POP27": "ENCHENTE OU INUNDACAO",
-        "POP28": "LAMINA DE AGUA",
-        "POP29": "ACIDENTE AMBIENTAL",
-        "POP30": "INCIDENTE COM BUEIRO",
-        "POP31": "QUEDA DE ARVORE SOBRE FIACAO",
-        "POP32": "RESIDUOS NA VIA",
-        "POP33": "INCENDIO EM VEGETACAO",
-        "POP34": "DESLIZAMENTO",
-        "POP35": "QUEDA DE ESTRUTURA DE ALVENARIA",
-        "POP36": "RESGATE OU REMOCAO DE ANIMAIS TERRESTRES E AEREOS",
-        "POP37": "REMOCAO DE ANIMAIS MORTOS NA AREIA",
-        "POP38": "RESGATE DE ANIMAL MARINHO PRESO EM REDE OU ENCALHADO",
-        "POP39": "ANIMAL EM LOCAL PUBLICO",
-        "POP40": "QUEDA DE CARGA VIVA DE GRANDE PORTE",
-        "POP41": "QUEDA DE CARGA VIVA DE PEQUENO PORTE",
-        "POP42": "PROTOCOLO DE VIA",
-        "POP43": "PROTOCOLO DE CICLOVIA",
-        "POP44": "ENGUICO NA VIA",
-        "POP45": "PROTOCOLO DE CALOR - NC2",
-        "POP46": "PROTOCOLO DE CALOR - NC3",
-        "POP47": "PROTOCOLO DE CALOR - NC4",
-        "POP48": "PROTOCOLO DE CALOR - NC5",
-        "POP49": "PROTOCOLO DE PARQUES",
-        "POP50": "OCORRENCIA EM PARQUE AEROPORTUARIO",
-        "POP51": "INTERRUPÇÃO PARCIAL OU TOTAL DE MODAL DE TRANSPORTE",
-        "POP52": "FIAÇÃO PARTIDA/ARREADA",
-        "POP53": "RESSACA/MARÉ ALTA"
-    }
-    
-    PRIORIDADE_DICT = {
-        1: "BAIXA",
-        2: "MÉDIA",
-        3: "ALTA",
-        4: "MUITO ALTA"
-    }
-    
-    CORES_PRIORIDADE = {
-        'BAIXA': '#10b981',
-        'MÉDIA': '#f59e0b',
-        'ALTA': '#ef4444',
-        'MUITO ALTA': '#991b1b',
-    }
-    
-    ICONES = {
-        'ACIDENTE': 'bi-car-front-fill',
-        'ALAGAMENTO': 'bi-water',
-        'DESLIZAMENTO': 'bi-exclamation-triangle-fill',
-        'QUEDA': 'bi-tree-fill',
-        'INCENDIO': 'bi-fire',
-        'INCÊNDIO': 'bi-fire',
-        'VAZAMENTO': 'bi-droplet-fill',
-        'BURACO': 'bi-sign-stop-fill',
-        'AFUNDAMENTO': 'bi-sign-stop-fill',
-    }
-    
-    try:
-        # 1. AUTENTICAR NA API HEXAGON
-        auth_url = f"{HEXAGON_API_BASE_URL}/Events/Login"
-        auth_payload = {"UserName": HEXAGON_API_USERNAME, "Password": HEXAGON_API_PASSWORD}
-        
-        auth_response = requests.post(auth_url, json=auth_payload, timeout=10)
-        auth_response.raise_for_status()
-        
-        token = auth_response.json().get("AccessToken")
-        if not token:
-            raise Exception("Falha na autenticação - Token não recebido")
-        
-        # 2. BUSCAR OCORRÊNCIAS ABERTAS
-        events_url = f"{HEXAGON_API_BASE_URL}/Events/OpenedEvents"
-        events_payload = {"token": token}
-        
-        events_response = requests.post(events_url, json=events_payload, timeout=15)
-        events_response.raise_for_status()
-        
-        raw_events = events_response.json()
-        
-        # 3. FILTRAR APENAS AS DE HOJE
-        hoje = date.today()
-        
-        ocorrencias = []
-        for item in raw_events:
-            # Pegar data do evento
-            created_date = item.get("CreatedDate", "")
-            if not created_date:
-                continue
-            
-            try:
-                # Parse da data (formato: 2025-11-24T10:30:00)
-                dt = datetime.fromisoformat(created_date.replace('Z', '+00:00'))
-                event_date = dt.date()
-                
-                # Filtrar apenas de HOJE
-                if event_date != hoje:
-                    continue
-                    
-            except Exception:
-                continue
-            
-            # Pegar tipo do evento
-            tipo_code = item.get("AgencyEventTypeCode", "")
-            tipo = EVENT_DICT.get(tipo_code, tipo_code or "OUTROS")
-            
-            # Pegar prioridade
-            prio_num = item.get("Priority", 1)
-            prioridade = PRIORIDADE_DICT.get(prio_num, "MÉDIA")
-            
-            # Determinar ícone
-            icone = 'bi-exclamation-circle-fill'
-            for key, icon in ICONES.items():
-                if key in tipo.upper():
-                    icone = icon
-                    break
-            
-            ocorrencias.append({
-                'id': item.get("EventId"),
-                'id_c': item.get("EventId"),
-                'tipo': tipo,
-                'descricao': item.get("Description") or tipo,
-                'endereco': item.get("Location") or 'Endereço não informado',
-                'bairro': item.get("District") or '',
-                'lat': item.get("Latitude"),
-                'lng': item.get("Longitude"),
-                'prioridade': prioridade,
-                'cor_prioridade': CORES_PRIORIDADE.get(prioridade, '#6b7280'),
-                'status': 'Em andamento',
-                'icone': icone,
-                'data_criacao': created_date,
-            })
-        
-        # Ordenar por data (mais recentes primeiro)
-        ocorrencias.sort(key=lambda x: x['data_criacao'] or '', reverse=True)
-        
-        total = len(ocorrencias)
-        
-        return JsonResponse({
-            'success': True,
-            'data': ocorrencias,
-            'count': total,
-            'abertas': total,
-            'filtro': f'HOJE (TEMPO REAL) - {hoje.isoformat()}',
-            'fonte': 'API Hexagon',
-            'timestamp': timezone.now().isoformat()
-        })
-        
-    except requests.exceptions.Timeout:
-        logger.error('Timeout ao conectar com API Hexagon')
-        return JsonResponse({
-            'success': False,
-            'error': 'Timeout ao conectar com API Hexagon',
-            'data': []
-        }, status=504)
-        
-    except Exception as e:
-        logger.error(f'Erro ao buscar ocorrências tempo real: {str(e)}')
-        return JsonResponse({
-            'success': False,
-            'error': str(e),
-            'data': []
-        }, status=500)
-    
 # ===== MATRIZ DECISÓRIA =====
 def matriz_decisoria(request):
     return render(request, 'mapa_novo/matriz_decisoria.html')
@@ -1400,50 +924,133 @@ def api_matriz_decisoria(request):
 def api_cameras(request):
     """API de câmeras de monitoramento"""
     try:
-        from aplicativo.models import Cameras
-        
         # Parâmetros
         bairro = request.GET.get('bairro', None)
         status = request.GET.get('status', None)
         search = request.GET.get('search', None)
-        
-        # Query
+
+        # Prioridade: API externa (lista completa)
+        try:
+            response = requests.get('https://aplicativo.cocr.com.br/camera_api_json', timeout=15)
+            response.raise_for_status()
+            payload = response.json()
+            cameras = payload.get('cameras', [])
+            total_raw = len(cameras)
+            total_raw_fixas = 0
+            total_raw_moveis = 0
+
+            data = []
+            bairros_set = set()
+
+            for cam in cameras:
+                nome = cam.get('nome') or cam.get('name') or f"Câmera {cam.get('id')}"
+                nome_lower = nome.lower() if isinstance(nome, str) else ""
+                fixa = "fixa" in nome_lower
+                if fixa:
+                    total_raw_fixas += 1
+                else:
+                    total_raw_moveis += 1
+
+                lat = cam.get('lat') or cam.get('latitude') or cam.get('y')
+                lon = cam.get('lon') or cam.get('lng') or cam.get('longitude') or cam.get('x')
+                bairro_cam = cam.get('bairro') or cam.get('local') or 'Sem bairro'
+                status_cam = cam.get('status') or cam.get('situacao') or 'ativa'
+                camera_id = cam.get('id_c') or cam.get('id')
+                camera_id_str = str(camera_id) if camera_id is not None else ""
+
+                if lat and lon:
+                    try:
+                        lat = float(lat)
+                        lon = float(lon)
+                    except (TypeError, ValueError):
+                        continue
+
+                    if lat == 0 or lon == 0:
+                        continue
+
+                    if bairro and bairro.lower() not in str(bairro_cam).lower():
+                        continue
+
+                    if status and status.lower() not in str(status_cam).lower():
+                        continue
+
+                    if search and search.lower() not in nome_lower:
+                        continue
+
+                    if not cam.get('stream_url') and not cam.get('url') and camera_id_str.isdigit():
+                        camera_id_str = camera_id_str.zfill(6)
+
+                    data.append({
+                        'id': cam.get('id'),
+                        'id_c': cam.get('id_c') or cam.get('id'),
+                        'nome': nome,
+                        'bairro': bairro_cam,
+                        'lat': lat,
+                        'lng': lon,
+                        'status': status_cam,
+                        'url_stream': cam.get('stream_url') or cam.get('url') or (
+                            f'https://dev.tixxi.rio/outvideo2/?CODE={camera_id_str}&KEY=H4281'
+                            if camera_id_str.isdigit()
+                            else None
+                        ),
+                        'fixa': fixa,
+                        'tipo': 'fixa' if fixa else 'movel',
+                    })
+                    bairros_set.add(bairro_cam)
+
+            return Response({
+                'success': True,
+                'data': data,
+                'count': len(data),
+                'total_raw': total_raw,
+                'total_raw_fixas': total_raw_fixas,
+                'total_raw_moveis': total_raw_moveis,
+                'bairros': sorted(list(bairros_set))
+            })
+        except Exception as e:
+            logger.warning(f'Erro ao buscar cameras externas: {e}')
+
+        # Fallback: banco local
+        from aplicativo.models import Cameras
+
         cameras = Cameras.objects.all()
-        
-        # Filtros
+
         if bairro:
             cameras = cameras.filter(bairro__icontains=bairro)
-        
+
         if status:
             cameras = cameras.filter(status__iexact=status)
-        
+
         if search:
             cameras = cameras.filter(nome__icontains=search)
-        
-        # Serializar
+
         data = []
         bairros_set = set()
-        
+
         for cam in cameras.order_by('id_c'):
             try:
                 lat = float(cam.lat) if cam.lat else None
                 lon = float(cam.lon) if cam.lon else None
-                
+
                 if lat and lon and lat != 0 and lon != 0:
+                    nome = cam.nome or f'Câmera {cam.id_c}'
+                    fixa = "fixa" in nome.lower()
                     data.append({
                         'id': cam.id,
                         'id_c': cam.id_c,
-                        'nome': cam.nome or f'Câmera {cam.id_c}',
+                        'nome': nome,
                         'bairro': cam.bairro or 'Sem bairro',
                         'lat': lat,
                         'lng': lon,
                         'status': cam.status,
-                        'url_stream': f'https://dev.tixxi.rio/outvideo2/?CODE={cam.id_c}&KEY=H4281'
+                        'url_stream': f'https://dev.tixxi.rio/outvideo2/?CODE={cam.id_c}&KEY=H4281',
+                        'fixa': fixa,
+                        'tipo': 'fixa' if fixa else 'movel',
                     })
                     bairros_set.add(cam.bairro or 'Sem bairro')
-            except:
+            except Exception:
                 continue
-        
+
         return Response({
             'success': True,
             'data': data,
@@ -1456,6 +1063,13 @@ def api_cameras(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+@api_view(['GET'])
+def cameras_api_local(request):
+    """Compatibilidade com /api/cameras/."""
+    base_request = getattr(request, "_request", request)
+    return api_cameras(base_request)
 
 @api_view(['GET'])
 def api_sirenes(request):
@@ -1781,6 +1395,22 @@ def api_brt_linhas(request):
 
 
 @api_view(['GET'])
+def api_brt(request):
+    """Compatibilidade com /api/brt/."""
+    base_request = getattr(request, "_request", request)
+    return api_brt_linhas(base_request)
+
+
+@api_view(['GET'])
+def alertas_api(request):
+    """Compatibilidade com /api/alertas/ usando dados meteorológicos atuais."""
+    base_request = getattr(request, "_request", request)
+    response = api_alertas_meteorologicos(base_request)
+    data = response.data if hasattr(response, 'data') else response
+    return JsonResponse(data, safe=isinstance(data, dict))
+
+
+@api_view(['GET'])
 def api_metro_linhas(request):
     """API de linhas de Metrô"""
     try:
@@ -1836,6 +1466,13 @@ def api_metro_linhas(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+@api_view(['GET'])
+def api_metro(request):
+    """Compatibilidade com /api/metro/."""
+    base_request = getattr(request, "_request", request)
+    return api_metro_linhas(base_request)
 
 
 @api_view(['GET'])
@@ -2055,373 +1692,12 @@ def waze_alerts_api(request):
 
 
 @csrf_exempt
-def chuva_api(request):
-    """API de dados de chuva/pluviômetros"""
-    try:
-        # TODO: Substituir por dados reais do banco
-        # Por enquanto, dados de exemplo
-        
-        pluviometros = [
-            {
-                'id': 1,
-                'nome': 'Alto da Boa Vista',
-                'lat': -22.9667,
-                'lng': -43.2833,
-                'chuva_15min': 12.5,
-                'chuva_1h': 25.3,
-                'chuva_24h': 45.8
-            },
-            {
-                'id': 2,
-                'nome': 'Tijuca',
-                'lat': -22.9333,
-                'lng': -43.2333,
-                'chuva_15min': 8.2,
-                'chuva_1h': 18.7,
-                'chuva_24h': 32.4
-            },
-            {
-                'id': 3,
-                'nome': 'Copacabana',
-                'lat': -22.9711,
-                'lng': -43.1822,
-                'chuva_15min': 2.1,
-                'chuva_1h': 5.3,
-                'chuva_24h': 12.7
-            },
-            {
-                'id': 4,
-                'nome': 'Barra da Tijuca',
-                'lat': -23.0050,
-                'lng': -43.3650,
-                'chuva_15min': 0.5,
-                'chuva_1h': 1.2,
-                'chuva_24h': 3.8
-            },
-            {
-                'id': 5,
-                'nome': 'Jacarepaguá',
-                'lat': -22.9211,
-                'lng': -43.3628,
-                'chuva_15min': 15.8,
-                'chuva_1h': 32.4,
-                'chuva_24h': 56.9
-            },
-            {
-                'id': 6,
-                'nome': 'Centro',
-                'lat': -22.9068,
-                'lng': -43.1729,
-                'chuva_15min': 6.3,
-                'chuva_1h': 14.5,
-                'chuva_24h': 28.2
-            },
-        ]
-        
-        # Estatísticas gerais
-        stats = {
-            'temperatura_media': 25.3,
-            'umidade_media': 68,
-            'chuva_24h': sum(p['chuva_24h'] for p in pluviometros) / len(pluviometros),
-            'vento_velocidade': 15
-        }
-        
-        return JsonResponse({
-            'success': True,
-            'data': pluviometros,
-            'stats': stats,
-            'timestamp': datetime.now().isoformat()
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-
-
-@csrf_exempt
-def alertas_api(request):
-    """API de alertas meteorológicos"""
-    try:
-        # TODO: Substituir por dados reais do banco
-        # Por enquanto, dados de exemplo
-        
-        alertas = [
-            {
-                'id': 1,
-                'tipo': 'chuva_forte',
-                'severidade': 'alta',
-                'titulo': 'Chuva Forte',
-                'mensagem': 'Chuva forte prevista para as próximas horas',
-                'regiao': 'Zona Norte',
-                'lat': -22.9333,
-                'lng': -43.2333
-            },
-            {
-                'id': 2,
-                'tipo': 'alagamento',
-                'severidade': 'media',
-                'titulo': 'Risco de Alagamento',
-                'mensagem': 'Pontos de alagamento reportados',
-                'regiao': 'Zona Sul',
-                'lat': -22.9711,
-                'lng': -43.1822
-            }
-        ]
-        
-        return JsonResponse({
-            'success': True,
-            'alertas': alertas,
-            'total': len(alertas),
-            'timestamp': datetime.now().isoformat()
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e),
-            'alertas': []
-        }, status=500)
-
-
-@csrf_exempt
-def estagio_api(request):
-    """API de estágio operacional"""
-    try:
-        estagios = ['Normalidade', 'Atenção', 'Alerta', 'Crise', 'Mobilização']
-        
-        return JsonResponse({
-            'success': True,
-            'estagio': 'Atenção',
-            'nivel': 2,
-            'descricao': 'Chuva moderada em algumas regiões',
-            'timestamp': datetime.now().isoformat()
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-        
-
-        
-        
-@csrf_exempt
-def chuva_api(request):
-    """API de dados de chuva/pluviômetros"""
-    import random
-    
-    # 30 pluviômetros cobrindo toda a cidade do Rio
-    pluviometros = [
-        # ZONA NORTE
-        {'id': 1, 'nome': 'Tijuca', 'lat': -22.9333, 'lng': -43.2333, 
-         'chuva_15min': random.uniform(0, 15), 'chuva_1h': random.uniform(5, 30), 'chuva_24h': random.uniform(10, 50)},
-        {'id': 2, 'nome': 'Maracanã', 'lat': -22.9122, 'lng': -43.2302, 
-         'chuva_15min': random.uniform(0, 15), 'chuva_1h': random.uniform(5, 30), 'chuva_24h': random.uniform(10, 50)},
-        {'id': 3, 'nome': 'São Cristóvão', 'lat': -22.8994, 'lng': -43.2228, 
-         'chuva_15min': random.uniform(0, 15), 'chuva_1h': random.uniform(5, 30), 'chuva_24h': random.uniform(10, 50)},
-        {'id': 4, 'nome': 'Méier', 'lat': -22.9025, 'lng': -43.2789, 
-         'chuva_15min': random.uniform(0, 15), 'chuva_1h': random.uniform(5, 30), 'chuva_24h': random.uniform(10, 50)},
-        {'id': 5, 'nome': 'Vila Isabel', 'lat': -22.9164, 'lng': -43.2456, 
-         'chuva_15min': random.uniform(0, 15), 'chuva_1h': random.uniform(5, 30), 'chuva_24h': random.uniform(10, 50)},
-        
-        # ZONA SUL
-        {'id': 6, 'nome': 'Copacabana', 'lat': -22.9711, 'lng': -43.1822, 
-         'chuva_15min': random.uniform(0, 10), 'chuva_1h': random.uniform(2, 20), 'chuva_24h': random.uniform(5, 35)},
-        {'id': 7, 'nome': 'Ipanema', 'lat': -22.9838, 'lng': -43.2096, 
-         'chuva_15min': random.uniform(0, 10), 'chuva_1h': random.uniform(2, 20), 'chuva_24h': random.uniform(5, 35)},
-        {'id': 8, 'nome': 'Leblon', 'lat': -22.9844, 'lng': -43.2175, 
-         'chuva_15min': random.uniform(0, 10), 'chuva_1h': random.uniform(2, 20), 'chuva_24h': random.uniform(5, 35)},
-        {'id': 9, 'nome': 'Botafogo', 'lat': -22.9519, 'lng': -43.1828, 
-         'chuva_15min': random.uniform(0, 10), 'chuva_1h': random.uniform(2, 20), 'chuva_24h': random.uniform(5, 35)},
-        {'id': 10, 'nome': 'Lagoa', 'lat': -22.9711, 'lng': -43.2053, 
-         'chuva_15min': random.uniform(0, 10), 'chuva_1h': random.uniform(2, 20), 'chuva_24h': random.uniform(5, 35)},
-        {'id': 11, 'nome': 'Gávea', 'lat': -22.9797, 'lng': -43.2344, 
-         'chuva_15min': random.uniform(0, 10), 'chuva_1h': random.uniform(2, 20), 'chuva_24h': random.uniform(5, 35)},
-        
-        # CENTRO
-        {'id': 12, 'nome': 'Centro', 'lat': -22.9068, 'lng': -43.1729, 
-         'chuva_15min': random.uniform(0, 12), 'chuva_1h': random.uniform(3, 25), 'chuva_24h': random.uniform(8, 40)},
-        {'id': 13, 'nome': 'Praça XV', 'lat': -22.9033, 'lng': -43.1752, 
-         'chuva_15min': random.uniform(0, 12), 'chuva_1h': random.uniform(3, 25), 'chuva_24h': random.uniform(8, 40)},
-        {'id': 14, 'nome': 'Lapa', 'lat': -22.9133, 'lng': -43.1786, 
-         'chuva_15min': random.uniform(0, 12), 'chuva_1h': random.uniform(3, 25), 'chuva_24h': random.uniform(8, 40)},
-        
-        # ZONA OESTE
-        {'id': 15, 'nome': 'Barra da Tijuca', 'lat': -23.0050, 'lng': -43.3650, 
-         'chuva_15min': random.uniform(0, 8), 'chuva_1h': random.uniform(1, 15), 'chuva_24h': random.uniform(3, 30)},
-        {'id': 16, 'nome': 'Recreio', 'lat': -23.0197, 'lng': -43.4597, 
-         'chuva_15min': random.uniform(0, 8), 'chuva_1h': random.uniform(1, 15), 'chuva_24h': random.uniform(3, 30)},
-        {'id': 17, 'nome': 'Jacarepaguá', 'lat': -22.9211, 'lng': -43.3628, 
-         'chuva_15min': random.uniform(0, 12), 'chuva_1h': random.uniform(5, 28), 'chuva_24h': random.uniform(10, 55)},
-        {'id': 18, 'nome': 'Cidade de Deus', 'lat': -22.9456, 'lng': -43.3592, 
-         'chuva_15min': random.uniform(0, 12), 'chuva_1h': random.uniform(5, 28), 'chuva_24h': random.uniform(10, 55)},
-        {'id': 19, 'nome': 'Campo Grande', 'lat': -22.9009, 'lng': -43.5615, 
-         'chuva_15min': random.uniform(0, 10), 'chuva_1h': random.uniform(3, 22), 'chuva_24h': random.uniform(8, 45)},
-        {'id': 20, 'nome': 'Bangu', 'lat': -22.8719, 'lng': -43.4664, 
-         'chuva_15min': random.uniform(0, 10), 'chuva_1h': random.uniform(3, 22), 'chuva_24h': random.uniform(8, 45)},
-        
-        # REGIÕES MONTANHOSAS (mais chuva)
-        {'id': 21, 'nome': 'Alto da Boa Vista', 'lat': -22.9667, 'lng': -43.2833, 
-         'chuva_15min': random.uniform(5, 25), 'chuva_1h': random.uniform(15, 45), 'chuva_24h': random.uniform(30, 80)},
-        {'id': 22, 'nome': 'Floresta da Tijuca', 'lat': -22.9442, 'lng': -43.2633, 
-         'chuva_15min': random.uniform(5, 25), 'chuva_1h': random.uniform(15, 45), 'chuva_24h': random.uniform(30, 80)},
-        {'id': 23, 'nome': 'Vista Chinesa', 'lat': -22.9583, 'lng': -43.2361, 
-         'chuva_15min': random.uniform(5, 25), 'chuva_1h': random.uniform(15, 45), 'chuva_24h': random.uniform(30, 80)},
-        {'id': 24, 'nome': 'Corcovado', 'lat': -22.9519, 'lng': -43.2106, 
-         'chuva_15min': random.uniform(5, 25), 'chuva_1h': random.uniform(15, 45), 'chuva_24h': random.uniform(30, 80)},
-        
-        # ILHA DO GOVERNADOR
-        {'id': 25, 'nome': 'Ilha do Governador', 'lat': -22.8147, 'lng': -43.2108, 
-         'chuva_15min': random.uniform(0, 10), 'chuva_1h': random.uniform(2, 18), 'chuva_24h': random.uniform(5, 35)},
-        {'id': 26, 'nome': 'Galeão', 'lat': -22.8094, 'lng': -43.2436, 
-         'chuva_15min': random.uniform(0, 10), 'chuva_1h': random.uniform(2, 18), 'chuva_24h': random.uniform(5, 35)},
-        
-        # SUBÚRBIOS
-        {'id': 27, 'nome': 'Penha', 'lat': -22.8436, 'lng': -43.2775, 
-         'chuva_15min': random.uniform(0, 12), 'chuva_1h': random.uniform(4, 24), 'chuva_24h': random.uniform(10, 48)},
-        {'id': 28, 'nome': 'Pavuna', 'lat': -22.8117, 'lng': -43.3539, 
-         'chuva_15min': random.uniform(0, 12), 'chuva_1h': random.uniform(4, 24), 'chuva_24h': random.uniform(10, 48)},
-        {'id': 29, 'nome': 'Irajá', 'lat': -22.8328, 'lng': -43.3264, 
-         'chuva_15min': random.uniform(0, 12), 'chuva_1h': random.uniform(4, 24), 'chuva_24h': random.uniform(10, 48)},
-        {'id': 30, 'nome': 'Santa Cruz', 'lat': -22.9197, 'lng': -43.6836, 
-         'chuva_15min': random.uniform(0, 10), 'chuva_1h': random.uniform(3, 20), 'chuva_24h': random.uniform(7, 42)},
-    ]
-    
-    stats = {
-        'temperatura_media': round(random.uniform(22, 28), 1),
-        'umidade_media': random.randint(60, 85),
-        'chuva_24h': round(sum(p['chuva_24h'] for p in pluviometros) / len(pluviometros), 1),
-        'vento_velocidade': random.randint(10, 25)
-    }
-    
-    return JsonResponse({
-        'success': True,
-        'data': pluviometros,
-        'stats': stats,
-        'timestamp': datetime.now().isoformat()
-    })
-
-@csrf_exempt
-def alertas_api(request):
-    """API de alertas"""
-    alertas = [
-        {'id': 1, 'tipo': 'chuva_forte', 'severidade': 'alta', 
-         'titulo': 'Chuva Forte', 'mensagem': 'Chuva forte prevista',
-         'regiao': 'Zona Norte', 'lat': -22.9333, 'lng': -43.2333},
-        {'id': 2, 'tipo': 'alagamento', 'severidade': 'media',
-         'titulo': 'Risco de Alagamento', 'mensagem': 'Pontos de alagamento',
-         'regiao': 'Zona Sul', 'lat': -22.9711, 'lng': -43.1822}
-    ]
-    
-    return JsonResponse({
-        'success': True,
-        'alertas': alertas,
-        'total': len(alertas),
-        'timestamp': datetime.now().isoformat()
-    })
-
-
-# VIDEO MONITORAMENTO
+# VIDEO - SEM LOGIN - DEFINITIVO
 @login_required(login_url='login')
 @never_cache
 def videomonitoramento(request):
-    """Dashboard de Videomonitoramento"""
     return render(request, 'mapa_novo/videomonitoramento.html')
 
-# API DE CAMERAS
-@csrf_exempt
-def cameras_api_local(request):
-    """API de câmeras com fallback para dados locais"""
-    import requests
-    import csv
-    from io import StringIO
-    
-    try:
-        response = requests.get('https://aplicativo.cocr.com.br/cameras_api', timeout=10)
-        if response.status_code == 200:
-            try:
-                # Parsear CSV
-                csv_data = response.text
-                reader = csv.reader(StringIO(csv_data), delimiter=';')
-                
-                cameras = []
-                for row in reader:
-                    if len(row) >= 4:
-                        lat, lng, nome, id_cam = row[0], row[1], row[2], row[3]
-                        
-                        # Determinar tipo baseado no nome
-                        is_fixa = nome.upper().endswith('- FIXA')
-                        tipo = 'fixa' if is_fixa else 'movel'
-                        
-                        # Limpar nome (remover "- FIXA" se tiver)
-                        nome_limpo = nome.replace(' - FIXA', '').replace(' - fixa', '').strip()
-                        
-                        cameras.append({
-                            'id': id_cam,
-                            'nome': nome,  # Nome com "- FIXA" para identificar
-                            'nome_limpo': nome_limpo,
-                            'lat': float(lat),
-                            'lng': float(lng),
-                            'tipo': tipo,
-                            'fixa': is_fixa,
-                            'status': 'Sim',
-                            'url_stream': f'https://dev.tixxi.rio/outvideo2/?CODE={id_cam}&KEY=H4281'
-                        })
-                
-                return JsonResponse({
-                    'success': True, 
-                    'data': cameras, 
-                    'count': len(cameras)
-                })
-                
-            except Exception as e:
-                logger.warning(f"Erro ao parsear CSV: {e}")
-                pass
-                
-    except Exception as e:
-        logger.warning(f"Erro ao buscar câmeras da API externa: {e}")
-    
-    # Fallback: retornar dados do banco local
-    try:
-        from aplicativo.models import Cameras
-        cameras = Cameras.objects.all()[:50]
-        data = [{
-            'id': cam.id,
-            'nome': cam.nome or f'Câmera {cam.id_c}',
-            'bairro': cam.bairro or 'Sem bairro',
-            'lat': float(cam.lat) if cam.lat else -22.9068,
-            'lng': float(cam.lon) if cam.lon else -43.1729,
-            'tipo': 'fixa',  # Assumir todas fixas no fallback
-            'fixa': True,
-            'status': cam.status or 'ativa',
-            'url_stream': f'https://dev.tixxi.rio/outvideo2/?CODE={cam.id_c}&KEY=H4281'
-        } for cam in cameras if cam.lat and cam.lon]
-        return JsonResponse({'success': True, 'data': data, 'count': len(data)})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e), 'data': []}, status=500)
-
-@csrf_exempt
-def chuva_api(request):
-    pluviometros = [
-        {'id': 1, 'nome': 'Alto da Boa Vista', 'lat': -22.9667, 'lng': -43.2833, 
-         'chuva_15min': 12.5, 'chuva_1h': 25.3, 'chuva_24h': 45.8},
-        {'id': 2, 'nome': 'Tijuca', 'lat': -22.9333, 'lng': -43.2333, 
-         'chuva_15min': 8.2, 'chuva_1h': 18.7, 'chuva_24h': 32.4},
-    ]
-    return JsonResponse({'success': True, 'data': pluviometros, 
-        'stats': {'temperatura_media': 25.3, 'umidade_media': 68, 'chuva_24h': 29.1, 'vento_velocidade': 15}})
-
-@csrf_exempt
-def alertas_api(request):
-    alertas = [{'id': 1, 'tipo': 'chuva_forte', 'titulo': 'Chuva Forte', 
-                'mensagem': 'Chuva forte prevista', 'lat': -22.9333, 'lng': -43.2333}]
-    return JsonResponse({'success': True, 'alertas': alertas, 'total': 1})
-
-
-# VIDEO - SEM LOGIN - DEFINITIVO
 def video_dashboard(request):
     return render(request, 'mapa_novo/videomonitoramento.html')
 
@@ -2817,7 +2093,7 @@ def try_fetch_snapshot(url: str, timeout: int = SNAPSHOT_TIMEOUT) -> tuple:
         tuple: (success: bool, content: bytes, status_code: int, error: str)
     """
     try:
-        response = requests.get(url, timeout=timeout, verify=False)
+        response = requests.get(url, timeout=timeout, verify=True)  # SEGURANCA: SSL ativo
         
         # Validar resposta
         if response.status_code == 200 and len(response.content) > 100:
@@ -2946,6 +2222,36 @@ def camera_stream_view(request, camera_id):
     
     # URL do stream
     stream_url = f'https://dev.tixxi.rio/outvideo2/?CODE={camera_id_padded}&KEY=H4281'
+    if request.GET.get('embed') == '1':
+        html = f'''
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{nome}</title>
+            <style>
+                html, body {{
+                    margin: 0;
+                    padding: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: #000;
+                    overflow: hidden;
+                }}
+                iframe {{
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }}
+            </style>
+        </head>
+        <body>
+            <iframe src="{stream_url}" allowfullscreen></iframe>
+        </body>
+        </html>
+        '''
+        return HttpResponse(html, content_type='text/html')
     
     # HTML responsivo com design moderno
     html = f'''
@@ -3251,48 +2557,6 @@ def waze_api(request):
 
 
 @api_view(['GET'])
-def pluviometros_view(request):
-    """API de pluviômetros com dados de exemplo"""
-    dados_exemplo = [
-        {
-            "id": 1,
-            "nome": "Pluviômetro Centro",
-            "latitude": -22.9035,
-            "longitude": -43.2096,
-            "chuva_15min": 2.5,
-            "chuva_1h": 8.0,
-            "chuva_24h": 25.0,
-            "status": "normal"
-        },
-        {
-            "id": 2,
-            "nome": "Pluviômetro Tijuca",
-            "latitude": -22.9256,
-            "longitude": -43.2378,
-            "chuva_15min": 5.2,
-            "chuva_1h": 15.5,
-            "chuva_24h": 45.0,
-            "status": "atencao"
-        },
-        {
-            "id": 3,
-            "nome": "Pluviômetro Zona Sul",
-            "latitude": -22.9711,
-            "longitude": -43.1822,
-            "chuva_15min": 1.0,
-            "chuva_1h": 3.5,
-            "chuva_24h": 12.0,
-            "status": "normal"
-        }
-    ]
-    return Response({
-        'success': True,
-        'data': dados_exemplo,
-        'count': len(dados_exemplo)
-    })
-
-
-@api_view(['GET'])
 def eventos_view(request):
     """API de eventos com dados de exemplo"""
     eventos_exemplo = [
@@ -3355,18 +2619,6 @@ def ocorrencias_view(request):
 
 
 @api_view(['GET'])
-def calor_api(request):
-    """API de dados de calor"""
-    return Response({
-        'success': True,
-        'temperatura': 32.5,
-        'sensacao_termica': 38.0,
-        'umidade': 65,
-        'nivel_alerta': 'moderado'
-    })
-
-
-@api_view(['GET'])
 def mobilidade_api(request):
     """API de mobilidade"""
     return Response({
@@ -3403,254 +2655,6 @@ def test_api_sem_protecao(request):
     })
 
 # ============================================
-# APIs DE MOBILIDADE
-# ============================================
-
-@api_view(['GET'])
-def api_transito_status(request):
-    """API de status do trânsito"""
-    import datetime
-    
-    hora_atual = datetime.datetime.now().hour
-    
-    # Simular status baseado na hora
-    if 7 <= hora_atual <= 9 or 17 <= hora_atual <= 19:
-        nivel = 3
-        descricao = "Trânsito Intenso"
-        cor = "#ef4444"
-        lentidao = 45
-        velocidade = 25
-    elif 10 <= hora_atual <= 16:
-        nivel = 2
-        descricao = "Trânsito Moderado"
-        cor = "#f59e0b"
-        lentidao = 20
-        velocidade = 40
-    else:
-        nivel = 1
-        descricao = "Trânsito Normal"
-        cor = "#10b981"
-        lentidao = 5
-        velocidade = 55
-    
-    return Response({
-        'success': True,
-        'data': {
-            'nivel': nivel,
-            'descricao': descricao,
-            'cor': cor,
-            'lentidao_km': lentidao,
-            'velocidade_media': velocidade,
-            'hora': hora_atual
-        }
-    })
-
-
-@api_view(['GET'])
-def api_brt(request):
-    """API de linhas BRT"""
-    linhas = [
-        {
-            'nome': 'TransCarioca',
-            'cor': '#0066cc',
-            'status': 'Normal',
-            'status_code': 'normal',
-            'estacoes': 45,
-            'extensao': '39 km',
-            'tempo_medio': '60 min',
-            'intervalo': '8-12 min'
-        },
-        {
-            'nome': 'TransOeste',
-            'cor': '#00a651',
-            'status': 'Normal',
-            'status_code': 'normal',
-            'estacoes': 52,
-            'extensao': '56 km',
-            'tempo_medio': '75 min',
-            'intervalo': '10-15 min'
-        },
-        {
-            'nome': 'TransOlímpica',
-            'cor': '#f7941e',
-            'status': 'Normal',
-            'status_code': 'normal',
-            'estacoes': 18,
-            'extensao': '26 km',
-            'tempo_medio': '35 min',
-            'intervalo': '5-8 min'
-        },
-        {
-            'nome': 'TransBrasil',
-            'cor': '#ed1c24',
-            'status': 'Normal',
-            'status_code': 'normal',
-            'estacoes': 28,
-            'extensao': '32 km',
-            'tempo_medio': '45 min',
-            'intervalo': '7-10 min'
-        }
-    ]
-    
-    return Response({
-        'success': True,
-        'data': linhas,
-        'count': len(linhas)
-    })
-
-
-@api_view(['GET'])
-def api_metro(request):
-    """API de linhas de metrô"""
-    linhas = [
-        {
-            'nome': 'Linha 1 (Laranja)',
-            'cor': '#ff6600',
-            'status': 'Normal',
-            'status_code': 'normal',
-            'estacoes': 19,
-            'extensao': '20,4 km',
-            'intervalo': '4-6 min',
-            'origem': 'Ipanema/General Osório',
-            'destino': 'Uruguai'
-        },
-        {
-            'nome': 'Linha 2 (Verde)',
-            'cor': '#00a651',
-            'status': 'Normal',
-            'status_code': 'normal',
-            'estacoes': 18,
-            'extensao': '31,7 km',
-            'intervalo': '5-8 min',
-            'origem': 'Pavuna',
-            'destino': 'Botafogo'
-        },
-        {
-            'nome': 'Linha 4 (Amarela)',
-            'cor': '#ffcc00',
-            'status': 'Normal',
-            'status_code': 'normal',
-            'estacoes': 6,
-            'extensao': '16 km',
-            'intervalo': '6-10 min',
-            'origem': 'Ipanema/General Osório',
-            'destino': 'Jardim Oceânico'
-        }
-    ]
-    
-    return Response({
-        'success': True,
-        'data': linhas,
-        'count': len(linhas)
-    })
-
-
-@api_view(['GET'])
-def api_bike_rio(request):
-    """API de estações Bike Rio"""
-    import random
-    
-    estacoes = []
-    nomes = [
-        'Copacabana - Siqueira Campos', 'Ipanema - Praça General Osório',
-        'Leblon - Ataulfo de Paiva', 'Botafogo - Voluntários da Pátria',
-        'Flamengo - Praia do Flamengo', 'Centro - Praça XV'
-    ]
-    
-    for i, nome in enumerate(nomes):
-        bikes = random.randint(0, 15)
-        vagas = random.randint(5, 20)
-        
-        estacoes.append({
-            'id': i + 1,
-            'nome': nome,
-            'bikes_disponiveis': bikes,
-            'vagas_disponiveis': vagas,
-            'status': 'Operacional' if bikes > 0 else 'Sem Bikes'
-        })
-    
-    total_bikes = sum(e['bikes_disponiveis'] for e in estacoes)
-    
-    return Response({
-        'success': True,
-        'data': estacoes,
-        'count': len(estacoes),
-        'total_bikes': total_bikes
-    })
-
-
-# ============================================
-# API CSI - Coeficiente de Severidade de Impacto
-# ============================================
-
-@api_view(['GET'])
-def api_csi_top5(request):
-    """API para obter Top 5 CSI (Coeficiente de Severidade de Impacto)
-
-    Usa sistema de cache para resposta instantanea.
-    Os dados sao atualizados em background a cada 5 minutos.
-    """
-    try:
-        from aplicativo.services.csi_api import (
-            get_csi_top5_cached,
-            get_csi_cache_status,
-            start_csi_background_updater
-        )
-
-        # Garantir que o atualizador em background esta rodando
-        start_csi_background_updater()
-
-        # Obter dados do cache (resposta instantanea)
-        data = get_csi_top5_cached()
-        cache_status = get_csi_cache_status()
-
-        if data:
-            return Response({
-                'success': True,
-                'data': data,
-                'cache': cache_status,
-                'timestamp': datetime.now().isoformat()
-            })
-        else:
-            return Response({
-                'success': False,
-                'error': 'Dados CSI ainda carregando, tente novamente em alguns segundos',
-                'cache': cache_status,
-                'data': None
-            }, status=503)
-
-    except Exception as e:
-        logger.error(f"Erro na API CSI: {str(e)}")
-        return Response({
-            'success': False,
-            'error': str(e),
-            'data': None
-        }, status=500)
-
-
-@api_view(['POST'])
-def api_csi_refresh(request):
-    """Forca atualizacao do cache CSI"""
-    try:
-        from aplicativo.services.csi_api import force_cache_refresh, get_csi_cache_status
-
-        force_cache_refresh()
-        cache_status = get_csi_cache_status()
-
-        return Response({
-            'success': True,
-            'message': 'Atualizacao do cache iniciada',
-            'cache': cache_status
-        })
-
-    except Exception as e:
-        return Response({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-
-
-# ============================================
 # TIXXI API - Cameras, Escolas, Bolsões
 # ============================================
 
@@ -3665,13 +2669,15 @@ _tixxi_token_cache = {
 }
 _tixxi_lock = threading.Lock()
 
+# TIXXI Config - Credenciais via variaveis de ambiente (SEGURO)
+from decouple import config
 TIXXI_CONFIG = {
-    'auth_url': 'https://tixxi.rio/tixxi/api/cora/auth.php?action=login',
-    'cameras_url': 'https://tixxi.rio/tixxi/api/cora/cameras',
-    'schools_url': 'https://tixxi.rio/tixxi/api/cora/schools',
-    'inundation_url': 'https://tixxi.rio/tixxi/api/cora/inundation',
-    'user': 'cora',
-    'pass': 'Cor@2025!'
+    'auth_url': config('TIXXI_AUTH_URL', default='https://tixxi.rio/tixxi/api/cora/auth.php?action=login'),
+    'cameras_url': config('TIXXI_CAMERAS_URL', default='https://tixxi.rio/tixxi/api/cora/cameras'),
+    'schools_url': config('TIXXI_SCHOOLS_URL', default='https://tixxi.rio/tixxi/api/cora/schools'),
+    'inundation_url': config('TIXXI_INUNDATION_URL', default='https://tixxi.rio/tixxi/api/cora/inundation'),
+    'user': config('TIXXI_USER'),
+    'pass': config('TIXXI_PASS'),
 }
 
 
@@ -3691,7 +2697,7 @@ def _get_tixxi_token():
             response = requests.post(
                 TIXXI_CONFIG['auth_url'],
                 json={"user": TIXXI_CONFIG['user'], "pass": TIXXI_CONFIG['pass']},
-                verify=False,
+                verify=True,  # SEGURANCA: Verificar certificado SSL
                 timeout=10,
                 allow_redirects=True
             )

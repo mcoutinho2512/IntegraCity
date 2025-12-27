@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,13 +21,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-3vr=@cd3dne&if%*2&j88%*bopb$v45u$qw)03ycrzobzxuka7'
+# SECURITY: SECRET_KEY from environment (REQUIRED)
+SECRET_KEY = config('DJANGO_SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SECURITY: DEBUG=False by default in production
+DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['*']  # Desenvolvimento - permitir todos os hosts
+# SECURITY: Explicit allowed hosts (no wildcards)
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 
 # Application definition
@@ -45,9 +48,8 @@ INSTALLED_APPS = [
     'core',
 ]
 
-LOGIN_REQUIRED_URLS_EXCEPTIONS = (
-    r'.*',  # Aceita TUDO (desabilita login requirement)
-)
+# LOGIN_REQUIRED_URLS_EXCEPTIONS removido por seguranca
+# Autenticacao controlada pelo middleware.SecurityMiddleware
 
 MIDDLEWARE = [
     # Segurança customizada
@@ -118,7 +120,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
@@ -165,7 +167,67 @@ SESSION_SAVE_EVERY_REQUEST = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Strict'
 
-# Headers de segurança
+# Headers de seguranca
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+
+# ============================================
+# CONFIGURACOES SSL/HTTPS (Producao)
+# ============================================
+# NOTA: Habilitar quando SSL estiver configurado no Nginx
+# Por enquanto, desabilitado pois ainda nao ha certificado SSL
+SECURE_SSL_REDIRECT = False  # Habilitar quando tiver SSL: True
+
+if not DEBUG:
+    # Cookies seguros - DESABILITADO ate ter SSL
+    # SESSION_COOKIE_SECURE = True
+    # CSRF_COOKIE_SECURE = True
+
+    # HSTS - Habilitar apenas quando SSL estiver funcionando
+    # SECURE_HSTS_SECONDS = 31536000  # 1 ano
+    # SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    # SECURE_HSTS_PRELOAD = True
+
+    # Proxy SSL header (para Nginx)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# ============================================
+# LOGGING DE SEGURANCA
+# ============================================
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'formatter': 'verbose',
+        },
+        'security': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'security.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'WARNING',
+            'propagate': True,
+        },
+        'django.security': {
+            'handlers': ['security'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

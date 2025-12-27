@@ -78,7 +78,9 @@ class RecursoSituacao(models.Model):
 		verbose_name_plural = "Situação dos Recursos - Operação Brasil"
 
 	def __str__(self):
-		return str(self.recurso.nome)+" - "+str(self.local.nome)+" - "+str(self.quantidade)
+		local_nome = self.recurso.local.nome if self.recurso and self.recurso.local else "Sem local"
+		status = self.status or "Sem status"
+		return f"{self.recurso.nome} - {local_nome} - {status}"
 
 
 
@@ -113,7 +115,7 @@ class Pouso(models.Model):
 		verbose_name_plural = "Pouso"
 
 	def __str__(self):
-		return self.id_e
+		return self.idv
 
 class Onibus(models.Model):
 	id_e = models.CharField("ID Estação", max_length=250,unique=True)
@@ -5147,4 +5149,3 @@ class ChatMessage(models.Model):
     
     class Meta:
         ordering = ['timestamp']
-

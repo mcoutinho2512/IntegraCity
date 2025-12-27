@@ -24,7 +24,7 @@ urlpatterns = [
 
     # APIs - Sirenes
     path('api/sirenes/', views.sirene_api, name='sirene_api'),
-    path('api/test/', views.test_api_sem_protecao, name='api_test'),
+    # REMOVIDO: path('api/test/', ...) - API de teste removida por seguranca
     path('api/mobilidade/', views.mobilidade_api, name='api_mobilidade'),
 
     # APIs - Estágios
@@ -39,14 +39,8 @@ urlpatterns = [
     path('api/alertas/', views.alertas_api, name='api_alertas'),
     path('api/calor/', views.calor_api, name='calor_api'),
 
-    # APIs - Eventos e Ocorrências
+    # APIs - Eventos
     path('api/eventos/', views.api_eventos, name='api_eventos'),
-    path('api/ocorrencias/', views.api_ocorrencias, name='api_ocorrencias'),
-
-    # API de ocorrências de hoje
-    path('api/ocorrencias/hoje/', views.api_ocorrencias_hoje, name='api_ocorrencias_hoje'),
-    path('api/teste-hoje/', lambda request: JsonResponse({'teste': 'ok'}), name='teste_hoje'),
-    path('api/ocorrencias/tempo-real/', views.api_ocorrencias_tempo_real, name='api_ocorrencias_tempo_real'),
 
     # APIs - Locais
     path('api/escolas/', views.escolas_view, name='escolas'),
@@ -63,16 +57,14 @@ urlpatterns = [
     path('hls/<str:camera_id>/playlist.m3u8', views.camera_hls_placeholder, name='hls_placeholder'),
 
     # Novas rotas de verificação de câmeras
-    path('api/cameras/status/', views.verificar_status_cameras, name='verificar_status_cameras'),
+    path('api/cameras/status/', views.cameras_status, name='cameras_status'),
     path('api/cameras/ping/', views.ping_camera, name='ping_camera'),
 
     # APIs de Câmeras
     path('api/camera/<str:camera_id>/snapshot/', views.camera_snapshot, name='camera_snapshot'),
-    path('api/camera/<str:camera_id>/stream/', views.camera_stream_info, name='camera_stream_info'),
-    path('api/cameras/status/', views.cameras_status, name='cameras_status'),
+    path('api/camera/<str:camera_id>/stream/', views.camera_stream_view, name='camera_stream_view'),
 
     # APIs - Mobile
-    path('api/mobile/inserir-ocorrencia/', views.inserir_ocorrencia_mobile, name='inserir_ocorrencia_mobile'),
     path('api/waze/', views.waze_data_view, name='waze_data'),
     path('api/waze-alerts/', views.waze_alerts_api, name='waze_alerts_api'),
 
@@ -85,10 +77,6 @@ urlpatterns = [
     # Matriz Decisória
     path('matriz-decisoria/', views.matriz_decisoria, name='matriz_decisoria'),
     path('api/matriz-decisoria/', views.api_matriz_decisoria, name='api_matriz_decisoria'),
-
-    # API CSI - Coeficiente de Severidade de Impacto
-    path('api/csi/top5/', views.api_csi_top5, name='api_csi_top5'),
-    path('api/csi/refresh/', views.api_csi_refresh, name='api_csi_refresh'),
 ]
 
 # Servir arquivos estáticos em desenvolvimento
