@@ -197,7 +197,7 @@
     </div>
 </div>
 
-<div class="layer-control-panel-novo collapsed" id="layer-panel">
+<div class="layer-control-panel-novo collapsed" id="layer-panel" style="display: block;">
     <div class="layer-control-header-novo">
         <i class="bi bi-layers-fill"></i>
         <h3>Camadas do Mapa</h3>
@@ -284,6 +284,20 @@
                     <span class="slider-novo"></span>
                 </label>
             </div>
+
+            <div class="layer-item-novo" data-layer="bolsoes">
+                <div class="layer-item-info-novo">
+                    <div class="layer-icon-novo"><i class="bi bi-water"></i></div>
+                    <div class="layer-item-text-novo">
+                        <span class="layer-name-novo">Bolsões de Alagamento</span>
+                        <span class="layer-count-novo" data-count="bolsoes">—</span>
+                    </div>
+                </div>
+                <label class="layer-toggle-switch-novo">
+                    <input type="checkbox" checked data-toggle="bolsoes">
+                    <span class="slider-novo"></span>
+                </label>
+            </div>
         </div>
 
         <div class="layer-category-novo">
@@ -315,6 +329,20 @@
                 </div>
                 <label class="layer-toggle-switch-novo">
                     <input type="checkbox" checked data-toggle="bensTombados">
+                    <span class="slider-novo"></span>
+                </label>
+            </div>
+
+            <div class="layer-item-novo" data-layer="cameras">
+                <div class="layer-item-info-novo">
+                    <div class="layer-icon-novo" style="background: #10b981;"><i class="bi bi-camera-video-fill"></i></div>
+                    <div class="layer-item-text-novo">
+                        <span class="layer-name-novo">Câmeras</span>
+                        <span class="layer-count-novo" data-count="cameras">—</span>
+                    </div>
+                </div>
+                <label class="layer-toggle-switch-novo">
+                    <input type="checkbox" checked data-toggle="cameras">
                     <span class="slider-novo"></span>
                 </label>
             </div>
@@ -400,7 +428,9 @@
 <script src="{% static 'mapa_novo/js/features/theme_toggle.js' %}"></script>
 
 <script>
-
+    // ========================================
+    // O controle de camadas é gerenciado pelo layer_control_novo.js
+    // ========================================
 
     // Sistema de notificações - SIMPLES E FUNCIONAL
     document.addEventListener('DOMContentLoaded', function () {

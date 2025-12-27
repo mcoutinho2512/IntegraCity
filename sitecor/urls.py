@@ -73,5 +73,12 @@ urlpatterns = [
     path('api/cameras-local/', views.cameras_api_local, name='cameras_api_local'),
     
     path('teste/', views.teste_sem_login, name='teste'),
-    
+
+    # ========================================
+    # TIXXI API - Câmeras, Escolas, Bolsões
+    # ========================================
+    path('api/tixxi/cameras/', views.api_tixxi_cameras, name='api_tixxi_cameras'),
+    path('api/tixxi/escolas/', views.api_tixxi_escolas, name='api_tixxi_escolas'),
+    path('api/tixxi/bolsoes/', views.api_tixxi_bolsoes, name='api_tixxi_bolsoes'),
+
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

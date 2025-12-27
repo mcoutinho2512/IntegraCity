@@ -1438,7 +1438,7 @@ def api_cameras(request):
                         'lat': lat,
                         'lng': lon,
                         'status': cam.status,
-                        'url_stream': f'https://dev.tixxi.rio/outvideo2/?CODE={cam.id_c}&KEY=B0914'
+                        'url_stream': f'https://dev.tixxi.rio/outvideo2/?CODE={cam.id_c}&KEY=H4281'
                     })
                     bairros_set.add(cam.bairro or 'Sem bairro')
             except:
@@ -2336,17 +2336,54 @@ def videomonitoramento(request):
 def cameras_api_local(request):
     """API de câmeras com fallback para dados locais"""
     import requests
+    import csv
+    from io import StringIO
+    
     try:
         response = requests.get('https://aplicativo.cocr.com.br/cameras_api', timeout=10)
         if response.status_code == 200:
             try:
-                data = response.json()
-                return JsonResponse(data, safe=False)
-            except:
+                # Parsear CSV
+                csv_data = response.text
+                reader = csv.reader(StringIO(csv_data), delimiter=';')
+                
+                cameras = []
+                for row in reader:
+                    if len(row) >= 4:
+                        lat, lng, nome, id_cam = row[0], row[1], row[2], row[3]
+                        
+                        # Determinar tipo baseado no nome
+                        is_fixa = nome.upper().endswith('- FIXA')
+                        tipo = 'fixa' if is_fixa else 'movel'
+                        
+                        # Limpar nome (remover "- FIXA" se tiver)
+                        nome_limpo = nome.replace(' - FIXA', '').replace(' - fixa', '').strip()
+                        
+                        cameras.append({
+                            'id': id_cam,
+                            'nome': nome,  # Nome com "- FIXA" para identificar
+                            'nome_limpo': nome_limpo,
+                            'lat': float(lat),
+                            'lng': float(lng),
+                            'tipo': tipo,
+                            'fixa': is_fixa,
+                            'status': 'Sim',
+                            'url_stream': f'https://dev.tixxi.rio/outvideo2/?CODE={id_cam}&KEY=H4281'
+                        })
+                
+                return JsonResponse({
+                    'success': True, 
+                    'data': cameras, 
+                    'count': len(cameras)
+                })
+                
+            except Exception as e:
+                logger.warning(f"Erro ao parsear CSV: {e}")
                 pass
+                
     except Exception as e:
         logger.warning(f"Erro ao buscar câmeras da API externa: {e}")
-
+    
     # Fallback: retornar dados do banco local
     try:
         from aplicativo.models import Cameras
@@ -2357,8 +2394,10 @@ def cameras_api_local(request):
             'bairro': cam.bairro or 'Sem bairro',
             'lat': float(cam.lat) if cam.lat else -22.9068,
             'lng': float(cam.lon) if cam.lon else -43.1729,
+            'tipo': 'fixa',  # Assumir todas fixas no fallback
+            'fixa': True,
             'status': cam.status or 'ativa',
-            'url_stream': f'https://dev.tixxi.rio/outvideo2/?CODE={cam.id_c}&KEY=B0914'
+            'url_stream': f'https://dev.tixxi.rio/outvideo2/?CODE={cam.id_c}&KEY=H4281'
         } for cam in cameras if cam.lat and cam.lon]
         return JsonResponse({'success': True, 'data': data, 'count': len(data)})
     except Exception as e:
@@ -2755,8 +2794,8 @@ def get_snapshot_urls(camera_id: str) -> list:
     for cam_id in ids_to_try:
         urls.extend([
             # Prioridade 1: API de snapshot dedicada
-            f'https://dev.tixxi.rio/outvideo2/snapshot.php?CODE={cam_id}&KEY=B0914',
-            f'https://dev.tixxi.rio/outvideo2/snapshot?CODE={cam_id}&KEY=B0914',
+            f'https://dev.tixxi.rio/outvideo2/snapshot.php?CODE={cam_id}&KEY=H4281',
+            f'https://dev.tixxi.rio/outvideo2/snapshot?CODE={cam_id}&KEY=H4281',
             
             # Prioridade 2: Aplicativo principal
             f'https://aplicativo.cocr.com.br/camera/{cam_id}/snapshot.jpg',
@@ -2868,7 +2907,7 @@ def camera_snapshot(request, camera_id):
     camera_id_padded = camera_id.zfill(6)
     
     # URL do player
-    stream_url = f'https://dev.tixxi.rio/outvideo2/?CODE={camera_id_padded}&KEY=B0914'
+    stream_url = f'https://dev.tixxi.rio/outvideo2/?CODE={camera_id_padded}&KEY=H4281'
     
     # Retornar HTML com iframe
     html = f'''
@@ -2906,7 +2945,7 @@ def camera_stream_view(request, camera_id):
         bairro = ""
     
     # URL do stream
-    stream_url = f'https://dev.tixxi.rio/outvideo2/?CODE={camera_id_padded}&KEY=B0914'
+    stream_url = f'https://dev.tixxi.rio/outvideo2/?CODE={camera_id_padded}&KEY=H4281'
     
     # HTML responsivo com design moderno
     html = f'''
@@ -3609,3 +3648,270 @@ def api_csi_refresh(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+# ============================================
+# TIXXI API - Cameras, Escolas, Bolsões
+# ============================================
+
+import threading
+import time
+
+# Cache global para token TIXXI
+_tixxi_token_cache = {
+    'access_token': None,
+    'refresh_token': None,
+    'expires_at': None
+}
+_tixxi_lock = threading.Lock()
+
+TIXXI_CONFIG = {
+    'auth_url': 'https://tixxi.rio/tixxi/api/cora/auth.php?action=login',
+    'cameras_url': 'https://tixxi.rio/tixxi/api/cora/cameras',
+    'schools_url': 'https://tixxi.rio/tixxi/api/cora/schools',
+    'inundation_url': 'https://tixxi.rio/tixxi/api/cora/inundation',
+    'user': 'cora',
+    'pass': 'Cor@2025!'
+}
+
+
+def _get_tixxi_token():
+    """Obtém token TIXXI com cache automático"""
+    global _tixxi_token_cache
+
+    with _tixxi_lock:
+        # Verifica se token ainda é válido (com margem de 60 segundos)
+        if (_tixxi_token_cache['access_token'] and
+            _tixxi_token_cache['expires_at'] and
+            datetime.now() < _tixxi_token_cache['expires_at'] - timedelta(seconds=60)):
+            return _tixxi_token_cache['access_token']
+
+        # Busca novo token
+        try:
+            response = requests.post(
+                TIXXI_CONFIG['auth_url'],
+                json={"user": TIXXI_CONFIG['user'], "pass": TIXXI_CONFIG['pass']},
+                verify=False,
+                timeout=10,
+                allow_redirects=True
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                if 'access_token' in data:
+                    _tixxi_token_cache['access_token'] = data['access_token']
+                    _tixxi_token_cache['refresh_token'] = data.get('refresh_token')
+                    # Token expira em ~1 hora, guardamos 50 minutos
+                    _tixxi_token_cache['expires_at'] = datetime.now() + timedelta(minutes=50)
+                    logger.info("TIXXI: Token obtido com sucesso")
+                    return data['access_token']
+
+            logger.error(f"TIXXI Auth Error: {response.text}")
+            return None
+
+        except Exception as e:
+            logger.error(f"TIXXI Auth Exception: {e}")
+            return None
+
+
+def _fetch_tixxi_data(endpoint_url):
+    """Busca dados de um endpoint TIXXI"""
+    token = _get_tixxi_token()
+    if not token:
+        return None, "Falha na autenticação TIXXI"
+
+    try:
+        response = requests.get(
+            endpoint_url,
+            headers={'Authorization': f'Bearer {token}'},
+            verify=False,
+            timeout=30,
+            allow_redirects=True
+        )
+
+        if response.status_code == 200:
+            return response.json(), None
+        elif response.status_code == 401:
+            # Token expirado, limpa cache e tenta novamente
+            with _tixxi_lock:
+                _tixxi_token_cache['access_token'] = None
+            return _fetch_tixxi_data(endpoint_url)  # Retry uma vez
+        else:
+            return None, f"HTTP {response.status_code}: {response.text}"
+
+    except Exception as e:
+        return None, str(e)
+
+
+@api_view(['GET'])
+def api_tixxi_cameras(request):
+    """API de câmeras via TIXXI"""
+    try:
+        data, error = _fetch_tixxi_data(TIXXI_CONFIG['cameras_url'])
+
+        if error:
+            return Response({'success': False, 'error': error}, status=500)
+
+        # Filtros opcionais
+        zona = request.GET.get('zona', None)
+        search = request.GET.get('search', None)
+
+        cameras = []
+        for cam in data:
+            try:
+                lat = float(cam.get('Latitude', 0))
+                lng = float(cam.get('Longitude', 0))
+
+                if lat == 0 or lng == 0:
+                    continue
+
+                # Filtro por zona
+                if zona and zona.lower() not in cam.get('CameraZone', '').lower():
+                    continue
+
+                # Filtro por busca
+                if search and search.lower() not in cam.get('CameraName', '').lower():
+                    continue
+
+                cameras.append({
+                    'id': cam.get('CameraCode'),
+                    'nome': cam.get('CameraName'),
+                    'zona': cam.get('CameraZone'),
+                    'bairro': cam.get('CameraLocality'),
+                    'lat': lat,
+                    'lng': lng,
+                    'url': cam.get('URL', '').replace('\\/', '/')
+                })
+            except:
+                continue
+
+        return Response({
+            'success': True,
+            'data': cameras,
+            'count': len(cameras),
+            'source': 'TIXXI'
+        })
+
+    except Exception as e:
+        logger.error(f"api_tixxi_cameras error: {e}")
+        return Response({'success': False, 'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+def api_tixxi_escolas(request):
+    """API de escolas via TIXXI"""
+    try:
+        data, error = _fetch_tixxi_data(TIXXI_CONFIG['schools_url'])
+
+        if error:
+            return Response({'success': False, 'error': error}, status=500)
+
+        # Filtros opcionais
+        bairro = request.GET.get('bairro', None)
+        search = request.GET.get('search', None)
+
+        escolas = []
+        for escola in data:
+            try:
+                # Latitude pode vir com vírgula em vez de ponto
+                lat_str = str(escola.get('Latitude', '0')).replace(',', '.')
+                lng_str = str(escola.get('Longitude', '0')).replace(',', '.')
+
+                lat = float(lat_str) if lat_str else 0
+                lng = float(lng_str) if lng_str else 0
+
+                # Ignora coordenadas inválidas
+                if lat == 0 or lng == 0 or abs(lat) > 90 or abs(lng) > 180:
+                    continue
+
+                # Corrige longitude duplicada (erro nos dados originais)
+                if abs(lng) < 30:  # Longitude de RJ é ~-43
+                    continue
+
+                # Filtros
+                if bairro and bairro.lower() not in escola.get('Bairro', '').lower():
+                    continue
+
+                if search and search.lower() not in escola.get('ItemName', '').lower():
+                    continue
+
+                escolas.append({
+                    'id': escola.get('ItemID'),
+                    'sigla': escola.get('Sigla'),
+                    'nome': escola.get('ItemName'),
+                    'endereco': escola.get('ItemAddress'),
+                    'bairro': escola.get('Bairro'),
+                    'cep': escola.get('CEP'),
+                    'telefone': escola.get('ItemPhone'),
+                    'email': escola.get('ItemMail'),
+                    'lat': lat,
+                    'lng': lng,
+                    'tipo': escola.get('Type', 'Escola'),
+                    'ativo': escola.get('Active') == '1'
+                })
+            except Exception as e:
+                continue
+
+        return Response({
+            'success': True,
+            'data': escolas,
+            'count': len(escolas),
+            'source': 'TIXXI'
+        })
+
+    except Exception as e:
+        logger.error(f"api_tixxi_escolas error: {e}")
+        return Response({'success': False, 'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+def api_tixxi_bolsoes(request):
+    """API de bolsões de alagamento via TIXXI"""
+    try:
+        data, error = _fetch_tixxi_data(TIXXI_CONFIG['inundation_url'])
+
+        if error:
+            return Response({'success': False, 'error': error}, status=500)
+
+        # Filtros opcionais
+        zona = request.GET.get('zona', None)
+        bairro = request.GET.get('bairro', None)
+
+        bolsoes = []
+        for item in data:
+            try:
+                lat = float(item.get('Latitude', '0').strip())
+                lng = float(item.get('Longitude', '0').strip())
+
+                if lat == 0 or lng == 0:
+                    continue
+
+                # Filtros
+                if zona and zona.lower() not in item.get('Zona', '').lower():
+                    continue
+
+                if bairro and bairro.lower() not in item.get('Bairro', '').lower():
+                    continue
+
+                bolsoes.append({
+                    'id': item.get('ItemID'),
+                    'local': item.get('Local'),
+                    'referencia': item.get('Referencia'),
+                    'bairro': item.get('Bairro'),
+                    'zona': item.get('Zona'),
+                    'lat': lat,
+                    'lng': lng
+                })
+            except:
+                continue
+
+        return Response({
+            'success': True,
+            'data': bolsoes,
+            'count': len(bolsoes),
+            'source': 'TIXXI'
+        })
+
+    except Exception as e:
+        logger.error(f"api_tixxi_bolsoes error: {e}")
+        return Response({'success': False, 'error': str(e)}, status=500)

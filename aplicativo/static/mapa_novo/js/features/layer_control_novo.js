@@ -1,254 +1,103 @@
 /**
- * layer_control_novo.js - Painel de Camadas Retrátil
+ * layer_control_novo.js - Sistema Unificado de Controle de Camadas
+ * Gerencia a visibilidade das camadas no mapa usando o painel do HTML
  */
 
-// Remover botões antigos duplicados
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        // Remover todos os botões de camadas EXCETO o nosso
-        const botoes = document.querySelectorAll('button');
-        botoes.forEach(btn => {
-            // Se é botão de camadas MAS NÃO é o novo
-            if (btn.id !== 'layers-toggle' && 
-                btn !== document.querySelector('.cor-layers-toggle') &&
-                (btn.innerHTML.includes('layers') || 
-                 btn.querySelector('.bi-layers-fill') ||
-                 btn.style.borderRadius === '50%' && 
-                 btn.offsetWidth === 56 &&
-                 !btn.classList.contains('cor-layers-toggle'))) {
-                console.log('🗑️ Removendo botão antigo:', btn);
-                btn.remove();
-            }
-        });
-    }, 1000);
-});
-
+// Estado das camadas
 let layerStatesNovo = {
     sirenes: true,
     eventos: true,
     ocorrencias: true,
     pluviometros: true,
     ventos: true,
+    bolsoes: true,
     escolas: true,
     bensTombados: true,
+    cameras: true,
     wazeAlertas: true,
     wazeJams: true
 };
 
-let isPanelCollapsed = false;
+/**
+ * Inicializa o sistema de controle de camadas
+ * Conecta os checkboxes do HTML com as camadas do mapa
+ */
+function initLayerControl() {
+    console.log('🗺️ Inicializando controle de camadas...');
 
-function createLayerControlNovo() {
-    const panel = document.createElement('div');
-    panel.className = 'layer-control-panel-novo';
-    panel.id = 'layer-control-novo';
-    panel.innerHTML = `
-       <button class="layer-toggle-button" onclick="togglePanel()" title="Camadas do Mapa">
-    <i class="bi bi-chevron-right"></i>
-</button>
-        
-        <div class="layer-control-content">
-            <div class="layer-control-header">
-                <div class="layer-control-title">
-                    <i class="bi bi-layers-fill"></i>
-                    Camadas do Mapa
-                </div>
-            </div>
-            
-            <div class="layer-control-body">
-                <div class="layer-group">
-                    <div class="layer-group-title">
-                        <i class="bi bi-activity"></i>
-                        Monitoramento
-                    </div>
-                    
-                    <div class="layer-item-novo" onclick="toggleLayerNovo('sirenes')">
-                        <div class="layer-item-info">
-                            <div class="layer-item-icon" style="background: #ef4444;">
-                                <i class="bi bi-megaphone-fill"></i>
-                            </div>
-                            <div class="layer-item-details">
-                                <div class="layer-item-name">Sirenes</div>
-                                <div class="layer-item-count" id="count-sirenes-novo">0 ativos</div>
-                            </div>
-                        </div>
-                        <div class="layer-item-toggle active" id="toggle-sirenes-novo"></div>
-                    </div>
-                    
-                    <div class="layer-item-novo" onclick="toggleLayerNovo('eventos')">
-                        <div class="layer-item-info">
-                            <div class="layer-item-icon" style="background: #f97316;">
-                                <i class="bi bi-calendar-event-fill"></i>
-                            </div>
-                            <div class="layer-item-details">
-                                <div class="layer-item-name">Eventos</div>
-                                <div class="layer-item-count" id="count-eventos-novo">0 programados</div>
-                            </div>
-                        </div>
-                        <div class="layer-item-toggle active" id="toggle-eventos-novo"></div>
-                    </div>
-                    
-                    <div class="layer-item-novo" onclick="toggleLayerNovo('ocorrencias')">
-                        <div class="layer-item-info">
-                            <div class="layer-item-icon" style="background: #eab308;">
-                                <i class="bi bi-exclamation-triangle-fill"></i>
-                            </div>
-                            <div class="layer-item-details">
-                                <div class="layer-item-name">Ocorrências</div>
-                                <div class="layer-item-count" id="count-ocorrencias-novo">0 abertas</div>
-                            </div>
-                        </div>
-                        <div class="layer-item-toggle active" id="toggle-ocorrencias-novo"></div>
-                    </div>
-                    
-                    <div class="layer-item-novo" onclick="toggleLayerNovo('pluviometros')">
-                        <div class="layer-item-info">
-                            <div class="layer-item-icon" style="background: #3b82f6;">
-                                <i class="bi bi-cloud-rain-fill"></i>
-                            </div>
-                            <div class="layer-item-details">
-                                <div class="layer-item-name">Pluviômetros</div>
-                                <div class="layer-item-count" id="count-pluviometros-novo">0 estações</div>
-                            </div>
-                        </div>
-                        <div class="layer-item-toggle active" id="toggle-pluviometros-novo"></div>
-                    </div>
-                    
-                    <div class="layer-item-novo" onclick="toggleLayerNovo('ventos')">
-                        <div class="layer-item-info">
-                            <div class="layer-item-icon" style="background: #00e5ff;">
-                                <i class="bi bi-wind"></i>
-                            </div>
-                            <div class="layer-item-details">
-                                <div class="layer-item-name">Estações de Vento</div>
-                                <div class="layer-item-count" id="count-ventos-novo">0 estações</div>
-                            </div>
-                        </div>
-                        <div class="layer-item-toggle active" id="toggle-ventos-novo"></div>
-                    </div>
-
-                    <div class="layer-item-novo" onclick="toggleLayerNovo('wazeAlertas')">
-                        <div class="layer-item-info">
-                            <div class="layer-item-icon" style="background: #eab308;">
-                                <i class="bi bi-exclamation-circle-fill"></i>
-                    </div>
-        <div class="layer-item-details">
-            <div class="layer-item-name">Alertas Waze</div>
-            <div class="layer-item-count" id="count-wazeAlertas-novo">0 alertas</div>
-        </div>
-    </div>
-    <div class="layer-item-toggle active" id="toggle-wazeAlertas-novo"></div>
-</div>
-
-<div class="layer-item-novo" onclick="toggleLayerNovo('wazeJams')">
-    <div class="layer-item-info">
-        <div class="layer-item-icon" style="background: #ff4500;">
-            <i class="bi bi-car-front-fill"></i>
-        </div>
-        <div class="layer-item-details">
-            <div class="layer-item-name">Trânsito Waze</div>
-            <div class="layer-item-count" id="count-wazeJams-novo">0 jams</div>
-        </div>
-    </div>
-    <div class="layer-item-toggle active" id="toggle-wazeJams-novo"></div>
-</div>
-
-
-                </div>
-                
-                <div class="layer-group">
-                    <div class="layer-group-title">
-                        <i class="bi bi-building"></i>
-                        Infraestrutura
-                    </div>
-                    
-                    <div class="layer-item-novo" onclick="toggleLayerNovo('escolas')">
-                        <div class="layer-item-info">
-                            <div class="layer-item-icon" style="background: #ff6b35;">
-                                <i class="bi bi-building-fill"></i>
-                            </div>
-                            <div class="layer-item-details">
-                                <div class="layer-item-name">Escolas Municipais</div>
-                                <div class="layer-item-count" id="count-escolas-novo">0 escolas</div>
-                            </div>
-                        </div>
-                        <div class="layer-item-toggle active" id="toggle-escolas-novo"></div>
-                    </div>
-                    
-                    <div class="layer-item-novo" onclick="toggleLayerNovo('bensTombados')">
-                        <div class="layer-item-info">
-                            <div class="layer-item-icon" style="background: #a855f7;">
-                                <i class="bi bi-building-fill-check"></i>
-                            </div>
-                            <div class="layer-item-details">
-                                <div class="layer-item-name">Bens Tombados</div>
-                                <div class="layer-item-count" id="count-bensTombados-novo">0 locais</div>
-                            </div>
-                        </div>
-                        <div class="layer-item-toggle active" id="toggle-bensTombados-novo"></div>
-                    </div>
-                </div>
-                
-                <div class="layer-group">
-                    <div class="status-badge status-normalidade" id="status-badge-novo">
-                        RIO: NORMALIDADE
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(panel);
+    // Aguardar mapa e markers estarem prontos
+    const checkReady = setInterval(() => {
+        if (typeof map !== 'undefined' && typeof markers !== 'undefined' && markers.sirenes) {
+            clearInterval(checkReady);
+            setupLayerControlSystem();
+        }
+    }, 500);
 }
 
-function togglePanel() {
-    const panel = document.getElementById('layer-control-novo');
-    const icon = panel.querySelector('.layer-toggle-button i');
+function setupLayerControlSystem() {
+    console.log('✅ Mapa e markers prontos, configurando toggles...');
 
-    isPanelCollapsed = !isPanelCollapsed;
+    // Configurar todos os checkboxes com data-toggle
+    const toggles = document.querySelectorAll('[data-toggle]');
 
-    if (isPanelCollapsed) {
-        panel.classList.add('collapsed');
-        icon.className = 'bi bi-chevron-left';
-    } else {
-        panel.classList.remove('collapsed');
-        icon.className = 'bi bi-chevron-right';
-    }
+    toggles.forEach(toggle => {
+        const layerName = toggle.getAttribute('data-toggle');
+
+        // Sincronizar estado inicial do checkbox com o estado da camada
+        if (markers[layerName]) {
+            toggle.checked = map.hasLayer(markers[layerName]);
+            layerStatesNovo[layerName] = toggle.checked;
+        }
+
+        // Adicionar event listener
+        toggle.addEventListener('change', function() {
+            toggleLayerNovo(layerName, this.checked);
+        });
+    });
+
+    // Atualizar contagens iniciais
+    setTimeout(updateLayerCountsNovo, 1000);
+
+    console.log('✅ Sistema de camadas configurado com sucesso!');
 }
 
-function toggleLayerNovo(layerName) {
-    layerStatesNovo[layerName] = !layerStatesNovo[layerName];
-    const toggle = document.getElementById('toggle-' + layerName + '-novo');
-    
-    if (toggle) {
-        toggle.classList.toggle('active');
-    }
-    
-    // ✅ VERIFICAR se mapa e markers existem
+/**
+ * Alterna a visibilidade de uma camada no mapa
+ */
+function toggleLayerNovo(layerName, isVisible) {
+    // Atualizar estado
+    layerStatesNovo[layerName] = isVisible;
+
+    console.log(`🔄 Toggle ${layerName}: ${isVisible ? 'ON' : 'OFF'}`);
+
+    // Verificar se mapa e markers existem
     if (typeof map === 'undefined' || !markers) {
         console.warn('⏳ Aguardando mapa/markers serem inicializados...');
         return;
     }
-    
-    // ✅ VERIFICAR se a camada existe
+
+    // Verificar se a camada existe
     if (!markers[layerName]) {
         console.warn(`⚠️ Camada "${layerName}" não encontrada em markers`);
         return;
     }
-    
-    // Adicionar ou remover camada
-    if (layerStatesNovo[layerName]) {
+
+    // Adicionar ou remover camada do mapa
+    if (isVisible) {
         if (!map.hasLayer(markers[layerName])) {
             map.addLayer(markers[layerName]);
+            console.log(`✅ Camada ${layerName} adicionada ao mapa`);
         }
     } else {
         if (map.hasLayer(markers[layerName])) {
             map.removeLayer(markers[layerName]);
+            console.log(`❌ Camada ${layerName} removida do mapa`);
         }
     }
-    
-    // Toggle Waze layers
+
+    // Toggle camadas Waze (armazenadas em window)
     if (layerName === 'wazeAlertas' && window.wazeAlertasLayer) {
-        if (layerStatesNovo[layerName]) {
+        if (isVisible) {
             if (!map.hasLayer(window.wazeAlertasLayer)) {
                 map.addLayer(window.wazeAlertasLayer);
             }
@@ -258,9 +107,9 @@ function toggleLayerNovo(layerName) {
             }
         }
     }
-    
+
     if (layerName === 'wazeJams' && window.wazeJamsLayer) {
-        if (layerStatesNovo[layerName]) {
+        if (isVisible) {
             if (!map.hasLayer(window.wazeJamsLayer)) {
                 map.addLayer(window.wazeJamsLayer);
             }
@@ -270,57 +119,81 @@ function toggleLayerNovo(layerName) {
             }
         }
     }
-    
+
+    // Atualizar contagens
     updateLayerCountsNovo();
 }
 
 
+/**
+ * Atualiza as contagens de marcadores em cada camada
+ */
 function updateLayerCountsNovo() {
-    if (!markers.sirenes) return;
+    if (typeof markers === 'undefined' || !markers.sirenes) return;
 
-    const counts = {
-        sirenes: markers.sirenes.getLayers().length,
-        eventos: markers.eventos.getLayers().length,
-        ocorrencias: markers.ocorrencias.getLayers().length,
-        pluviometros: markers.pluviometros.getLayers().length,
-        ventos: markers.ventos.getLayers().length,
-        escolas: markers.escolas.getLayers().length,
-        bensTombados: markers.bensTombados.getLayers().length
-    };
+    const layerNames = ['sirenes', 'eventos', 'ocorrencias', 'pluviometros', 'ventos', 'bolsoes', 'escolas', 'bensTombados', 'cameras'];
 
-    document.getElementById('count-sirenes-novo').textContent = counts.sirenes + ' ativos';
-    document.getElementById('count-eventos-novo').textContent = counts.eventos + ' programados';
-    document.getElementById('count-ocorrencias-novo').textContent = counts.ocorrencias + ' abertas';
-    document.getElementById('count-pluviometros-novo').textContent = counts.pluviometros + ' estações';
-    document.getElementById('count-ventos-novo').textContent = counts.ventos + ' estações';
-    document.getElementById('count-escolas-novo').textContent = counts.escolas + ' escolas';
-    document.getElementById('count-bensTombados-novo').textContent = counts.bensTombados + ' locais';
+    layerNames.forEach(name => {
+        if (markers[name]) {
+            const count = markers[name].getLayers().length;
 
-    // Update Waze counts
-if (window.wazeAlertasLayer) {
-    const alertasCount = window.wazeAlertasLayer.getLayers().length;
-    document.getElementById('count-wazeAlertas-novo').textContent = alertasCount + ' alertas';
+            // Atualizar elementos com data-count
+            const countEl = document.querySelector(`[data-count="${name}"]`);
+            if (countEl) {
+                countEl.textContent = count;
+            }
+        }
+    });
+
+    // Atualizar contagens do Waze
+    if (window.wazeAlertasLayer) {
+        const alertasCount = window.wazeAlertasLayer.getLayers().length;
+        const wazeAlertasEl = document.querySelector('[data-count="wazeAlertas"]');
+        if (wazeAlertasEl) {
+            wazeAlertasEl.textContent = alertasCount;
+        }
+    }
+
+    if (window.wazeJamsLayer) {
+        const jamsCount = window.wazeJamsLayer.getLayers().length;
+        const wazeJamsEl = document.querySelector('[data-count="wazeJams"]');
+        if (wazeJamsEl) {
+            wazeJamsEl.textContent = jamsCount;
+        }
+    }
 }
 
-if (window.wazeJamsLayer) {
-    const jamsCount = window.wazeJamsLayer.getLayers().length;
-    document.getElementById('count-wazeJams-novo').textContent = jamsCount + ' jams';
-}
+/**
+ * Toggle do painel de camadas
+ */
+function toggleLayerPanel() {
+    const panel = document.getElementById('layer-panel');
+    if (panel) {
+        panel.classList.toggle('collapsed');
+    }
 }
 
+// Inicializar quando DOM estiver pronto
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', createLayerControlNovo);
+    document.addEventListener('DOMContentLoaded', initLayerControl);
 } else {
-    createLayerControlNovo();
+    initLayerControl();
 }
 
-console.log('✅ layer_control_novo.js carregado');
-
-// Conectar botão externo ao toggle
+// Conectar botão externo ao toggle do painel
 document.addEventListener('DOMContentLoaded', () => {
     const layersBtn = document.getElementById('layers-toggle');
     if (layersBtn) {
-        layersBtn.addEventListener('click', togglePanel);
-        console.log('✅ Botão de camadas externo conectado');
+        layersBtn.addEventListener('click', toggleLayerPanel);
+        console.log('✅ Botão de camadas conectado');
     }
 });
+
+// Atualizar contagens periodicamente
+setInterval(() => {
+    if (typeof markers !== 'undefined') {
+        updateLayerCountsNovo();
+    }
+}, 5000);
+
+console.log('✅ layer_control_novo.js carregado');

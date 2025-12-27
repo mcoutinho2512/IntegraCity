@@ -29,8 +29,10 @@ function initMap() {
     markers.ocorrencias = L.layerGroup().addTo(map);
     markers.pluviometros = L.layerGroup().addTo(map);
     markers.ventos = L.layerGroup().addTo(map);
+    markers.bolsoes = L.layerGroup().addTo(map);
     markers.escolas = L.layerGroup().addTo(map);
     markers.bensTombados = L.layerGroup().addTo(map);
+    markers.cameras = L.layerGroup().addTo(map);
 
     carregarDados();
 }
@@ -45,8 +47,10 @@ async function carregarDados() {
             carregarOcorrencias(),
             carregarPluviometros(),
             carregarVentos(),
+            carregarBolsoes(),
             carregarEscolas(),
-            carregarBensTombados()
+            carregarBensTombados(),
+            carregarCameras()
         ]);
         console.log('Dados carregados com sucesso');
     } catch (error) {
@@ -319,12 +323,56 @@ async function carregarOcorrencias() {
     }
 }
 
-async function carregarEscolas() {
+async function carregarBolsoes() {
     try {
-        const response = await fetch('/api/escolas/');
+        const response = await fetch('/api/tixxi/bolsoes/');
         const data = await response.json();
 
-        console.log('Resposta escolas:', data);
+        console.log('Resposta bolsões:', data);
+
+        if (!data.success || !data.data) return;
+
+        markers.bolsoes.clearLayers();
+
+        data.data.forEach(bolsao => {
+            if (bolsao.lat && bolsao.lng) {
+                const icon = L.divIcon({
+                    className: 'custom-marker',
+                    html: '<div class="marker-icon marker-bolsao"><i class="bi bi-water"></i></div>',
+                    iconSize: [35, 35],
+                    iconAnchor: [17, 35]
+                });
+
+                const popup = `<div class="custom-popup">
+                    <div class="popup-header" style="background:#06b6d4">
+                        <h6 class="popup-title"><i class="bi bi-water"></i> Bolsão de Alagamento</h6>
+                    </div>
+                    <div class="popup-body">
+                        <p><strong>📍 Local:</strong> ${bolsao.local}</p>
+                        <p><strong>🔍 Referência:</strong> ${bolsao.referencia}</p>
+                        <p><strong>🏘️ Bairro:</strong> ${bolsao.bairro}</p>
+                        <p><strong>🗺️ Zona:</strong> ${bolsao.zona}</p>
+                    </div>
+                </div>`;
+
+                const marker = L.marker([bolsao.lat, bolsao.lng], { icon }).bindPopup(popup);
+                markers.bolsoes.addLayer(marker);
+            }
+        });
+
+        console.log(data.count + ' bolsões plotados');
+        updateLayerCounts();
+    } catch (error) {
+        console.error('Erro ao carregar bolsões:', error);
+    }
+}
+
+async function carregarEscolas() {
+    try {
+        const response = await fetch('/api/tixxi/escolas/');
+        const data = await response.json();
+
+        console.log('Resposta escolas TIXXI:', data);
 
         if (!data.success || !data.data) return;
 
@@ -340,13 +388,14 @@ async function carregarEscolas() {
                 });
 
                 const popup = `<div class="custom-popup">
-                    <div class="popup-header" style="background:#f59e0b">
+                    <div class="popup-header" style="background:#ff6b35">
                         <h6 class="popup-title"><i class="bi bi-building"></i> ${escola.nome}</h6>
                     </div>
                     <div class="popup-body">
-                        <p><strong>📍 Endereço:</strong> ${escola.endereco}</p>
-                        <p><strong>🏘️ Bairro:</strong> ${escola.bairro}</p>
-                        <p><strong>📞 Telefone:</strong> ${escola.telefone}</p>
+                        <p><strong>📍 Endereço:</strong> ${escola.endereco || 'N/A'}</p>
+                        <p><strong>🏘️ Bairro:</strong> ${escola.bairro || 'N/A'}</p>
+                        <p><strong>📞 Telefone:</strong> ${escola.telefone || 'N/A'}</p>
+                        <p><strong>🏫 Tipo:</strong> ${escola.tipo || 'Escola Municipal'}</p>
                     </div>
                 </div>`;
 
@@ -355,7 +404,7 @@ async function carregarEscolas() {
             }
         });
 
-        console.log(data.count + ' escolas plotadas');
+        console.log(data.count + ' escolas TIXXI plotadas');
         updateLayerCounts();
     } catch (error) {
         console.error('Erro ao carregar escolas:', error);
@@ -401,6 +450,49 @@ async function carregarBensTombados() {
         updateLayerCounts();
     } catch (error) {
         console.error('Erro ao carregar bens tombados:', error);
+    }
+}
+
+async function carregarCameras() {
+    try {
+        const response = await fetch('/api/tixxi/cameras/');
+        const data = await response.json();
+
+        console.log('Resposta câmeras TIXXI:', data);
+
+        if (!data.success || !data.data) return;
+
+        markers.cameras.clearLayers();
+
+        data.data.forEach(camera => {
+            if (camera.lat && camera.lng) {
+                const icon = L.divIcon({
+                    className: 'custom-marker',
+                    html: '<div class="marker-icon marker-camera"><i class="bi bi-camera-video-fill"></i></div>',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 30]
+                });
+
+                const popup = `<div class="custom-popup">
+                    <div class="popup-header" style="background:#10b981">
+                        <h6 class="popup-title"><i class="bi bi-camera-video-fill"></i> ${camera.nome || 'Câmera'}</h6>
+                    </div>
+                    <div class="popup-body">
+                        <p><strong>📍 Local:</strong> ${camera.endereco || camera.local || 'N/A'}</p>
+                        <p><strong>🏘️ Bairro:</strong> ${camera.bairro || 'N/A'}</p>
+                        <p><strong>📊 Status:</strong> ${camera.status || 'Ativa'}</p>
+                    </div>
+                </div>`;
+
+                const marker = L.marker([camera.lat, camera.lng], { icon }).bindPopup(popup);
+                markers.cameras.addLayer(marker);
+            }
+        });
+
+        console.log(data.count + ' câmeras TIXXI plotadas');
+        updateLayerCounts();
+    } catch (error) {
+        console.error('Erro ao carregar câmeras:', error);
     }
 }
 

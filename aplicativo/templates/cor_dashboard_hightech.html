@@ -516,18 +516,64 @@
                     </div>
                 </div>
 
-                <!-- Cameras -->
-                <div class="layer-item">
-                    <label class="layer-checkbox">
-                        <input type="checkbox" id="layerCameras" onchange="toggleMapLayer('cameras')">
-                        <span class="checkmark"></span>
-                    </label>
-                    <div class="layer-icon" style="background: rgba(156, 39, 176, 0.2); color: #9C27B0;">
-                        <i class="fas fa-video"></i>
+                <!-- Cameras - Com Submenu -->
+                <div class="layer-item-group">
+                    <div class="layer-item has-submenu" onclick="toggleCameraSubmenu(event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerCameras" onchange="toggleAllCameras()">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(156, 39, 176, 0.2); color: #9C27B0;">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Cameras</span>
+                            <span class="layer-count" id="countCameras">--</span>
+                        </div>
+                        <div class="submenu-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
                     </div>
-                    <div class="layer-info">
-                        <span class="layer-name">Cameras</span>
-                        <span class="layer-count" id="countCameras">--</span>
+
+                    <!-- Submenu de Cameras -->
+                    <div class="layer-submenu" id="cameraSubmenu">
+                        <!-- Filtro Cameras Fixas -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerCamerasFixas" onchange="toggleCameraType('fixas')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon fixas">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <span class="submenu-label">Fixas</span>
+                            <span class="submenu-badge" id="countCamerasFixas">--</span>
+                        </div>
+
+                        <!-- Filtro Cameras Moveis -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerCamerasMoveis" onchange="toggleCameraType('moveis')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon moveis">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <span class="submenu-label">Moveis</span>
+                            <span class="submenu-badge" id="countCamerasMoveis">--</span>
+                        </div>
+
+                        <!-- Separador -->
+                        <div class="submenu-divider"></div>
+
+                        <!-- Botao Mosaico -->
+                        <div class="submenu-item submenu-action" onclick="openMosaicModal()">
+                            <div class="submenu-icon mosaico">
+                                <i class="fas fa-th-large"></i>
+                            </div>
+                            <span class="submenu-label">Mosaico de Cameras</span>
+                            <i class="fas fa-external-link-alt submenu-arrow-icon"></i>
+                        </div>
                     </div>
                 </div>
 
@@ -588,6 +634,21 @@
                     <div class="layer-info">
                         <span class="layer-name">Waze</span>
                         <span class="layer-count" id="countWaze">--</span>
+                    </div>
+                </div>
+
+                <!-- Bolsoes de Alagamento -->
+                <div class="layer-item">
+                    <label class="layer-checkbox">
+                        <input type="checkbox" id="layerBolsoes" onchange="toggleMapLayer('bolsoes')">
+                        <span class="checkmark"></span>
+                    </label>
+                    <div class="layer-icon" style="background: rgba(6, 182, 212, 0.2); color: #06b6d4;">
+                        <i class="fas fa-water"></i>
+                    </div>
+                    <div class="layer-info">
+                        <span class="layer-name">Bolsoes</span>
+                        <span class="layer-count" id="countBolsoes">--</span>
                     </div>
                 </div>
             </div>
@@ -922,10 +983,13 @@
         pluviometros: L.layerGroup(),
         sirenes: L.layerGroup(),
         cameras: L.layerGroup(),
+        camerasFixas: L.layerGroup(),
+        camerasMoveis: L.layerGroup(),
         metro: L.layerGroup(),
         brt: L.layerGroup(),
         ocorrencias: L.layerGroup(),
-        waze: L.layerGroup()
+        waze: L.layerGroup(),
+        bolsoes: L.layerGroup()
     };
 
     // Cache dos dados carregados
@@ -938,7 +1002,14 @@
         metro: null,
         brt: null,
         ocorrencias: null,
-        waze: null
+        waze: null,
+        bolsoes: null
+    };
+
+    // Estado dos filtros de cameras
+    var cameraFilters = {
+        fixas: true,
+        moveis: true
     };
 
     // Icones customizados para cada tipo
@@ -948,11 +1019,208 @@
         pluviometros: { icon: 'fa-cloud-rain', color: '#2196F3' },
         sirenes: { icon: 'fa-bullhorn', color: '#FF9800' },
         cameras: { icon: 'fa-video', color: '#9C27B0' },
+        camerasFixas: { icon: 'fa-video', color: '#2196F3' },     // Azul para fixas
+        camerasMoveis: { icon: 'fa-video', color: '#4CAF50' },    // Verde para moveis
         metro: { icon: 'fa-subway', color: '#FF5722' },
         brt: { icon: 'fa-bus', color: '#009688' },
         ocorrencias: { icon: 'fa-exclamation-triangle', color: '#ff0055' },
-        waze: { icon: 'fa-car', color: '#00d4ff' }
+        waze: { icon: 'fa-car', color: '#00d4ff' },
+        bolsoes: { icon: 'fa-water', color: '#06b6d4' }
     };
+
+    // ============================================
+    // SUBMENU DE CAMERAS
+    // ============================================
+
+    // Toggle do submenu de cameras
+    function toggleCameraSubmenu(event) {
+        if (event) event.stopPropagation();
+
+        var layerItem = document.querySelector('.layer-item.has-submenu');
+        var submenu = document.getElementById('cameraSubmenu');
+
+        if (layerItem && submenu) {
+            layerItem.classList.toggle('expanded');
+            submenu.classList.toggle('expanded');
+        }
+    }
+
+    // Toggle todas as cameras (checkbox principal)
+    function toggleAllCameras() {
+        var mainCheckbox = document.getElementById('layerCameras');
+        var isChecked = mainCheckbox ? mainCheckbox.checked : false;
+        var layerItem = mainCheckbox ? mainCheckbox.closest('.layer-item') : null;
+
+        // Atualizar checkboxes filhos
+        var fixasCheckbox = document.getElementById('layerCamerasFixas');
+        var moveisCheckbox = document.getElementById('layerCamerasMoveis');
+
+        if (fixasCheckbox) fixasCheckbox.checked = isChecked;
+        if (moveisCheckbox) moveisCheckbox.checked = isChecked;
+
+        cameraFilters.fixas = isChecked;
+        cameraFilters.moveis = isChecked;
+
+        if (isChecked) {
+            if (layerItem) layerItem.classList.add('active');
+
+            // Carregar dados se ainda nao carregou
+            if (!layerDataCache.cameras) {
+                loadLayerData('cameras');
+            } else {
+                renderCamerasByType();
+            }
+
+            // Adicionar camadas ao mapa
+            mapLayers.camerasFixas.addTo(map);
+            mapLayers.camerasMoveis.addTo(map);
+        } else {
+            if (layerItem) layerItem.classList.remove('active');
+            map.removeLayer(mapLayers.camerasFixas);
+            map.removeLayer(mapLayers.camerasMoveis);
+        }
+    }
+
+    // Toggle tipo de camera (fixas ou moveis)
+    function toggleCameraType(type) {
+        var checkbox = document.getElementById('layerCameras' + type.charAt(0).toUpperCase() + type.slice(1));
+        var isChecked = checkbox ? checkbox.checked : false;
+
+        cameraFilters[type] = isChecked;
+
+        // Atualizar checkbox principal baseado nos filhos
+        var mainCheckbox = document.getElementById('layerCameras');
+        if (mainCheckbox) {
+            mainCheckbox.checked = cameraFilters.fixas || cameraFilters.moveis;
+        }
+
+        if (type === 'fixas') {
+            if (isChecked) {
+                mapLayers.camerasFixas.addTo(map);
+            } else {
+                map.removeLayer(mapLayers.camerasFixas);
+            }
+        } else if (type === 'moveis') {
+            if (isChecked) {
+                mapLayers.camerasMoveis.addTo(map);
+            } else {
+                map.removeLayer(mapLayers.camerasMoveis);
+            }
+        }
+
+        // Se nao tem dados carregados, carregar
+        if (!layerDataCache.cameras && isChecked) {
+            loadLayerData('cameras');
+        }
+    }
+
+    // Renderizar cameras por tipo (fixas/moveis)
+    function renderCamerasByType() {
+        // Limpar camadas existentes
+        mapLayers.camerasFixas.clearLayers();
+        mapLayers.camerasMoveis.clearLayers();
+        mapLayers.cameras.clearLayers();
+
+        var data = layerDataCache.cameras;
+        if (!data) {
+            console.log('Sem dados de câmeras no cache');
+            return;
+        }
+
+        var items = [];
+
+        // Normalizar dados - a API retorna em data.data
+        if (Array.isArray(data)) {
+            items = data;
+        } else if (data.data && Array.isArray(data.data)) {
+            items = data.data;
+        } else if (data.cameras) {
+            items = data.cameras;
+        }
+
+        console.log('Processando ' + items.length + ' cameras');
+
+        var countFixas = 0;
+        var countMoveis = 0;
+        var countTotal = 0;
+
+        items.forEach(function(item) {
+            var lat = item.latitude || item.lat || item.y;
+            var lng = item.longitude || item.lng || item.lon || item.x;
+
+            if (lat && lng) {
+                countTotal++;
+
+                // Determinar se a camera eh fixa ou movel
+                // Verifica campos comuns da API: tipo, type, mobile, movel, fixa
+                var isMovel = false;
+
+                if (item.tipo) {
+                    isMovel = item.tipo.toLowerCase().includes('movel') ||
+                              item.tipo.toLowerCase().includes('móvel') ||
+                              item.tipo.toLowerCase().includes('mobile');
+                }
+                if (item.type) {
+                    isMovel = isMovel || item.type.toLowerCase().includes('mobile') ||
+                              item.type.toLowerCase().includes('movel');
+                }
+                if (item.mobile !== undefined) {
+                    isMovel = item.mobile === true || item.mobile === 1 || item.mobile === '1';
+                }
+                if (item.movel !== undefined) {
+                    isMovel = item.movel === true || item.movel === 1 || item.movel === '1';
+                }
+                if (item.fixa !== undefined) {
+                    isMovel = !(item.fixa === true || item.fixa === 1 || item.fixa === '1');
+                }
+
+                var cameraType = isMovel ? 'camerasMoveis' : 'camerasFixas';
+                var marker = L.marker([lat, lng], {
+                    icon: createLayerIcon(cameraType)
+                });
+
+                // Abrir video direto no clique
+                if (item.url_stream || item.url) {
+                    marker.on('click', function() {
+                        openCameraPlayer(item.url_stream || item.url, item.nome || 'Camera', item.id || '');
+                    });
+                }
+
+                // Tooltip com indicacao do tipo
+                var tooltipText = (item.nome || 'Camera') + ' (' + (isMovel ? 'Móvel' : 'Fixa') + ')';
+                marker.bindTooltip(tooltipText, {
+                    permanent: false,
+                    direction: 'top',
+                    className: 'camera-tooltip'
+                });
+
+                // Adicionar a camada apropriada
+                if (isMovel) {
+                    countMoveis++;
+                    mapLayers.camerasMoveis.addLayer(marker);
+                } else {
+                    countFixas++;
+                    mapLayers.camerasFixas.addLayer(marker);
+                }
+
+                // Tambem adiciona na camada geral para compatibilidade
+                mapLayers.cameras.addLayer(marker);
+            }
+        });
+
+        // Atualizar contadores
+        updateElement('countCameras', countTotal);
+        updateElement('countCamerasFixas', countFixas);
+        updateElement('countCamerasMoveis', countMoveis);
+
+        console.log('Cameras carregadas: ' + countTotal + ' total (' + countFixas + ' fixas, ' + countMoveis + ' moveis)');
+    }
+
+    // Funcao auxiliar para atualizar elementos
+    function updateElement(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
 
     // Toggle da sidebar de camadas
     function toggleLayersSidebar() {
@@ -1009,34 +1277,57 @@
     }
 
     // Carregar dados de uma camada especifica
+    // Detectar base URL automaticamente - usar origin para garantir URL absoluta
+    var baseUrl = window.location.origin + '/';
+    console.log('Base URL para APIs:', baseUrl);
+
     function loadLayerData(layerName) {
         var apiUrls = {
-            escolas: '/api/escolas/',
-            hospitais: '/api/hospitais/',
-            pluviometros: '/api/pluviometros/',
-            sirenes: '/api/sirenes/',
-            cameras: '/api/cameras/',
-            metro: '/api/metro/',
-            brt: '/api/brt/',
-            ocorrencias: '/api/ocorrencias/hoje/',
-            waze: '/api/waze/'
+            escolas: baseUrl + 'api/escolas/',
+            hospitais: baseUrl + 'api/hospitais/',
+            pluviometros: baseUrl + 'api/pluviometros/',
+            sirenes: baseUrl + 'api/sirenes/',
+            cameras: baseUrl + '/integracity/api/cameras/',
+            metro: baseUrl + 'api/metro/',
+            brt: baseUrl + 'api/brt/',
+            ocorrencias: baseUrl + 'api/ocorrencias/tempo-real/',
+            waze: baseUrl + 'api/waze/',
+            bolsoes: baseUrl + 'api/bolsoes/'
         };
 
         var url = apiUrls[layerName];
         if (!url) return;
 
         showToast('Carregando ' + layerName + '...', 'info');
+        console.log('Carregando camada ' + layerName + ' de:', url);
 
         fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                layerDataCache[layerName] = data;
-                renderLayerMarkers(layerName, data);
-                updateLayerCount(layerName, data);
+            .then(function(response) {
+                console.log('Resposta da API ' + layerName + ':', response.status);
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.json();
             })
-            .catch(error => {
+            .then(function(data) {
+                console.log('Dados recebidos para ' + layerName + ':', data);
+                layerDataCache[layerName] = data;
+
+                // Cameras usa renderização especial com tipos (fixas/moveis)
+                if (layerName === 'cameras') {
+                    renderCamerasByType();
+                    // Adicionar camadas baseado nos filtros atuais
+                    if (cameraFilters.fixas) mapLayers.camerasFixas.addTo(map);
+                    if (cameraFilters.moveis) mapLayers.camerasMoveis.addTo(map);
+                    showToast('Cameras carregadas com sucesso', 'success');
+                } else {
+                    renderLayerMarkers(layerName, data);
+                    updateLayerCount(layerName, data);
+                }
+            })
+            .catch(function(error) {
                 console.error('Erro ao carregar ' + layerName + ':', error);
-                showToast('Erro ao carregar ' + layerName, 'error');
+                showToast('Erro ao carregar ' + layerName + ': ' + error.message, 'error');
             });
     }
 
@@ -1089,9 +1380,22 @@
                     icon: createLayerIcon(layerName)
                 });
 
-                // Criar popup com informacoes
-                var popupContent = createPopupContent(layerName, item);
-                marker.bindPopup(popupContent);
+                // Para cameras, abrir video direto no clique
+                if (layerName === 'cameras' && item.url) {
+                    marker.on('click', function() {
+                        openCameraPlayer(item.url_stream || item.url, item.nome || 'Camera', item.id || '');
+                    });
+                    // Tooltip simples no hover
+                    marker.bindTooltip(item.nome || 'Camera', {
+                        permanent: false,
+                        direction: 'top',
+                        className: 'camera-tooltip'
+                    });
+                } else {
+                    // Criar popup com informacoes para outras camadas
+                    var popupContent = createPopupContent(layerName, item);
+                    marker.bindPopup(popupContent);
+                }
 
                 mapLayers[layerName].addLayer(marker);
             }
@@ -1109,6 +1413,8 @@
         switch(layerName) {
             case 'escolas':
                 details = '<p>' + (item.endereco || item.bairro || '--') + '</p>';
+                if (item.telefone) details += '<p>Tel: ' + item.telefone + '</p>';
+                if (item.tipo) details += '<p>Tipo: ' + item.tipo + '</p>';
                 break;
             case 'hospitais':
                 details = '<p>' + (item.endereco || item.bairro || '--') + '</p>';
@@ -1118,13 +1424,19 @@
                 details = '<p>Bairro: ' + (item.bairro || '--') + '</p>';
                 if (item.acumulado_15min !== undefined) details += '<p>15min: ' + item.acumulado_15min + 'mm</p>';
                 if (item.acumulado_1h !== undefined) details += '<p>1h: ' + item.acumulado_1h + 'mm</p>';
+                if (item.chuva_1h !== undefined) details += '<p>1h: ' + item.chuva_1h + 'mm</p>';
+                if (item.chuva_24h !== undefined) details += '<p>24h: ' + item.chuva_24h + 'mm</p>';
                 break;
             case 'sirenes':
                 details = '<p>Bairro: ' + (item.bairro || '--') + '</p>';
                 details += '<p>Status: ' + (item.acionada ? '<span style="color:#ff0055">ACIONADA</span>' : '<span style="color:#00ff88">Stand-by</span>') + '</p>';
                 break;
             case 'cameras':
-                details = '<p>' + (item.localizacao || item.bairro || '--') + '</p>';
+                details = '<p>' + (item.zona || item.localizacao || item.bairro || '--') + '</p>';
+                if (item.bairro) details += '<p>Bairro: ' + item.bairro + '</p>';
+                if (item.url_stream || item.url) {
+                    var cameraUrl = item.url_stream || item.url; var cameraName = (item.nome || 'Camera').replace(/'/g, "\'"); details += '<button onclick="openCameraPlayer(&quot;' + cameraUrl + '&quot;, &quot;' + cameraName + '&quot;)" style="margin-top: 10px; padding: 8px 16px; background: linear-gradient(135deg, #9C27B0, #7B1FA2); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Rajdhani, sans-serif; font-weight: 600; display: flex; align-items: center; gap: 6px;"><i class="fas fa-play"></i> Assistir ao Vivo</button>';
+                }
                 break;
             case 'metro':
                 details = '<p>Linha: ' + (item.linha || '--') + '</p>';
@@ -1142,6 +1454,12 @@
             case 'waze':
                 details = '<p>Tipo: ' + (item.type || item.subtype || '--') + '</p>';
                 if (item.street) details += '<p>' + item.street + '</p>';
+                break;
+            case 'bolsoes':
+                details = '<p>Local: ' + (item.local || '--') + '</p>';
+                if (item.referencia) details += '<p>Ref: ' + item.referencia + '</p>';
+                if (item.bairro) details += '<p>Bairro: ' + item.bairro + '</p>';
+                if (item.zona) details += '<p>Zona: ' + item.zona + '</p>';
                 break;
             default:
                 details = '<p>' + (item.descricao || item.description || '--') + '</p>';
@@ -1208,10 +1526,578 @@
     }
 
     // ============================================
+    // PLAYER DE CAMERAS - JANELA FLUTUANTE RESPONSIVA
+    // ============================================
+
+    // Modo de visualizacao atual
+    var currentViewMode = 'contain';
+
+    function openCameraPlayer(url, nome, cameraId) {
+        // Fechar modal existente se houver
+        closeCameraPlayer();
+
+        // Formatar nome da câmera
+        var displayName = 'CAMERA ' + (cameraId || '') + ' - ' + nome.toUpperCase();
+
+        var modalHtml = `
+            <div id="cameraPlayerModal" class="camera-player-modal" style="
+                top: 100px;
+                left: 150px;
+                width: 640px;
+                height: 480px;
+            ">
+                <!-- Cabecalho arrastavel -->
+                <div id="cameraPlayerHeader" class="camera-player-header">
+                    <span class="camera-player-title">${displayName}</span>
+                </div>
+
+                <!-- Container do Video - RESPONSIVO -->
+                <div class="camera-video-container">
+                    <!-- Loading indicator -->
+                    <div id="cameraLoading" class="camera-loading">
+                        <div class="camera-loading-spinner"></div>
+                        <span>Carregando video...</span>
+                    </div>
+
+                    <!-- Video Wrapper - RESPONSIVO SEM CORTES -->
+                    <div class="video-wrapper">
+                        <iframe
+                            id="cameraIframe"
+                            src="${url}"
+                            allowfullscreen
+                            allow="autoplay; encrypted-media"
+                            scrolling="no"
+                            onload="hideCameraLoading();"
+                            onerror="showCameraOffline()"
+                        ></iframe>
+                    </div>
+                </div>
+
+                <!-- Rodape com controles e botao fechar -->
+                <div class="camera-player-footer">
+
+                    <button onclick="closeCameraPlayer()" class="camera-close-btn">
+                        <i class="fas fa-times"></i> FECHAR
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Tornar arrastavel
+        makeDraggable(document.getElementById('cameraPlayerModal'), document.getElementById('cameraPlayerHeader'));
+
+        // Fechar com ESC
+        document.addEventListener('keydown', handleCameraEsc);
+
+        // Esconder loading depois de um tempo se iframe nao disparar onload
+        setTimeout(function() {
+            var loading = document.getElementById('cameraLoading');
+            if (loading) loading.style.display = 'none';
+        }, 5000);
+    }
+
+    // Esconder loading quando iframe carregar
+    function hideCameraLoading() {
+        var loading = document.getElementById('cameraLoading');
+        if (loading) loading.style.display = 'none';
+    }
+
+    // Mostrar estado offline
+    function showCameraOffline() {
+        var loading = document.getElementById('cameraLoading');
+        if (loading) {
+            loading.innerHTML = '<i class="fas fa-video-slash" style="font-size: 48px; opacity: 0.7;"></i><span>Camera offline</span>';
+        }
+    }
+
+    // Placeholder - o iframe do Tixxi controla seu próprio conteúdo
+    // Não temos controle sobre o CSS da página externa
+    function setViewMode(mode, btn) {
+        currentViewMode = mode;
+        console.log('Modo:', mode, '(controle limitado - conteúdo externo)');
+
+        // Atualizar botoes ativos
+        document.querySelectorAll('.camera-view-btn').forEach(function(b) {
+            b.classList.remove('active');
+        });
+        if (btn) {
+            btn.classList.add('active');
+        }
+    }
+
+    function closeCameraPlayer() {
+        var modal = document.getElementById('cameraPlayerModal');
+        if (modal) {
+            modal.remove();
+        }
+        document.removeEventListener('keydown', handleCameraEsc);
+    }
+
+    function handleCameraEsc(e) {
+        if (e.key === 'Escape') {
+            closeCameraPlayer();
+        }
+    }
+
+    // Funcao para tornar elemento arrastavel
+    function makeDraggable(element, handle) {
+        var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+        handle.onmousedown = dragMouseDown;
+
+        function dragMouseDown(e) {
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        }
+
+        function elementDrag(e) {
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+        }
+
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
+    }
+
+    // ============================================
+    // MOSAICO DE CÂMERAS
+    // ============================================
+
+    var allCameras = []; // Armazena todas as câmeras
+    var mosaicCameras = []; // Câmeras selecionadas para o mosaico
+    var currentMosaicLayout = 4; // Layout atual (4, 8, 16, 24, 48)
+
+    // Abrir modal do mosaico
+    function openMosaicModal() {
+        // Carregar câmeras se ainda não carregou
+        if (allCameras.length === 0) {
+            loadCamerasForMosaic();
+        }
+
+        var modal = document.getElementById('mosaicModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            renderCameraList();
+        }
+    }
+
+    // Fechar modal do mosaico
+    function closeMosaicModal() {
+        var modal = document.getElementById('mosaicModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Carregar câmeras da API
+    function loadCamerasForMosaic() {
+        var mosaicApiUrl = window.location.origin + '/integracity/api/cameras/';
+        console.log('Carregando cameras para mosaico de:', mosaicApiUrl);
+
+        fetch(mosaicApiUrl)
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('Dados do mosaico recebidos:', data);
+
+                // A API retorna em data.data
+                if (data.data && Array.isArray(data.data)) {
+                    allCameras = data.data;
+                } else if (data.cameras) {
+                    allCameras = data.cameras;
+                } else if (Array.isArray(data)) {
+                    allCameras = data;
+                } else {
+                    allCameras = [];
+                }
+                console.log('Câmeras carregadas para mosaico:', allCameras.length);
+                renderCameraList();
+            })
+            .catch(function(err) {
+                console.error('Erro ao carregar câmeras:', err);
+            });
+    }
+
+    // Renderizar lista de câmeras com filtro
+    function renderCameraList() {
+        var container = document.getElementById('cameraListContainer');
+        var searchTerm = document.getElementById('cameraSearch')?.value?.toLowerCase() || '';
+
+        if (!container) return;
+
+        var filtered = allCameras.filter(function(cam) {
+            var id = (cam.id || cam.codigo || '').toString().toLowerCase();
+            var nome = (cam.nome || cam.name || '').toLowerCase();
+            return id.includes(searchTerm) || nome.includes(searchTerm);
+        });
+
+        var html = '';
+        filtered.forEach(function(cam, index) {
+            var camId = cam.id || cam.codigo || index;
+            var camNome = cam.nome || cam.name || 'Camera ' + camId;
+            var isSelected = mosaicCameras.some(function(c) { return c.id === camId; });
+
+            html += '<div class="camera-list-item ' + (isSelected ? 'selected' : '') + '" onclick="toggleCameraSelection(\'' + camId + '\')">';
+            html += '  <div class="camera-checkbox">' + (isSelected ? '<i class="fas fa-check"></i>' : '') + '</div>';
+            html += '  <div class="camera-info">';
+            html += '    <span class="camera-id">' + camId + '</span>';
+            html += '    <span class="camera-name">' + camNome + '</span>';
+            html += '  </div>';
+            html += '</div>';
+        });
+
+        container.innerHTML = html || '<div class="no-cameras">Nenhuma câmera encontrada</div>';
+
+        // Atualizar contador
+        var counter = document.getElementById('selectedCount');
+        if (counter) {
+            counter.textContent = mosaicCameras.length + ' / ' + currentMosaicLayout;
+        }
+    }
+
+    // Toggle seleção de câmera
+    function toggleCameraSelection(camId) {
+        var cam = allCameras.find(function(c) {
+            return (c.id || c.codigo) == camId;
+        });
+
+        if (!cam) return;
+
+        var index = mosaicCameras.findIndex(function(c) {
+            return (c.id || c.codigo) == camId;
+        });
+
+        if (index >= 0) {
+            // Remover
+            mosaicCameras.splice(index, 1);
+        } else {
+            // Adicionar (se não exceder limite)
+            if (mosaicCameras.length < currentMosaicLayout) {
+                mosaicCameras.push(cam);
+            } else {
+                showToast('Limite de ' + currentMosaicLayout + ' câmeras atingido!', 'warning');
+                return;
+            }
+        }
+
+        renderCameraList();
+    }
+
+    // Mudar layout do mosaico
+    function setMosaicLayout(layout) {
+        currentMosaicLayout = layout;
+
+        // Se tem mais câmeras selecionadas que o novo limite, remover excesso
+        while (mosaicCameras.length > layout) {
+            mosaicCameras.pop();
+        }
+
+        // Atualizar botões
+        document.querySelectorAll('.layout-btn').forEach(function(btn) {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        renderCameraList();
+    }
+
+    // Iniciar mosaico
+    function startMosaic() {
+        if (mosaicCameras.length === 0) {
+            showToast('Selecione pelo menos uma câmera!', 'warning');
+            return;
+        }
+
+        closeMosaicModal();
+        openMosaicView();
+    }
+
+    // Abrir visualização do mosaico
+    function openMosaicView() {
+        // Pegar IDs das câmeras selecionadas
+        var cameraIds = mosaicCameras.map(function(c) { return c.id; }).join(',');
+        
+        // Construir URL com parâmetros
+        var url = window.location.origin + window.location.pathname;
+        url += '?mosaic=true&cameras=' + encodeURIComponent(cameraIds) + '&layout=' + currentMosaicLayout;
+        
+        // Abrir em nova aba
+        window.open(url, '_blank');
+    }
+
+    // Criar overlay do mosaico
+    function createMosaicOverlay() {
+        var html = `
+            <div id="mosaicOverlay" class="mosaic-overlay">
+                <div class="mosaic-header">
+                    <div class="mosaic-title">
+                        <i class="fas fa-th"></i>
+                        MOSAICO DE CÂMERAS
+                        <span id="mosaicInfo"></span>
+                    </div>
+                    <div class="mosaic-controls">
+                        <button class="mosaic-btn" onclick="setMosaicLayout(4); renderMosaicGrid();">2x2</button>
+                        <button class="mosaic-btn" onclick="setMosaicLayout(8); renderMosaicGrid();">2x4</button>
+                        <button class="mosaic-btn" onclick="setMosaicLayout(16); renderMosaicGrid();">4x4</button>
+                        <button class="mosaic-btn" onclick="setMosaicLayout(24); renderMosaicGrid();">4x6</button>
+                        <button class="mosaic-btn" onclick="setMosaicLayout(48); renderMosaicGrid();">6x8</button>
+                        <button class="mosaic-btn" onclick="openMosaicModal()"><i class="fas fa-plus"></i> Editar</button>
+                        <button class="mosaic-btn close" onclick="closeMosaicView()"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div id="mosaicGrid" class="mosaic-grid grid-4"></div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', html);
+    }
+
+    // Renderizar grid do mosaico
+    function renderMosaicGrid() {
+        var grid = document.getElementById('mosaicGrid');
+        var info = document.getElementById('mosaicInfo');
+
+        if (!grid) return;
+
+        // Definir classe do grid baseado no layout
+        grid.className = 'mosaic-grid grid-' + currentMosaicLayout;
+
+        // Atualizar info
+        if (info) {
+            info.textContent = '(' + mosaicCameras.length + ' câmeras)';
+        }
+
+        var html = '';
+
+        // Renderizar câmeras selecionadas
+        mosaicCameras.forEach(function(cam, index) {
+            var camId = cam.id || cam.codigo;
+            var camNome = cam.nome || cam.name || 'Camera';
+            var camUrl = cam.url || '';
+
+            html += '<div class="mosaic-cell">';
+            html += '  <div class="mosaic-cell-header">' + camId + ' - ' + camNome + '</div>';
+            if (camUrl) {
+                html += '  <iframe src="' + camUrl + '" allowfullscreen></iframe>';
+            } else {
+                html += '  <div class="mosaic-no-stream"><i class="fas fa-video-slash"></i></div>';
+            }
+            html += '</div>';
+        });
+
+        // Preencher células vazias
+        for (var i = mosaicCameras.length; i < currentMosaicLayout; i++) {
+            html += '<div class="mosaic-cell empty">';
+            html += '  <div class="mosaic-empty-cell"><i class="fas fa-plus"></i><br>Vazio</div>';
+            html += '</div>';
+        }
+
+        grid.innerHTML = html;
+    }
+
+    // Fechar visualização do mosaico
+    function closeMosaicView() {
+        var overlay = document.getElementById('mosaicOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }
+
+    // Filtrar câmeras (chamado no input)
+    function filterCameras() {
+        renderCameraList();
+    }
+
+    // Selecionar todas as câmeras filtradas
+    function selectAllFiltered() {
+        var searchTerm = document.getElementById('cameraSearch')?.value?.toLowerCase() || '';
+
+        var filtered = allCameras.filter(function(cam) {
+            var id = (cam.id || cam.codigo || '').toString().toLowerCase();
+            var nome = (cam.nome || cam.name || '').toLowerCase();
+            return id.includes(searchTerm) || nome.includes(searchTerm);
+        });
+
+        filtered.forEach(function(cam) {
+            var camId = cam.id || cam.codigo;
+            var alreadySelected = mosaicCameras.some(function(c) {
+                return (c.id || c.codigo) == camId;
+            });
+
+            if (!alreadySelected && mosaicCameras.length < currentMosaicLayout) {
+                mosaicCameras.push(cam);
+            }
+        });
+
+        renderCameraList();
+    }
+
+    // Limpar seleção
+    function clearSelection() {
+        mosaicCameras = [];
+        renderCameraList();
+    }
+
+    // ============================================
+    // EXPORT FUNCTIONS TO GLOBAL SCOPE
+    // ============================================
+    // Necessário para que onclick="" funcione corretamente
+    window.toggleLayersSidebar = toggleLayersSidebar;
+    window.toggleMapLayer = toggleMapLayer;
+    window.toggleCameraSubmenu = toggleCameraSubmenu;
+    window.toggleAllCameras = toggleAllCameras;
+    window.toggleCameraType = toggleCameraType;
+    window.openMosaicModal = openMosaicModal;
+    window.closeMosaicModal = closeMosaicModal;
+    window.setMosaicLayout = setMosaicLayout;
+    window.filterCameras = filterCameras;
+    window.selectAllFiltered = selectAllFiltered;
+    window.clearSelection = clearSelection;
+    window.toggleCameraSelection = toggleCameraSelection;
+    window.createMosaicOverlay = createMosaicOverlay;
+    window.closeMosaicView = closeMosaicView;
+    window.renderMosaicGrid = renderMosaicGrid;
+    window.openMosaicView = openMosaicView;
+    window.switchLayer = switchLayer;
+    window.zoomIn = zoomIn;
+    window.zoomOut = zoomOut;
+    window.resetView = resetView;
+
+    // ============================================
     // INICIALIZACAO
     // ============================================
     console.log('IntegraCity High-Tech Dashboard initialized');
     console.log('Mapa centrado no Rio de Janeiro');
     console.log('Sistema de camadas carregado');
+
+    // ===== DETECTOR DE MOSAICO NA URL =====
+    window.addEventListener('DOMContentLoaded', function() {
+        var urlParams = new URLSearchParams(window.location.search);
+        
+        if (urlParams.get('mosaic') === 'true') {
+            var cameraIds = urlParams.get('cameras');
+            var layout = parseInt(urlParams.get('layout')) || 4;
+            
+            console.log('Modo mosaico detectado! IDs:', cameraIds, 'Layout:', layout);
+            
+            // Configurar layout
+            currentMosaicLayout = layout;
+            
+            // Carregar câmeras da API e depois abrir overlay
+            fetch(window.location.origin + '/integracity/api/cameras/')
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    // Parsear dados da API
+                    if (data.data && Array.isArray(data.data)) {
+                        allCameras = data.data;
+                    } else if (Array.isArray(data)) {
+                        allCameras = data;
+                    }
+                    
+                    // Selecionar câmeras pelos IDs
+                    if (cameraIds) {
+                        var ids = cameraIds.split(',');
+                        mosaicCameras = allCameras.filter(function(cam) {
+                            return ids.includes(String(cam.id));
+                        });
+                        console.log('Câmeras selecionadas:', mosaicCameras.length);
+                    } else {
+                        // Se não tem IDs, pegar as primeiras N câmeras
+                        mosaicCameras = allCameras.slice(0, layout);
+                    }
+                    
+                    // Criar e abrir overlay
+                    createMosaicOverlay();
+                    var overlay = document.getElementById('mosaicOverlay');
+                    if (overlay) {
+                        overlay.style.display = 'flex';
+                        renderMosaicGrid();
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Erro ao carregar câmeras para mosaico:', err);
+                });
+        }
+    });
+
 </script>
+
+<!-- ============================================
+     MODAL DE SELEÇÃO DO MOSAICO
+     ============================================ -->
+<div id="mosaicModal" class="mosaic-modal" style="display: none;">
+    <div class="mosaic-modal-content">
+        <div class="mosaic-modal-header">
+            <h2><i class="fas fa-th"></i> Configurar Mosaico</h2>
+            <button class="mosaic-close-btn" onclick="closeMosaicModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="mosaic-modal-body">
+            <!-- Layout Selection -->
+            <div class="layout-section">
+                <label>Layout:</label>
+                <div class="layout-buttons">
+                    <button class="layout-btn active" onclick="setMosaicLayout(4)">2x2 (4)</button>
+                    <button class="layout-btn" onclick="setMosaicLayout(8)">2x4 (8)</button>
+                    <button class="layout-btn" onclick="setMosaicLayout(16)">4x4 (16)</button>
+                    <button class="layout-btn" onclick="setMosaicLayout(24)">4x6 (24)</button>
+                    <button class="layout-btn" onclick="setMosaicLayout(48)">6x8 (48)</button>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="search-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="cameraSearch" placeholder="Buscar por ID ou nome..." oninput="filterCameras()">
+                </div>
+                <div class="search-actions">
+                    <button class="action-btn" onclick="selectAllFiltered()">
+                        <i class="fas fa-check-double"></i> Selecionar Filtrados
+                    </button>
+                    <button class="action-btn" onclick="clearSelection()">
+                        <i class="fas fa-trash"></i> Limpar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Counter -->
+            <div class="selection-counter">
+                Selecionadas: <span id="selectedCount">0 / 4</span>
+            </div>
+
+            <!-- Camera List -->
+            <div id="cameraListContainer" class="camera-list-container">
+                <div class="loading-cameras">
+                    <i class="fas fa-spinner fa-spin"></i> Carregando câmeras...
+                </div>
+            </div>
+        </div>
+
+        <div class="mosaic-modal-footer">
+            <button class="cancel-btn" onclick="closeMosaicModal()">Cancelar</button>
+            <button class="start-btn" onclick="startMosaic()">
+                <i class="fas fa-play"></i> Iniciar Mosaico
+            </button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
