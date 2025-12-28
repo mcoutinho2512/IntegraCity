@@ -331,7 +331,7 @@ def cor_dashboard_hightech_view(request):
     from django.db.models import Count
     from .models import EstagioOperacional
 
-    # Estagio atual - usando Matriz Decisoria
+    # Estagio atual - usando Matriz Decisoria (padrão COR Rio 1-5)
     try:
         # Buscar ultimo estagio calculado pela matriz
         estagio_matriz = EstagioOperacional.objects.select_related('matriz').order_by('-calculado_em').first()
@@ -343,19 +343,17 @@ def cor_dashboard_hightech_view(request):
             # Fallback para modelo antigo se nao houver calculo da matriz
             estagio_obj = Estagio.objects.latest('data_i')
             estagio_map = {
-                'Normalidade': 0,
-                'Atencao': 1,
-                'Alerta': 2,
-                'Mobilizacao': 3,
-                'Crise': 4,
-                'Calamidade': 5,
-                'Colapso': 6,
+                'Normalidade': 1,
+                'Mobilizacao': 2,
+                'Atencao': 3,
+                'Alerta': 4,
+                'Crise': 5,
             }
-            estagio = estagio_map.get(estagio_obj.esta, 0)
+            estagio = estagio_map.get(estagio_obj.esta, 1)
             estagio_label = estagio_obj.esta or 'Normal'
             estagio_cor = '#00ff88'
     except:
-        estagio = 0
+        estagio = 1
         estagio_label = 'Normal'
         estagio_cor = '#00ff88'
 
@@ -382,53 +380,76 @@ def cor_dashboard_hightech_view(request):
         sirenes_acionadas = 0
         sirenes_operantes = 0
 
-    # Indice de calor
-    try:
-        calor_obj = Calor.objects.latest('data')
-        calor_index = calor_obj.nivel if hasattr(calor_obj, 'nivel') else 1
-        calor_label = calor_obj.descricao if hasattr(calor_obj, 'descricao') else 'Normal'
-    except:
-        calor_index = 1
-        calor_label = 'Normal'
+    # Nível de Calor (NC1-NC5) - Será calculado junto com meteorologia
+    calor_nivel = 1
+    calor_label = 'Normal'
+    calor_status = 'NORMAL'
+    calor_cor = '#00ff88'
+    heat_index = None
 
-    # Meteorologia
+    # Meteorologia - Usando Open-Meteo via IntegradorINMET
     try:
-        meteo = DadosMet.objects.order_by('-data').first()
-        if meteo:
-            temperatura = round(meteo.temp, 1) if meteo.temp else None
-            umidade = round(meteo.umd, 0) if meteo.umd else None
-            vento = round(meteo.vel * 3.6, 1) if meteo.vel else 0
+        from .models import Cliente
+        from .services.integrador_inmet import IntegradorINMET
+
+        cliente = Cliente.objects.filter(ativo=True).first()
+        if cliente:
+            integrador = IntegradorINMET(cliente)
+            dados_meteo = integrador.obter_dados_atuais_openmeteo()
+            if dados_meteo:
+                temperatura = round(dados_meteo['temperatura'], 1) if dados_meteo.get('temperatura') else None
+                umidade = round(dados_meteo['umidade'], 0) if dados_meteo.get('umidade') else None
+                vento = round(dados_meteo['vento_velocidade'], 1) if dados_meteo.get('vento_velocidade') else 0
+                precipitacao = round(dados_meteo['precipitacao'], 1) if dados_meteo.get('precipitacao') else 0
+                meteo_nivel, meteo_detalhes = integrador.calcular_nivel_meteorologia()
+
+                # Extrair dados de calor do meteo_detalhes (NC1-NC5)
+                calor_nivel = meteo_detalhes.get('nivel_calor', 1)
+                calor_detalhes = meteo_detalhes.get('calor', {})
+                calor_label = calor_detalhes.get('nomenclatura', 'Normal')
+                calor_cor = calor_detalhes.get('cor', '#00ff88')
+                heat_index = calor_detalhes.get('ic_max')
+
+                # Status de calor (NC1-NC5)
+                CALOR_STATUS = {1: 'NORMAL', 2: 'MOBILIZACAO', 3: 'ATENCAO', 4: 'ALERTA', 5: 'CRISE'}
+                calor_status = CALOR_STATUS.get(calor_nivel, 'NORMAL')
+            else:
+                temperatura = None
+                umidade = None
+                vento = 0
+                precipitacao = 0
+                meteo_nivel = 1
+                meteo_detalhes = {}
         else:
             temperatura = None
             umidade = None
             vento = 0
-    except:
+            precipitacao = 0
+            meteo_nivel = 1
+            meteo_detalhes = {}
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Erro ao obter meteorologia: {e}")
         temperatura = None
         umidade = None
         vento = 0
-
-    # Precipitacao
-    try:
-        pluv = DadosPlv.objects.order_by('-data_t').first()
-        precipitacao = round(pluv.chuva_1, 1) if pluv and pluv.chuva_1 else 0
-    except:
         precipitacao = 0
+        meteo_nivel = 1
+        meteo_detalhes = {}
 
-    # Determinar status do estagio
-    if estagio == 0:
+    # Determinar status do estagio (padrão COR Rio 1-5)
+    if estagio == 1:
         estagio_status = 'NORMAL'
-    elif estagio == 1:
-        estagio_status = 'ATENCAO'
     elif estagio == 2:
-        estagio_status = 'ALERTA'
-    elif estagio == 3:
         estagio_status = 'MOBILIZACAO'
+    elif estagio == 3:
+        estagio_status = 'ATENCAO'
     elif estagio == 4:
-        estagio_status = 'CRISE'
+        estagio_status = 'ALERTA'
     elif estagio == 5:
-        estagio_status = 'CALAMIDADE'
+        estagio_status = 'CRISE'
     else:
-        estagio_status = 'COLAPSO'
+        estagio_status = 'NORMAL'  # Default para valores inesperados
 
     context = {
         # Estagio
@@ -448,19 +469,21 @@ def cor_dashboard_hightech_view(request):
         'sirenes_acionadas': sirenes_acionadas,
         'sirenes_operantes': sirenes_operantes,
 
-        # Calor
-        'calor_index': calor_index,
+        # Calor (NC1-NC5)
+        'calor_nivel': calor_nivel,
         'calor_label': calor_label,
-        'calor_status': 'NORMAL' if calor_index < 2 else 'ALERTA',
+        'calor_status': calor_status,
+        'calor_cor': calor_cor,
+        'heat_index': heat_index,
 
-        # Meteorologia
+        # Meteorologia (Open-Meteo)
         'temperatura': temperatura,
         'umidade': umidade,
         'vento': vento,
         'precipitacao': precipitacao,
-        'meteo_nivel': 'N0',
-        'meteo_status': 'ESTAVEL',
-        'meteo_desc': 'Tempo Estavel',
+        'meteo_nivel': f'E{meteo_nivel}',
+        'meteo_status': {1: 'NORMAL', 2: 'MOBILIZACAO', 3: 'ATENCAO', 4: 'ALERTA', 5: 'CRISE'}.get(meteo_nivel, 'NORMAL'),
+        'meteo_desc': meteo_detalhes.get('razao', 'Condições normais') if meteo_detalhes else 'Condições normais',
 
         # Mobilidade
         'mobilidade_nivel': 'N1',

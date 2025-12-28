@@ -1,0 +1,944 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}Meteorologia - IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    .meteo-container {
+        padding: 20px;
+        height: calc(100vh - var(--header-height));
+        overflow-y: auto;
+    }
+
+    .meteo-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .meteo-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .meteo-subtitle {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 5px;
+    }
+
+    .btn-coletar {
+        padding: 12px 24px;
+        background: linear-gradient(135deg, var(--cyan), #0099cc);
+        border: none;
+        border-radius: 8px;
+        color: #000;
+        font-family: 'Orbitron', monospace;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-coletar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px var(--cyan-glow);
+    }
+
+    .btn-coletar.loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    /* Grid principal */
+    .meteo-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 25px;
+    }
+
+    @media (max-width: 1200px) {
+        .meteo-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Card do Nivel */
+    .nivel-card {
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nivel-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--nivel-cor, var(--cyan));
+    }
+
+    .nivel-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        font-family: 'Orbitron', monospace;
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: rgba(0, 0, 0, 0.5);
+        border: 4px solid var(--nivel-cor, var(--cyan));
+        box-shadow: 0 0 30px var(--nivel-glow, var(--cyan-glow));
+        color: var(--nivel-cor, var(--cyan));
+    }
+
+    .nivel-nome {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        color: var(--nivel-cor, var(--cyan));
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+    }
+
+    .nivel-razao {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        padding: 10px;
+        background: var(--bg-surface);
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+
+    /* Cards de estacoes */
+    .estacoes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .estacao-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .estacao-card:hover {
+        border-color: var(--cyan);
+        transform: translateY(-3px);
+    }
+
+    .estacao-card.principal {
+        border-color: var(--cyan);
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .estacao-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .estacao-nome {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+
+    .estacao-codigo {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-family: 'Orbitron', monospace;
+    }
+
+    .estacao-badge {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 4px;
+        background: var(--cyan);
+        color: #000;
+        font-weight: 600;
+    }
+
+    .estacao-distancia {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .estacao-dados {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .dado-item {
+        text-align: center;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+    }
+
+    .dado-valor {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--cyan);
+    }
+
+    .dado-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .estacao-idade {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 10px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .estacao-idade.recente {
+        color: var(--green-neon);
+    }
+
+    .estacao-idade.antigo {
+        color: var(--yellow-warn);
+    }
+
+    .estacao-idade.muito-antigo {
+        color: var(--red-alert);
+    }
+
+    /* Painel direito */
+    .right-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .panel-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.95rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .panel-body {
+        padding: 20px;
+    }
+
+    /* Grafico */
+    .grafico-container {
+        height: 250px;
+        position: relative;
+    }
+
+    /* Info cards */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .info-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .info-item {
+        text-align: center;
+        padding: 15px;
+        background: var(--bg-surface);
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+    }
+
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        font-size: 1.2rem;
+    }
+
+    .info-icon.temp { background: rgba(255, 107, 0, 0.2); color: #FF6B00; }
+    .info-icon.umid { background: rgba(0, 212, 255, 0.2); color: var(--cyan); }
+    .info-icon.chuva { background: rgba(0, 136, 255, 0.2); color: #0088FF; }
+    .info-icon.vento { background: rgba(181, 55, 242, 0.2); color: var(--purple-neon); }
+    .info-icon.calor { background: rgba(255, 0, 85, 0.2); color: #FF0055; }
+
+    /* Card de Indice de Calor */
+    .heat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .heat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--heat-color, #00ff88);
+    }
+
+    .heat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .heat-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.95rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .heat-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-family: 'Orbitron', monospace;
+        font-size: 0.9rem;
+        font-weight: 700;
+        background: var(--heat-color, #00ff88);
+        color: #000;
+    }
+
+    .heat-main {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        margin: 20px 0;
+    }
+
+    .heat-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--heat-color, #00ff88);
+        text-shadow: 0 0 20px var(--heat-color, #00ff88);
+    }
+
+    .heat-value small {
+        font-size: 1.5rem;
+        opacity: 0.8;
+    }
+
+    .heat-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .heat-stat {
+        text-align: center;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+    }
+
+    .heat-stat-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .heat-stat-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-top: 3px;
+    }
+
+    .heat-razao {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-align: center;
+        margin-top: 15px;
+        padding: 10px;
+        background: var(--bg-surface);
+        border-radius: 8px;
+    }
+
+    /* Cores dos niveis de calor (NC1-NC5 padrao COR Rio) */
+    .nc-1 { --heat-color: #00ff88; }  /* Verde - Normal */
+    .nc-2 { --heat-color: #00D4FF; }  /* Cyan - Mobilizacao */
+    .nc-3 { --heat-color: #FFB800; }  /* Amarelo - Atencao */
+    .nc-4 { --heat-color: #FF6B00; }  /* Laranja - Alerta */
+    .nc-5 { --heat-color: #FF0055; }  /* Vermelho - Crise */
+
+    .info-valor {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    /* Erro */
+    .erro-container {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .erro-icon {
+        font-size: 4rem;
+        color: var(--yellow-warn);
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="meteo-container">
+    {% if erro %}
+    <!-- Estado de Erro -->
+    <div class="erro-container">
+        <div class="erro-icon">
+            <i class="fas fa-cloud-sun"></i>
+        </div>
+        <h2 style="font-family: 'Orbitron', monospace; color: var(--text-primary); margin-bottom: 15px;">
+            Meteorologia Nao Configurada
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">{{ erro }}</p>
+        <code style="background: var(--bg-surface); padding: 10px 20px; border-radius: 8px; color: var(--cyan);">
+            python manage.py configurar_cliente --nome "Sua Cidade" --cidade "Nome" --estado "UF" --lat -00.0000 --lon -00.0000
+        </code>
+    </div>
+    {% else %}
+    <!-- Header -->
+    <div class="meteo-header">
+        <div>
+            <h1 class="meteo-title">
+                <i class="fas fa-cloud-sun-rain"></i>
+                Meteorologia INMET
+            </h1>
+            <p class="meteo-subtitle">
+                {{ cliente.nome }} - Dados em tempo real do Instituto Nacional de Meteorologia
+            </p>
+        </div>
+        <div>
+            <button class="btn-coletar" onclick="coletarAgora()" id="btnColetar">
+                <i class="fas fa-sync-alt"></i>
+                Atualizar Dados
+            </button>
+        </div>
+    </div>
+
+    <div class="meteo-grid">
+        <!-- Coluna Esquerda - Nivel e Estacoes -->
+        <div>
+            <!-- Card do Nivel -->
+            <div class="nivel-card" style="--nivel-cor: {{ nivel_cor }}; --nivel-glow: {{ nivel_cor }}40;">
+                <div class="nivel-badge">
+                    E{{ nivel }}
+                </div>
+                <div class="nivel-nome">
+                    {{ nivel_nome }}
+                </div>
+                <div class="nivel-razao">
+                    {% if detalhes.razao %}
+                        {{ detalhes.razao }}
+                    {% else %}
+                        Condicoes meteorologicas normais
+                    {% endif %}
+                </div>
+
+                {% if detalhes.estacao %}
+                <div style="margin-top: 15px; font-size: 0.8rem; color: var(--text-muted);">
+                    <i class="fas fa-broadcast-tower"></i>
+                    {{ detalhes.estacao }} ({{ detalhes.codigo }})
+                    {% if detalhes.idade_dados_minutos %}
+                    - atualizado ha {{ detalhes.idade_dados_minutos }} min
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Cards das Estacoes -->
+            <h3 style="font-family: 'Orbitron', monospace; font-size: 1rem; color: var(--cyan); margin: 25px 0 15px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-broadcast-tower"></i>
+                Estacoes INMET ({{ estacoes|length }})
+            </h3>
+
+            <div class="estacoes-grid">
+                {% for item in estacoes %}
+                <div class="estacao-card {% if item.estacao.principal %}principal{% endif %}">
+                    <div class="estacao-header">
+                        <div>
+                            <div class="estacao-nome">{{ item.estacao.nome }}</div>
+                            <div class="estacao-codigo">{{ item.estacao.codigo_inmet }}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            {% if item.estacao.principal %}
+                            <span class="estacao-badge">PRINCIPAL</span>
+                            {% endif %}
+                            <div class="estacao-distancia">{{ item.estacao.distancia_km }} km</div>
+                        </div>
+                    </div>
+
+                    {% if item.ultimo_dado %}
+                    <div class="estacao-dados">
+                        <div class="dado-item">
+                            <div class="dado-valor" style="color: #FF6B00;">
+                                {% if item.ultimo_dado.temperatura %}
+                                {{ item.ultimo_dado.temperatura|floatformat:1 }}
+                                {% else %}--{% endif %}
+                            </div>
+                            <div class="dado-label"><i class="fas fa-thermometer-half"></i> Temp</div>
+                        </div>
+                        <div class="dado-item">
+                            <div class="dado-valor" style="color: var(--cyan);">
+                                {% if item.ultimo_dado.umidade %}
+                                {{ item.ultimo_dado.umidade|floatformat:0 }}%
+                                {% else %}--{% endif %}
+                            </div>
+                            <div class="dado-label"><i class="fas fa-tint"></i> Umid</div>
+                        </div>
+                        <div class="dado-item">
+                            <div class="dado-valor" style="color: #0088FF;">
+                                {% if item.ultimo_dado.precipitacao_horaria %}
+                                {{ item.ultimo_dado.precipitacao_horaria|floatformat:1 }}
+                                {% else %}0{% endif %}
+                            </div>
+                            <div class="dado-label"><i class="fas fa-cloud-rain"></i> mm/h</div>
+                        </div>
+                        <div class="dado-item">
+                            <div class="dado-valor" style="color: var(--purple-neon);">
+                                {% if item.ultimo_dado.vento_velocidade %}
+                                {{ item.ultimo_dado.vento_velocidade|floatformat:0 }}
+                                {% else %}0{% endif %}
+                            </div>
+                            <div class="dado-label"><i class="fas fa-wind"></i> km/h</div>
+                        </div>
+                    </div>
+
+                    <div class="estacao-idade {% if item.idade_minutos <= 60 %}recente{% elif item.idade_minutos <= 180 %}antigo{% else %}muito-antigo{% endif %}">
+                        <i class="fas fa-clock"></i>
+                        {% if item.idade_minutos %}
+                            {{ item.idade_minutos }} min atras
+                        {% else %}
+                            Sem dados recentes
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                        <i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>Sem dados coletados</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Coluna Direita -->
+        <div class="right-panel">
+            <!-- Resumo atual -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Resumo Atual
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">
+                        {{ agora|date:"d/m/Y H:i" }}
+                    </span>
+                </div>
+                <div class="panel-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-icon temp">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <div class="info-valor" style="color: #FF6B00;">
+                                {% if detalhes.temperatura %}{{ detalhes.temperatura|floatformat:1 }}C{% else %}--{% endif %}
+                            </div>
+                            <div class="info-label">Temperatura</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon umid">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div class="info-valor" style="color: var(--cyan);">
+                                {% if detalhes.umidade %}{{ detalhes.umidade|floatformat:0 }}%{% else %}--{% endif %}
+                            </div>
+                            <div class="info-label">Umidade</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon chuva">
+                                <i class="fas fa-cloud-rain"></i>
+                            </div>
+                            <div class="info-valor" style="color: #0088FF;">
+                                {% if detalhes.chuva_mm_h %}{{ detalhes.chuva_mm_h|floatformat:1 }}{% else %}0{% endif %} mm
+                            </div>
+                            <div class="info-label">Precipitacao</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon vento">
+                                <i class="fas fa-wind"></i>
+                            </div>
+                            <div class="info-valor" style="color: var(--purple-neon);">
+                                {% if detalhes.vento_kmh %}{{ detalhes.vento_kmh|floatformat:0 }}{% else %}0{% endif %} km/h
+                            </div>
+                            <div class="info-label">Vento</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card de Indice de Calor -->
+            <div class="heat-card nc-{{ detalhes.nivel_calor|default:1 }}">
+                <div class="heat-header">
+                    <div class="heat-title">
+                        <i class="fas fa-temperature-high"></i>
+                        Indice de Calor (Heat Index)
+                    </div>
+                    <span class="heat-badge">NC{{ detalhes.nivel_calor|default:1 }}</span>
+                </div>
+
+                <div class="heat-main">
+                    <div class="heat-value">
+                        {% if detalhes.calor.ic_max %}
+                            {{ detalhes.calor.ic_max }}<small>C</small>
+                        {% elif detalhes.heat_index %}
+                            {{ detalhes.heat_index }}<small>C</small>
+                        {% else %}
+                            --<small>C</small>
+                        {% endif %}
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">
+                            {% if detalhes.calor.nomenclatura %}
+                                {{ detalhes.calor.nomenclatura }}
+                            {% else %}
+                                Normal
+                            {% endif %}
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">
+                            Sensacao Termica
+                        </div>
+                    </div>
+                </div>
+
+                <div class="heat-stats">
+                    <div class="heat-stat">
+                        <div class="heat-stat-value" style="color: #FF6B00;">
+                            {% if detalhes.calor.temp_max %}{{ detalhes.calor.temp_max }}{% elif detalhes.temperatura %}{{ detalhes.temperatura|floatformat:1 }}{% else %}--{% endif %}C
+                        </div>
+                        <div class="heat-stat-label">Temp Max</div>
+                    </div>
+                    <div class="heat-stat">
+                        <div class="heat-stat-value" style="color: var(--cyan);">
+                            {% if detalhes.calor.umidade_media %}{{ detalhes.calor.umidade_media|floatformat:0 }}{% elif detalhes.umidade %}{{ detalhes.umidade|floatformat:0 }}{% else %}--{% endif %}%
+                        </div>
+                        <div class="heat-stat-label">Umidade Med</div>
+                    </div>
+                    <div class="heat-stat">
+                        <div class="heat-stat-value" style="color: var(--green-neon);">
+                            {% if detalhes.calor.horas_analisadas %}{{ detalhes.calor.horas_analisadas }}h{% else %}--{% endif %}
+                        </div>
+                        <div class="heat-stat-label">Periodo</div>
+                    </div>
+                </div>
+
+                <div class="heat-razao">
+                    {% if detalhes.calor.razao %}
+                        <i class="fas fa-info-circle"></i> {{ detalhes.calor.razao }}
+                    {% else %}
+                        <i class="fas fa-check-circle"></i> Condicoes normais de temperatura
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Grafico de Evolucao -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-chart-line"></i>
+                        Evolucao (24h)
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="grafico-container">
+                        <canvas id="evolucaoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info sobre INMET -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-info-circle"></i>
+                        Sobre a Integracao
+                    </div>
+                </div>
+                <div class="panel-body" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+                    <p>
+                        <strong style="color: var(--cyan);">INMET</strong> - Instituto Nacional de Meteorologia
+                    </p>
+                    <p style="margin-top: 10px;">
+                        Os dados sao coletados automaticamente das estacoes meteorologicas
+                        automaticas do INMET localizadas proximas a {{ cliente.cidade }}/{{ cliente.estado }}.
+                    </p>
+                    <p style="margin-top: 10px;">
+                        <strong>Limiares para elevacao do nivel:</strong>
+                    </p>
+                    <ul style="margin-top: 5px; margin-left: 20px;">
+                        <li>Chuva >= 5mm/h: Mobilizacao (E2)</li>
+                        <li>Chuva >= 10mm/h: Atencao (E3)</li>
+                        <li>Chuva >= 20mm/h: Alerta (E4)</li>
+                        <li>Chuva >= 30mm/h: Crise (E5)</li>
+                        <li>Vento >= 40km/h: Mobilizacao (E2)</li>
+                        <li>Vento >= 90km/h: Crise (E5)</li>
+                    </ul>
+                    <p style="margin-top: 10px;">
+                        <strong>Niveis de Calor (NC1-NC5):</strong>
+                    </p>
+                    <ul style="margin-top: 5px; margin-left: 20px;">
+                        <li>NC1: Normal (IC < 36C)</li>
+                        <li>NC2: Mobilizacao (IC 36-40C por 4h+)</li>
+                        <li>NC3: Atencao (IC 36-40C por 6h+)</li>
+                        <li>NC4: Alerta (IC 40-44C por 2h+)</li>
+                        <li>NC5: Crise (IC > 44C por 2h+)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+{% if not erro %}
+// Dados do grafico
+const graficoData = {{ grafico_data|safe }};
+
+// Inicializar grafico
+let evolucaoChart = null;
+
+function initChart() {
+    const ctx = document.getElementById('evolucaoChart').getContext('2d');
+
+    const labels = graficoData.map(d => d.timestamp);
+    const tempData = graficoData.map(d => d.temperatura);
+    const umidData = graficoData.map(d => d.umidade);
+    const chuvaData = graficoData.map(d => d.chuva);
+
+    evolucaoChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Temperatura (C)',
+                    data: tempData,
+                    borderColor: '#FF6B00',
+                    backgroundColor: 'rgba(255, 107, 0, 0.1)',
+                    borderWidth: 2,
+                    yAxisID: 'y',
+                    tension: 0.4,
+                    pointRadius: 2,
+                },
+                {
+                    label: 'Umidade (%)',
+                    data: umidData,
+                    borderColor: '#00D4FF',
+                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                    borderWidth: 2,
+                    yAxisID: 'y1',
+                    tension: 0.4,
+                    pointRadius: 2,
+                },
+                {
+                    label: 'Chuva (mm)',
+                    data: chuvaData,
+                    borderColor: '#0088FF',
+                    backgroundColor: 'rgba(0, 136, 255, 0.3)',
+                    borderWidth: 2,
+                    yAxisID: 'y2',
+                    type: 'bar',
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#9CA3AF',
+                        usePointStyle: true,
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(10, 14, 23, 0.95)',
+                    borderColor: '#00D4FF',
+                    borderWidth: 1,
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Temp (C)',
+                        color: '#FF6B00'
+                    },
+                    ticks: { color: '#FF6B00' },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Umidade (%)',
+                        color: '#00D4FF'
+                    },
+                    ticks: { color: '#00D4FF' },
+                    grid: { drawOnChartArea: false }
+                },
+                y2: {
+                    type: 'linear',
+                    display: false,
+                    position: 'right',
+                    min: 0,
+                    max: 50,
+                },
+                x: {
+                    ticks: { color: '#6B7280', maxTicksLimit: 12 },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+// Coletar dados agora
+async function coletarAgora() {
+    const btn = document.getElementById('btnColetar');
+    btn.classList.add('loading');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Coletando...';
+
+    try {
+        const response = await fetch('{% url "api_coletar_meteorologia" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast(`Dados coletados de ${data.coletados}/${data.total} estacoes!`, 'success');
+            // Recarregar pagina para mostrar novos dados
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.error || 'Erro ao coletar dados', 'error');
+        }
+    } catch (error) {
+        showToast('Erro de conexao', 'error');
+    } finally {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Dados';
+    }
+}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    if (graficoData.length > 0) {
+        initChart();
+    }
+});
+
+// Auto-refresh a cada 10 minutos
+setInterval(() => {
+    location.reload();
+}, 10 * 60 * 1000);
+{% endif %}
+</script>
+{% endblock %}

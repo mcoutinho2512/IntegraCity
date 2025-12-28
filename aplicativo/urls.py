@@ -7,6 +7,7 @@ from aplicativo import views
 from aplicativo import views_users
 from aplicativo import views_ocorrencias
 from aplicativo import views_matriz
+from aplicativo import views_meteorologia
 
 urlpatterns = [
     # LOGIN - PÁGINA PRINCIPAL
@@ -44,6 +45,17 @@ urlpatterns = [
     path('api/estagio-externo/', views.estagio_proxy, name='estagio_proxy'),
 
     path('mobilidade/', views.mobilidade_dashboard_view, name='mobilidade_dashboard'),
+
+    # ============================================
+    # METEOROLOGIA - INTEGRAÇÃO INMET
+    # ============================================
+    path('meteo/', views_meteorologia.meteorologia_dashboard, name='meteorologia_inmet'),
+    path('api/meteo/coletar/', views_meteorologia.api_coletar_agora, name='api_coletar_meteorologia'),
+    path('api/meteo/estacao/<str:codigo_inmet>/', views_meteorologia.api_dados_estacao, name='api_dados_estacao'),
+    path('api/meteo/nivel/', views_meteorologia.api_nivel_meteorologia, name='api_nivel_meteorologia'),
+    path('api/meteo/calor/', views_meteorologia.api_nivel_calor, name='api_nivel_calor'),
+
+    # Manter URL antiga para compatibilidade
     path('meteorologia/', views.meteorologia_dashboard_view, name='meteorologia_dashboard'),
 
     # APIs - Sirenes

@@ -64,6 +64,7 @@ class Command(BaseCommand):
             versao='3.5',
             nome='Matriz Decisoria v3.5',
             descricao='''Matriz Decisoria para analise do estagio operacional da cidade.
+Baseada no padrao COR Rio: https://cor.rio/estagios-operacionais-da-cidade/
 
 4 grupos de criterios:
 - Grupo 1: Meteorologia (Peso 2.0)
@@ -71,14 +72,12 @@ class Command(BaseCommand):
 - Grupo 3: Mobilidade (Peso 1.0)
 - Grupo 4: Eventos (Peso 1.0)
 
-Niveis resultantes (0-6):
-0 - Normal
-1 - Atencao
-2 - Alerta
-3 - Mobilizacao
-4 - Crise
-5 - Calamidade
-6 - Colapso''',
+Estagios Operacionais (1-5):
+1 - Normal       - Sem ocorrencias significativas
+2 - Mobilizacao  - Risco de eventos de alto impacto
+3 - Atencao      - Impactos ja ocorrendo em alguma regiao
+4 - Alerta       - Ocorrencias graves ou multiplos problemas
+5 - Crise        - Multiplos danos excedem capacidade de resposta''',
             status='publicada',
             ativa=True,
             peso_meteorologia=2.0,
@@ -132,20 +131,23 @@ Niveis resultantes (0-6):
         # Criar acoes recomendadas
         self.stdout.write('\nCriando acoes recomendadas...')
 
+        # Ações recomendadas para os 5 estágios do COR Rio
         acoes_data = [
+            # ESTÁGIO 1 - NORMAL
             {
-                'nivel_min': 0,
-                'nivel_max': 0,
-                'titulo': 'Monitoramento Normal',
-                'descricao': 'Manter monitoramento padrao da cidade. Acompanhar indicadores meteorologicos e de transito.',
+                'nivel_min': 1,
+                'nivel_max': 1,
+                'titulo': 'NORMAL - Monitoramento Padrao',
+                'descricao': 'Manter monitoramento padrao da cidade. Acompanhar indicadores meteorologicos e de transito. Sem alertas ativos.',
                 'prioridade': 'baixa',
                 'prazo': None,
                 'ordem': 1,
             },
+            # ESTÁGIO 2 - MOBILIZAÇÃO
             {
-                'nivel_min': 1,
-                'nivel_max': 1,
-                'titulo': 'Estado de Atencao - Aumentar Vigilancia',
+                'nivel_min': 2,
+                'nivel_max': 2,
+                'titulo': 'MOBILIZACAO - Aumentar Vigilancia',
                 'descricao': 'Aumentar frequencia de monitoramento. Verificar previsoes meteorologicas. Alertar equipes de prontidao.',
                 'prioridade': 'baixa',
                 'prazo': 12,
@@ -154,51 +156,63 @@ Niveis resultantes (0-6):
             {
                 'nivel_min': 2,
                 'nivel_max': 2,
-                'titulo': 'Alerta - Ativar Monitoramento Intensivo',
-                'descricao': 'Monitoramento intensivo de todas as fontes. Acionar equipes de apoio. Preparar recursos de emergencia.',
+                'titulo': 'MOBILIZACAO - Preparar Recursos',
+                'descricao': 'Verificar disponibilidade de recursos. Confirmar comunicacao com agencias. Preparar planos de contingencia.',
+                'prioridade': 'baixa',
+                'prazo': 8,
+                'ordem': 2,
+            },
+            # ESTÁGIO 3 - ATENÇÃO
+            {
+                'nivel_min': 3,
+                'nivel_max': 3,
+                'titulo': 'ATENCAO - Ativar Monitoramento Intensivo',
+                'descricao': 'Monitoramento intensivo de todas as fontes. Impactos ja ocorrendo em alguma regiao. Acionar equipes de apoio.',
                 'prioridade': 'media',
                 'prazo': 6,
                 'ordem': 1,
             },
             {
-                'nivel_min': 2,
-                'nivel_max': 2,
-                'titulo': 'Alerta - Verificar POPs de Contingencia',
-                'descricao': 'Revisar procedimentos operacionais padrao. Garantir comunicacao com todas as agencias.',
+                'nivel_min': 3,
+                'nivel_max': 3,
+                'titulo': 'ATENCAO - Verificar POPs de Contingencia',
+                'descricao': 'Revisar procedimentos operacionais padrao. Garantir comunicacao com todas as agencias. Preparar recursos de emergencia.',
                 'prioridade': 'media',
                 'prazo': 4,
                 'ordem': 2,
             },
+            # ESTÁGIO 4 - ALERTA
             {
-                'nivel_min': 3,
-                'nivel_max': 3,
-                'titulo': 'Mobilizacao - Acionar Equipes de Campo',
+                'nivel_min': 4,
+                'nivel_max': 4,
+                'titulo': 'ALERTA - Acionar Equipes de Campo',
                 'descricao': 'Mobilizar equipes de campo em areas criticas. Ativar sala de situacao. Coordenar com agencias externas.',
                 'prioridade': 'alta',
                 'prazo': 2,
                 'ordem': 1,
             },
             {
-                'nivel_min': 3,
-                'nivel_max': 3,
-                'titulo': 'Mobilizacao - Comunicacao com a Populacao',
-                'descricao': 'Emitir comunicados oficiais. Ativar canais de comunicacao de emergencia. Orientar populacao.',
+                'nivel_min': 4,
+                'nivel_max': 4,
+                'titulo': 'ALERTA - Comunicacao com a Populacao',
+                'descricao': 'Emitir comunicados oficiais. Ativar canais de comunicacao de emergencia. Orientar populacao sobre areas de risco.',
                 'prioridade': 'alta',
                 'prazo': 2,
                 'ordem': 2,
             },
+            # ESTÁGIO 5 - CRISE
             {
-                'nivel_min': 4,
-                'nivel_max': 4,
+                'nivel_min': 5,
+                'nivel_max': 5,
                 'titulo': 'CRISE - Ativar Gabinete de Crise',
-                'descricao': 'Ativar gabinete de crise completo. Convocar gestores de todas as agencias. Operacao 24 horas.',
+                'descricao': 'Ativar gabinete de crise completo. Convocar gestores de todas as agencias. Operacao 24 horas. Multiplos danos excedem capacidade normal.',
                 'prioridade': 'critica',
                 'prazo': 1,
                 'ordem': 1,
             },
             {
-                'nivel_min': 4,
-                'nivel_max': 4,
+                'nivel_min': 5,
+                'nivel_max': 5,
                 'titulo': 'CRISE - Coordenacao Interagencias',
                 'descricao': 'Estabelecer comando unificado. Distribuir recursos de forma coordenada. Priorizar areas de maior risco.',
                 'prioridade': 'critica',
@@ -208,38 +222,11 @@ Niveis resultantes (0-6):
             {
                 'nivel_min': 5,
                 'nivel_max': 5,
-                'titulo': 'CALAMIDADE - Solicitar Apoio Estadual/Federal',
-                'descricao': 'Acionar Defesa Civil Estadual. Solicitar recursos extras. Avaliar decretar estado de calamidade.',
+                'titulo': 'CRISE - Solicitar Apoio Externo',
+                'descricao': 'Acionar Defesa Civil Estadual se necessario. Solicitar recursos extras. Avaliar medidas extraordinarias.',
                 'prioridade': 'critica',
                 'prazo': 1,
-                'ordem': 1,
-            },
-            {
-                'nivel_min': 5,
-                'nivel_max': 5,
-                'titulo': 'CALAMIDADE - Evacuacao de Areas de Risco',
-                'descricao': 'Coordenar evacuacao preventiva. Ativar abrigos. Mobilizar transporte de emergencia.',
-                'prioridade': 'critica',
-                'prazo': 1,
-                'ordem': 2,
-            },
-            {
-                'nivel_min': 6,
-                'nivel_max': 6,
-                'titulo': 'COLAPSO - Protocolo Maximo de Emergencia',
-                'descricao': 'Ativar todos os protocolos de emergencia. Mobilizacao total. Operacao de guerra.',
-                'prioridade': 'critica',
-                'prazo': 1,
-                'ordem': 1,
-            },
-            {
-                'nivel_min': 6,
-                'nivel_max': 6,
-                'titulo': 'COLAPSO - Requisicao de Recursos Extraordinarios',
-                'descricao': 'Requisitar recursos extraordinarios. Solicitar apoio das Forcas Armadas se necessario.',
-                'prioridade': 'critica',
-                'prazo': 1,
-                'ordem': 2,
+                'ordem': 3,
             },
         ]
 

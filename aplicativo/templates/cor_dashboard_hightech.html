@@ -17,7 +17,7 @@
             </div>
             <div class="card-main-info">
                 <div class="card-value" style="color: {{ estagio_cor|default:'#00ff88' }};">
-                    E{{ estagio|default:"0" }}
+                    E{{ estagio|default:"1" }}
                 </div>
                 <div class="card-label">Estagio<br>Operacional</div>
             </div>
@@ -34,7 +34,7 @@
         <div class="card-content">
             <div class="card-detail-row">
                 <span class="detail-label">Nivel</span>
-                <span class="detail-value" style="color: {{ estagio_cor|default:'#00ff88' }};">{{ estagio|default:"0" }} - {{ estagio_label|default:"Normal" }}</span>
+                <span class="detail-value" style="color: {{ estagio_cor|default:'#00ff88' }};">{{ estagio|default:"1" }} - {{ estagio_label|default:"Normal" }}</span>
             </div>
             <div class="card-detail-row">
                 <span class="detail-label">Regiao</span>
@@ -132,23 +132,23 @@
     </div>
 </div>
 
-<!-- Card 5: Índice de Calor -->
+<!-- Card 5: Nível de Calor (NC1-NC5) -->
 <div class="compact-card" onclick="toggleCard(this)">
     <div class="card-header">
         <div class="card-header-left">
-            <div class="card-icon {% if calor_index > 2 %}orange{% else %}cyan{% endif %}">
+            <div class="card-icon" style="background: {{ calor_cor|default:'#00ff88' }}20; color: {{ calor_cor|default:'#00ff88' }};">
                 <i class="fas fa-temperature-high"></i>
             </div>
             <div class="card-main-info">
-                <div class="card-value {% if calor_index > 2 %}orange{% else %}cyan{% endif %}">
-                    IC{{ calor_index|default:"1" }}
+                <div class="card-value" style="color: {{ calor_cor|default:'#00ff88' }};">
+                    NC{{ calor_nivel|default:"1" }}
                 </div>
                 <div class="card-label">Indice de<br>Calor</div>
             </div>
         </div>
         <div class="card-header-right">
-            <div class="status-badge {% if calor_index > 2 %}warning{% else %}normal{% endif %}">
-                <div class="status-dot"></div>
+            <div class="status-badge" style="background: {{ calor_cor|default:'#00ff88' }}20; color: {{ calor_cor|default:'#00ff88' }}; border-color: {{ calor_cor|default:'#00ff88' }};">
+                <div class="status-dot" style="background: {{ calor_cor|default:'#00ff88' }};"></div>
                 {{ calor_status|default:"NORMAL" }}
             </div>
             <i class="fas fa-chevron-down expand-icon"></i>
@@ -159,6 +159,10 @@
             <div class="card-detail-row">
                 <span class="detail-label">Status</span>
                 <span class="detail-value">{{ calor_label|default:"Normal" }}</span>
+            </div>
+            <div class="card-detail-row">
+                <span class="detail-label">Heat Index</span>
+                <span class="detail-value">{{ heat_index|default:"--" }}C</span>
             </div>
             <div class="card-detail-row">
                 <span class="detail-label">Temperatura</span>

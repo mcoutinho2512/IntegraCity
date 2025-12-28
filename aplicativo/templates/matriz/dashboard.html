@@ -755,25 +755,22 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 {% if not erro %}
-// Cores por nivel
+// Cores por nivel (padrão COR Rio 1-5)
+// https://cor.rio/estagios-operacionais-da-cidade/
 const coresNiveis = {
-    0: '#00ff88',
-    1: '#00D4FF',
-    2: '#FFB800',
-    3: '#FF6B00',
-    4: '#FF4444',
-    5: '#B537F2',
-    6: '#FF0055'
+    1: '#00ff88',   // Verde - Normal
+    2: '#00D4FF',   // Cyan - Mobilização
+    3: '#FFB800',   // Amarelo - Atenção
+    4: '#FF6B00',   // Laranja - Alerta
+    5: '#FF0055'    // Vermelho - Crise
 };
 
 const nomenclaturaNiveis = {
-    0: 'Normal',
-    1: 'Atencao',
-    2: 'Alerta',
-    3: 'Mobilizacao',
-    4: 'Crise',
-    5: 'Calamidade',
-    6: 'Colapso'
+    1: 'Normal',       // Sem ocorrências significativas
+    2: 'Mobilização',  // Risco de eventos de alto impacto
+    3: 'Atenção',      // Impactos já ocorrendo
+    4: 'Alerta',       // Ocorrências graves
+    5: 'Crise'         // Múltiplos danos
 };
 
 // Dados do grafico
@@ -831,8 +828,8 @@ function initChart() {
             },
             scales: {
                 y: {
-                    min: 0,
-                    max: 6,
+                    min: 1,
+                    max: 5,
                     ticks: {
                         stepSize: 1,
                         color: '#6B7280',

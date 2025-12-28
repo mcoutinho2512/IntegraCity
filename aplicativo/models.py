@@ -5998,26 +5998,23 @@ class EstagioOperacional(models.Model):
     Armazena todos os dados usados no cálculo para auditoria.
     """
 
-    # Nomenclatura oficial dos níveis
+    # Nomenclatura oficial dos níveis (padrão COR Rio)
+    # https://cor.rio/estagios-operacionais-da-cidade/
     NOMENCLATURA_NIVEIS = {
-        0: 'Normal',
-        1: 'Atenção',
-        2: 'Alerta',
-        3: 'Mobilização',
-        4: 'Crise',
-        5: 'Calamidade',
-        6: 'Colapso',
+        1: 'Normal',       # Sem ocorrências significativas
+        2: 'Mobilização',  # Risco de eventos de alto impacto
+        3: 'Atenção',      # Impactos já ocorrendo em alguma região
+        4: 'Alerta',       # Ocorrências graves ou múltiplos problemas
+        5: 'Crise',        # Múltiplos danos excedem capacidade de resposta
     }
 
-    # Cores por nível (tema high-tech)
+    # Cores por nível (tema high-tech - padrão COR Rio)
     CORES_NIVEIS = {
-        0: '#00ff88',   # Verde neon
-        1: '#00D4FF',   # Cyan
-        2: '#FFB800',   # Amarelo
-        3: '#FF6B00',   # Laranja
-        4: '#FF4444',   # Vermelho
-        5: '#B537F2',   # Roxo
-        6: '#FF0055',   # Vermelho intenso
+        1: '#00ff88',   # Verde neon - Normal
+        2: '#00D4FF',   # Cyan - Mobilização
+        3: '#FFB800',   # Amarelo - Atenção
+        4: '#FF6B00',   # Laranja - Alerta
+        5: '#FF0055',   # Vermelho - Crise
     }
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -6074,12 +6071,12 @@ class EstagioOperacional(models.Model):
         return f"Nível {self.nivel_cidade} ({self.get_nomenclatura()}) - {self.calculado_em.strftime('%d/%m/%Y %H:%M')}"
 
     def get_nomenclatura(self):
-        """Retorna nomenclatura textual do nível"""
-        return self.NOMENCLATURA_NIVEIS.get(self.nivel_cidade, 'Desconhecido')
+        """Retorna nomenclatura textual do nível (padrão COR Rio)"""
+        return self.NOMENCLATURA_NIVEIS.get(self.nivel_cidade, 'Normal')
 
     def get_cor(self):
         """Retorna cor CSS do nível"""
-        return self.CORES_NIVEIS.get(self.nivel_cidade, '#00D4FF')
+        return self.CORES_NIVEIS.get(self.nivel_cidade, '#00ff88')
 
     @property
     def percentual_proximo_nivel(self):
@@ -6162,3 +6159,253 @@ class AcaoRecomendada(models.Model):
             'critica': '#FF0055',
         }
         return cores.get(self.prioridade_automatica, '#00D4FF')
+
+
+# ============================================
+# SISTEMA MULTI-TENANT - CLIENTES
+# ============================================
+
+class Cliente(models.Model):
+    """
+    Cidade/Órgão que contratou o sistema IntegraCity
+
+    Sistema Multi-Tenant: cada cliente (cidade) tem seus próprios dados,
+    estações meteorológicas, ocorrências, etc.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nome = models.CharField(max_length=200, help_text='Ex: Prefeitura de Niterói')
+    slug = models.SlugField(unique=True, help_text='Ex: niteroi')
+
+    # Localização
+    cidade = models.CharField(max_length=100)
+    estado = models.CharField(max_length=2)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+
+    # Informações de contato
+    responsavel_nome = models.CharField(max_length=200, blank=True)
+    responsavel_email = models.EmailField(blank=True)
+    responsavel_telefone = models.CharField(max_length=20, blank=True)
+
+    # Configuração de APIs externas
+    config_apis = models.JSONField(default=dict, blank=True, help_text='Configurações de integração')
+
+    # Plano/Licença
+    PLANO_CHOICES = [
+        ('basico', 'Básico'),
+        ('profissional', 'Profissional'),
+        ('enterprise', 'Enterprise'),
+    ]
+    plano = models.CharField(max_length=50, choices=PLANO_CHOICES, default='profissional')
+    ativo = models.BooleanField(default=True)
+    data_contratacao = models.DateField(auto_now_add=True)
+    data_expiracao = models.DateField(null=True, blank=True)
+
+    # Customização visual
+    logo = models.ImageField(upload_to='clientes/logos/', null=True, blank=True)
+    cores_personalizadas = models.JSONField(default=dict, blank=True)
+
+    # Auditoria
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'clientes'
+        verbose_name = 'Cliente'
+        verbose_name_plural = 'Clientes'
+        ordering = ['nome']
+
+    def __str__(self):
+        return f"{self.nome} ({self.cidade}/{self.estado})"
+
+    def get_estacao_principal(self):
+        """Retorna a estação meteorológica principal do cliente"""
+        return self.estacoes.filter(principal=True, ativa=True).first()
+
+
+class EstacaoMeteorologica(models.Model):
+    """
+    Estações INMET próximas ao cliente
+
+    O INMET (Instituto Nacional de Meteorologia) possui ~600 estações
+    automáticas espalhadas pelo Brasil que fornecem dados em tempo real.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name='estacoes'
+    )
+
+    # Dados da estação INMET
+    codigo_inmet = models.CharField(
+        max_length=20,
+        unique=True,
+        help_text='Código da estação (ex: A652)'
+    )
+    nome = models.CharField(max_length=200)
+
+    TIPO_CHOICES = [
+        ('automatica', 'Automática'),
+        ('convencional', 'Convencional'),
+    ]
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='automatica')
+
+    # Localização
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    altitude = models.DecimalField(max_digits=7, decimal_places=2, help_text='Metros')
+
+    # Distância do centro da cidade
+    distancia_km = models.DecimalField(max_digits=6, decimal_places=2, help_text='Distância em KM')
+
+    # Configuração
+    principal = models.BooleanField(default=False, help_text='Estação principal para cálculos')
+    ativa = models.BooleanField(default=True)
+
+    # Auditoria
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'estacoes_meteorologicas'
+        verbose_name = 'Estação Meteorológica'
+        verbose_name_plural = 'Estações Meteorológicas'
+        ordering = ['cliente', 'distancia_km']
+        indexes = [
+            models.Index(fields=['cliente', 'principal']),
+        ]
+
+    def __str__(self):
+        return f"{self.nome} ({self.codigo_inmet}) - {self.distancia_km}km"
+
+    def get_ultimo_dado(self):
+        """Retorna o dado meteorológico mais recente"""
+        return self.dados.first()
+
+
+class DadosMeteorologicos(models.Model):
+    """
+    Cache de dados meteorológicos coletados do INMET
+
+    Os dados são coletados periodicamente (a cada hora) e armazenados
+    localmente para consulta rápida e cálculo do nível meteorológico.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    estacao = models.ForeignKey(
+        EstacaoMeteorologica,
+        on_delete=models.CASCADE,
+        related_name='dados'
+    )
+
+    # Timestamp do dado (vem da API)
+    data_hora = models.DateTimeField(db_index=True)
+
+    # Dados atmosféricos
+    temperatura = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        null=True, blank=True,
+        help_text='°C'
+    )
+    temperatura_max = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        null=True, blank=True,
+        help_text='°C'
+    )
+    temperatura_min = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        null=True, blank=True,
+        help_text='°C'
+    )
+    umidade = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        null=True, blank=True,
+        help_text='%'
+    )
+    pressao = models.DecimalField(
+        max_digits=7, decimal_places=2,
+        null=True, blank=True,
+        help_text='hPa'
+    )
+
+    # Precipitação (chuva)
+    precipitacao_horaria = models.DecimalField(
+        max_digits=7, decimal_places=2,
+        null=True, blank=True,
+        help_text='mm'
+    )
+    precipitacao_diaria = models.DecimalField(
+        max_digits=7, decimal_places=2,
+        null=True, blank=True,
+        help_text='mm acumulado'
+    )
+
+    # Vento
+    vento_velocidade = models.DecimalField(
+        max_digits=6, decimal_places=2,
+        null=True, blank=True,
+        help_text='km/h'
+    )
+    vento_direcao = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        null=True, blank=True,
+        help_text='graus'
+    )
+    vento_rajada = models.DecimalField(
+        max_digits=6, decimal_places=2,
+        null=True, blank=True,
+        help_text='km/h'
+    )
+
+    # Radiação e ponto de orvalho
+    radiacao = models.DecimalField(
+        max_digits=7, decimal_places=2,
+        null=True, blank=True,
+        help_text='kJ/m²'
+    )
+    ponto_orvalho = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        null=True, blank=True,
+        help_text='°C'
+    )
+
+    # Dados brutos da API (para debug)
+    dados_raw = models.JSONField(default=dict, blank=True)
+
+    # Timestamp de coleta
+    coletado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'dados_meteorologicos'
+        verbose_name = 'Dado Meteorológico'
+        verbose_name_plural = 'Dados Meteorológicos'
+        ordering = ['-data_hora']
+        indexes = [
+            models.Index(fields=['estacao', '-data_hora']),
+            models.Index(fields=['-data_hora']),
+        ]
+        unique_together = [['estacao', 'data_hora']]
+
+    def __str__(self):
+        return f"{self.estacao.nome} - {self.data_hora}"
+
+    @property
+    def idade_minutos(self):
+        """Retorna a idade do dado em minutos"""
+        from django.utils import timezone
+        delta = timezone.now() - self.data_hora
+        return int(delta.total_seconds() / 60)
+
+    @property
+    def vento_direcao_cardeal(self):
+        """Converte graus para direção cardeal"""
+        if not self.vento_direcao:
+            return None
+
+        direcoes = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+                    'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO']
+        idx = int((float(self.vento_direcao) + 11.25) / 22.5) % 16
+        return direcoes[idx]
