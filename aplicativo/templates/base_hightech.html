@@ -52,6 +52,10 @@
                     <i class="fas fa-clipboard-list"></i>
                     <span>Ocorrencias</span>
                 </a>
+                <a href="{% url 'matriz_dashboard' %}" class="nav-link {% if 'matriz' in request.resolver_match.url_name %}active{% endif %}" title="Matriz Decisoria" target="_blank">
+                    <i class="fas fa-brain"></i>
+                    <span>Matriz</span>
+                </a>
                 <a href="{% url 'videomonitoramento' %}" class="nav-link {% if request.resolver_match.url_name == 'videomonitoramento' %}active{% endif %}" title="Cameras">
                     <i class="fas fa-video"></i>
                     <span>Cameras</span>

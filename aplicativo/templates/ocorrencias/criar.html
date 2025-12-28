@@ -531,8 +531,8 @@
                         </div>
 
                         <div class="form-group" style="margin-top: 20px;">
-                            <label class="form-label">Procedimento Operacional (POP)</label>
-                            <select name="procedimento" class="form-select" id="procedimentoSelect">
+                            <label class="form-label">Procedimento Operacional (POP) <span class="required">*</span></label>
+                            <select name="procedimento" class="form-select" id="procedimentoSelect" required>
                                 <option value="">-- Selecione a categoria primeiro --</option>
                             </select>
                         </div>
@@ -558,9 +558,9 @@
 
                         <div class="form-row">
                             <div class="form-group full-width">
-                                <label class="form-label">Descricao <span class="required">*</span></label>
-                                <textarea name="descricao" class="form-textarea" required
-                                          placeholder="Descreva a ocorrencia com detalhes..."></textarea>
+                                <label class="form-label">Descricao</label>
+                                <textarea name="descricao" class="form-textarea"
+                                          placeholder="Descreva a ocorrencia com detalhes (opcional)..."></textarea>
                             </div>
                         </div>
 
@@ -576,12 +576,12 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Responsavel</label>
-                                <select name="responsavel" class="form-select">
-                                    <option value="">Nao atribuido</option>
-                                    {% for u in usuarios %}
-                                    <option value="{{ u.id }}">{{ u.get_full_name|default:u.username }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="responsavel-info" style="padding: 12px 16px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                                    <i class="fas fa-user-check" style="color: var(--cyan);"></i>
+                                    <span style="color: var(--text-primary);">{{ user.get_full_name|default:user.username }}</span>
+                                    <span style="color: var(--text-muted); font-size: 0.8rem;">(Usuario logado)</span>
+                                </div>
+                                <input type="hidden" name="responsavel" value="{{ user.id }}">
                             </div>
                         </div>
 
@@ -626,8 +626,8 @@
 
                         <div class="form-row">
                             <div class="form-group" style="flex: 2;">
-                                <label class="form-label">Endereco</label>
-                                <input type="text" name="endereco" id="enderecoInput" class="form-input"
+                                <label class="form-label">Endereco <span class="required">*</span></label>
+                                <input type="text" name="endereco" id="enderecoInput" class="form-input" required
                                        placeholder="Rua, Avenida...">
                             </div>
                             <div class="form-group">
@@ -829,6 +829,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Validar POP (obrigatorio)
+        const popSelect = document.getElementById('procedimentoSelect');
+        if (!popSelect.value) {
+            showToast('Selecione um Procedimento Operacional (POP)', 'error');
+            popSelect.focus();
+            return;
+        }
+
+        // Validar endereco (obrigatorio)
+        const enderecoInput = document.getElementById('enderecoInput');
+        if (!enderecoInput.value.trim()) {
+            showToast('Informe o endereco da ocorrencia', 'error');
+            enderecoInput.focus();
+            return;
+        }
+
         const formLoading = document.getElementById('formLoading');
         formLoading.classList.add('active');
 
@@ -869,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function setMarker(lat, lng) {
+function setMarker(lat, lng, skipReverseGeocode = false) {
     if (marker) {
         map.removeLayer(marker);
     }
@@ -885,6 +901,66 @@ function setMarker(lat, lng) {
 
     document.getElementById('latitudeInput').value = lat.toFixed(7);
     document.getElementById('longitudeInput').value = lng.toFixed(7);
+
+    // Geocodificação reversa - buscar endereço pelo clique no mapa
+    if (!skipReverseGeocode) {
+        reverseGeocode(lat, lng);
+    }
+}
+
+function reverseGeocode(lat, lng) {
+    // Mostrar indicador de carregamento
+    const enderecoInput = document.getElementById('enderecoInput');
+    const bairroInput = document.getElementById('bairroInput');
+    const cepField = document.getElementById('cepField');
+
+    enderecoInput.placeholder = 'Buscando endereco...';
+
+    // Usando Nominatim para geocodificação reversa
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=pt-BR`)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.address) {
+                const addr = data.address;
+
+                // Montar endereço
+                let endereco = '';
+                if (addr.road) {
+                    endereco = addr.road;
+                    if (addr.house_number) {
+                        endereco += ', ' + addr.house_number;
+                    }
+                } else if (addr.pedestrian) {
+                    endereco = addr.pedestrian;
+                } else if (data.display_name) {
+                    // Pegar apenas a primeira parte do display_name
+                    endereco = data.display_name.split(',')[0];
+                }
+
+                // Preencher campos
+                if (endereco) {
+                    enderecoInput.value = endereco;
+                }
+
+                // Bairro
+                const bairro = addr.suburb || addr.neighbourhood || addr.district || addr.city_district || '';
+                if (bairro) {
+                    bairroInput.value = bairro;
+                }
+
+                // CEP
+                if (addr.postcode) {
+                    cepField.value = addr.postcode;
+                }
+
+                enderecoInput.placeholder = 'Rua, Avenida...';
+                showToast('Endereco identificado!', 'success');
+            }
+        })
+        .catch(error => {
+            console.log('Erro na geocodificacao reversa:', error);
+            enderecoInput.placeholder = 'Rua, Avenida...';
+        });
 }
 
 function buscarCEP() {
@@ -923,7 +999,8 @@ function geocodeAddress(address) {
             if (data.length > 0) {
                 const lat = parseFloat(data[0].lat);
                 const lng = parseFloat(data[0].lon);
-                setMarker(lat, lng);
+                // skipReverseGeocode=true porque já temos o endereço do CEP
+                setMarker(lat, lng, true);
                 map.setView([lat, lng], 16);
             }
         });

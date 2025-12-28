@@ -1,0 +1,399 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}Historico - Matriz Decisoria{% endblock %}
+
+{% block extra_css %}
+<style>
+    .historico-container {
+        padding: 20px;
+        height: calc(100vh - var(--header-height));
+        overflow-y: auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .filtros-form {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .filtro-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filtro-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .filtro-select {
+        padding: 8px 15px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+    }
+
+    .filtro-select:focus {
+        outline: none;
+        border-color: var(--cyan);
+    }
+
+    .btn-voltar {
+        padding: 10px 18px;
+        border: 1px solid var(--cyan);
+        background: transparent;
+        color: var(--cyan);
+        font-family: 'Orbitron', monospace;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-voltar:hover {
+        background: var(--cyan);
+        color: #000;
+    }
+
+    /* Stats Cards */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    @media (max-width: 1200px) {
+        .stats-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .stat-card-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 2rem;
+        color: var(--cyan);
+        margin-bottom: 5px;
+    }
+
+    .stat-card-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    /* Table */
+    .panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .panel-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.95rem;
+        color: var(--cyan);
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th {
+        text-align: left;
+        padding: 15px;
+        background: var(--bg-surface);
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table td {
+        padding: 15px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+
+    .data-table tr:hover {
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .nivel-badge-mini {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+        font-weight: 700;
+        border: 2px solid;
+    }
+
+    .nomenclatura-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .grupos-mini {
+        display: flex;
+        gap: 8px;
+    }
+
+    .grupo-mini {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-detalhe {
+        padding: 6px 12px;
+        background: transparent;
+        border: 1px solid var(--cyan);
+        color: var(--cyan);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-detalhe:hover {
+        background: var(--cyan);
+        color: #000;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        color: rgba(0, 212, 255, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="historico-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-history"></i>
+                Historico de Estagios
+            </h1>
+        </div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <form class="filtros-form" method="GET">
+                <div class="filtro-group">
+                    <span class="filtro-label">Periodo:</span>
+                    <select name="dias" class="filtro-select" onchange="this.form.submit()">
+                        <option value="1" {% if dias == 1 %}selected{% endif %}>Ultimo dia</option>
+                        <option value="7" {% if dias == 7 %}selected{% endif %}>Ultimos 7 dias</option>
+                        <option value="15" {% if dias == 15 %}selected{% endif %}>Ultimos 15 dias</option>
+                        <option value="30" {% if dias == 30 %}selected{% endif %}>Ultimos 30 dias</option>
+                    </select>
+                </div>
+                <div class="filtro-group">
+                    <span class="filtro-label">Nivel:</span>
+                    <select name="nivel" class="filtro-select" onchange="this.form.submit()">
+                        <option value="">Todos</option>
+                        {% for nivel, nome in nomenclaturas.items %}
+                        <option value="{{ nivel }}" {% if nivel_filter == nivel|stringformat:"s" %}selected{% endif %}>
+                            {{ nivel }} - {{ nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+            <a href="{% url 'matriz_dashboard' %}" class="btn-voltar">
+                <i class="fas fa-arrow-left"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-card-value">{{ stats.total|default:0 }}</div>
+            <div class="stat-card-label">Total de Calculos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" style="color: var(--green-neon);">{{ stats.nivel_min|default:0|floatformat:0 }}</div>
+            <div class="stat-card-label">Nivel Minimo</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" style="color: var(--yellow-warn);">{{ stats.nivel_medio|default:0|floatformat:1 }}</div>
+            <div class="stat-card-label">Nivel Medio</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" style="color: var(--red-alert);">{{ stats.nivel_max|default:0|floatformat:0 }}</div>
+            <div class="stat-card-label">Nivel Maximo</div>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">
+                <i class="fas fa-table"></i>
+                Registros
+            </span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">
+                {{ estagios|length }} registro(s)
+            </span>
+        </div>
+        <div class="table-container">
+            {% if estagios %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Nivel</th>
+                        <th>Status</th>
+                        <th>Grupos</th>
+                        <th>Matriz</th>
+                        <th>Usuario</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for estagio in estagios %}
+                    <tr>
+                        <td>
+                            <div style="font-family: 'Orbitron', monospace; color: var(--cyan);">
+                                {{ estagio.calculado_em|date:"d/m/Y" }}
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                {{ estagio.calculado_em|date:"H:i:s" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="nivel-badge-mini" style="border-color: {{ estagio.get_cor }}; color: {{ estagio.get_cor }};">
+                                {{ estagio.nivel_cidade }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="nomenclatura-badge" style="background: {{ estagio.get_cor }}20; color: {{ estagio.get_cor }}; border: 1px solid {{ estagio.get_cor }};">
+                                {{ estagio.get_nomenclatura }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="grupos-mini">
+                                <div class="grupo-mini" title="Meteorologia" style="color: var(--cyan);">
+                                    {{ estagio.nivel_meteorologia }}
+                                </div>
+                                <div class="grupo-mini" title="Incidentes" style="color: var(--red-alert);">
+                                    {{ estagio.nivel_incidentes }}
+                                </div>
+                                <div class="grupo-mini" title="Mobilidade" style="color: var(--yellow-warn);">
+                                    {{ estagio.nivel_mobilidade }}
+                                </div>
+                                <div class="grupo-mini" title="Eventos" style="color: var(--purple-neon);">
+                                    {{ estagio.nivel_eventos }}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="font-size: 0.85rem;">
+                                v{{ estagio.matriz.versao }}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-size: 0.85rem;">
+                                {% if estagio.solicitado_por %}
+                                {{ estagio.solicitado_por.get_full_name|default:estagio.solicitado_por.username }}
+                                {% else %}
+                                <span style="color: var(--text-muted);">Sistema</span>
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'matriz_detalhe_estagio' estagio_id=estagio.id %}" class="btn-detalhe">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>Nenhum registro encontrado para os filtros selecionados</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

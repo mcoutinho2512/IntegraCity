@@ -264,8 +264,10 @@ function updateDate() {
     const dateElement = document.getElementById('systemDate');
     if (dateElement) {
         const now = new Date();
-        const options = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
-        dateElement.textContent = now.toLocaleDateString('pt-BR', options).toUpperCase();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        dateElement.textContent = `${day}/${month}/${year}`;
     }
 }
 

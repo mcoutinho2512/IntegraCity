@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from aplicativo import views
 from aplicativo import views_users
 from aplicativo import views_ocorrencias
+from aplicativo import views_matriz
 
 urlpatterns = [
     # LOGIN - PÁGINA PRINCIPAL
@@ -97,9 +98,21 @@ urlpatterns = [
     path('api/metro/', views.api_metro, name='api_metro'),
     path('api/bike-rio/', views.api_bike_rio, name='api_bike_rio'),
 
-    # Matriz Decisória
-    path('matriz-decisoria/', views.matriz_decisoria, name='matriz_decisoria'),
-    path('api/matriz-decisoria/', views.api_matriz_decisoria, name='api_matriz_decisoria'),
+    # ============================================
+    # MATRIZ DECISÓRIA - MOTOR DE DECISÃO HEXAGON
+    # ============================================
+    path('matriz/', views_matriz.matriz_dashboard, name='matriz_dashboard'),
+    path('matriz/historico/', views_matriz.matriz_historico, name='matriz_historico'),
+    path('matriz/estagio/<uuid:estagio_id>/', views_matriz.matriz_detalhe_estagio, name='matriz_detalhe_estagio'),
+
+    # APIs Matriz Decisória
+    path('api/matriz/calcular/', views_matriz.api_calcular_estagio, name='api_calcular_estagio'),
+    path('api/matriz/ultimo/', views_matriz.api_ultimo_estagio, name='api_ultimo_estagio'),
+    path('api/matriz/historico/', views_matriz.api_historico_grafico, name='api_historico_grafico'),
+    path('api/matriz/estatisticas/', views_matriz.api_estatisticas, name='api_matriz_estatisticas'),
+
+    # Manter compatibilidade com URLs antigas
+    path('matriz-decisoria/', views_matriz.matriz_dashboard, name='matriz_decisoria'),
 
     # ============================================
     # SISTEMA DE GERENCIAMENTO DE OCORRÊNCIAS
@@ -117,6 +130,12 @@ urlpatterns = [
     path('api/ocorrencias/mapa/', views_ocorrencias.api_ocorrencias_mapa, name='api_ocorrencias_mapa'),
     path('api/ocorrencias/estatisticas/', views_ocorrencias.api_estatisticas_ocorrencias, name='api_estatisticas_ocorrencias'),
     path('api/pops/categoria/<uuid:categoria_id>/', views_ocorrencias.api_pops_por_categoria, name='api_pops_por_categoria'),
+
+    # APIs de Agências em Ocorrências
+    path('ocorrencias/<uuid:ocorrencia_id>/agencias/', views_ocorrencias.ocorrencia_adicionar_agencia, name='ocorrencia_adicionar_agencia'),
+    path('ocorrencias/<uuid:ocorrencia_id>/agencias/<uuid:acionamento_id>/', views_ocorrencias.ocorrencia_atualizar_agencia, name='ocorrencia_atualizar_agencia'),
+    path('ocorrencias/<uuid:ocorrencia_id>/agencias/<uuid:acionamento_id>/remover/', views_ocorrencias.ocorrencia_remover_agencia, name='ocorrencia_remover_agencia'),
+    path('api/ocorrencias/<uuid:ocorrencia_id>/agencias-disponiveis/', views_ocorrencias.api_agencias_disponiveis, name='api_agencias_disponiveis'),
 ]
 
 # Servir arquivos estáticos em desenvolvimento

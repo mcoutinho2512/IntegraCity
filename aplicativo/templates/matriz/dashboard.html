@@ -1,0 +1,1001 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}Matriz Decisoria - IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    .matriz-container {
+        padding: 20px;
+        height: calc(100vh - var(--header-height));
+        overflow-y: auto;
+    }
+
+    /* Header da pagina */
+    .matriz-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .matriz-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .matriz-subtitle {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 5px;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-recalcular {
+        padding: 12px 24px;
+        background: linear-gradient(135deg, var(--cyan), #0099cc);
+        border: none;
+        border-radius: 8px;
+        color: #000;
+        font-family: 'Orbitron', monospace;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-recalcular:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px var(--cyan-glow);
+    }
+
+    .btn-recalcular.loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .btn-recalcular i.fa-spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Grid principal */
+    .matriz-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 25px;
+    }
+
+    @media (max-width: 1400px) {
+        .matriz-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Card do Nivel Principal */
+    .nivel-card {
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nivel-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--nivel-cor, var(--cyan));
+    }
+
+    .nivel-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        font-family: 'Orbitron', monospace;
+        font-size: 4rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+        position: relative;
+        background: rgba(0, 0, 0, 0.5);
+        border: 4px solid var(--nivel-cor, var(--cyan));
+        box-shadow: 0 0 30px var(--nivel-glow, var(--cyan-glow)),
+                    inset 0 0 30px rgba(0, 212, 255, 0.1);
+        color: var(--nivel-cor, var(--cyan));
+    }
+
+    .nivel-badge.pulsing {
+        animation: nivel-pulse 2s infinite;
+    }
+
+    @keyframes nivel-pulse {
+        0%, 100% { box-shadow: 0 0 30px var(--nivel-glow, var(--cyan-glow)); }
+        50% { box-shadow: 0 0 60px var(--nivel-glow, var(--cyan-glow)), 0 0 80px var(--nivel-glow, var(--cyan-glow)); }
+    }
+
+    .nivel-nomenclatura {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.8rem;
+        color: var(--nivel-cor, var(--cyan));
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        margin-bottom: 10px;
+    }
+
+    .nivel-decimal {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        margin-bottom: 15px;
+    }
+
+    .proximidade-container {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .proximidade-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .proximidade-bar {
+        height: 8px;
+        background: var(--bg-surface);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .proximidade-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--nivel-cor, var(--cyan)), var(--yellow-warn));
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .proximidade-percent {
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+        color: var(--nivel-cor, var(--cyan));
+        margin-top: 8px;
+    }
+
+    /* Cards dos Grupos */
+    .grupos-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .grupo-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .grupo-card:hover {
+        border-color: var(--cyan);
+        transform: translateY(-3px);
+    }
+
+    .grupo-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .grupo-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    .grupo-icon.meteo { background: rgba(0, 212, 255, 0.2); color: var(--cyan); }
+    .grupo-icon.incidentes { background: rgba(255, 0, 85, 0.2); color: var(--red-alert); }
+    .grupo-icon.mobilidade { background: rgba(255, 184, 0, 0.2); color: var(--yellow-warn); }
+    .grupo-icon.eventos { background: rgba(181, 55, 242, 0.2); color: var(--purple-neon); }
+
+    .grupo-nivel {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .grupo-nome {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .grupo-peso {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 5px;
+    }
+
+    /* Painel direito */
+    .right-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Panel generico */
+    .panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .panel-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.95rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .panel-body {
+        padding: 20px;
+    }
+
+    /* Grafico */
+    .grafico-container {
+        height: 200px;
+        position: relative;
+    }
+
+    #historicoChart {
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Stats de Ocorrencias */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+        background: var(--bg-surface);
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+    }
+
+    .stat-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .stat-value.baixa { color: var(--green-neon); }
+    .stat-value.media { color: var(--cyan); }
+    .stat-value.alta { color: var(--yellow-warn); }
+    .stat-value.critica { color: var(--red-alert); }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    /* Acoes Recomendadas */
+    .acoes-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .acao-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+        background: var(--bg-surface);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border-left: 3px solid var(--acao-cor, var(--cyan));
+    }
+
+    .acao-prioridade {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-top: 5px;
+        flex-shrink: 0;
+    }
+
+    .acao-prioridade.baixa { background: var(--green-neon); }
+    .acao-prioridade.media { background: var(--cyan); }
+    .acao-prioridade.alta { background: var(--yellow-warn); }
+    .acao-prioridade.critica { background: var(--red-alert); animation: blink 1s infinite; }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+
+    .acao-content {
+        flex: 1;
+    }
+
+    .acao-titulo {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 5px;
+    }
+
+    .acao-descricao {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .acao-meta {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .acao-meta span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Timestamp */
+    .timestamp-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    /* Erro state */
+    .erro-container {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .erro-icon {
+        font-size: 4rem;
+        color: var(--yellow-warn);
+        margin-bottom: 20px;
+    }
+
+    .erro-titulo {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.3rem;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+    }
+
+    .erro-mensagem {
+        color: var(--text-muted);
+        margin-bottom: 20px;
+    }
+
+    /* Info box */
+    .info-box {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid var(--cyan);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+
+    .info-box-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.85rem;
+        color: var(--cyan);
+        margin-bottom: 8px;
+    }
+
+    .info-box-content {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .grupos-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .nivel-badge {
+            width: 100px;
+            height: 100px;
+            font-size: 3rem;
+        }
+
+        .nivel-nomenclatura {
+            font-size: 1.4rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block monitoring_cards %}
+<div class="monitoring-card">
+    <div class="card-header">
+        <span class="card-title"><i class="fas fa-clock"></i> Atualizado</span>
+    </div>
+    <div class="card-body">
+        <div style="text-align: center;">
+            {% if estagio %}
+            <div style="font-family: 'Orbitron', monospace; font-size: 1.1rem; color: var(--cyan);">
+                {{ estagio.calculado_em|date:"H:i" }}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                {{ estagio.calculado_em|date:"d/m/Y" }}
+            </div>
+            {% else %}
+            <div style="color: var(--text-muted);">-</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="monitoring-card">
+    <div class="card-header">
+        <span class="card-title"><i class="fas fa-database"></i> Matriz</span>
+    </div>
+    <div class="card-body">
+        <div style="text-align: center;">
+            {% if matriz %}
+            <div style="font-family: 'Orbitron', monospace; font-size: 1.1rem; color: var(--purple-neon);">
+                v{{ matriz.versao }}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                {{ matriz.status|upper }}
+            </div>
+            {% else %}
+            <div style="color: var(--text-muted);">-</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="matriz-container">
+    {% if erro %}
+    <!-- Estado de Erro -->
+    <div class="erro-container">
+        <div class="erro-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h2 class="erro-titulo">Matriz Nao Configurada</h2>
+        <p class="erro-mensagem">{{ erro }}</p>
+        <p class="erro-mensagem">
+            Execute o comando abaixo para criar a matriz inicial:
+        </p>
+        <code style="background: var(--bg-surface); padding: 10px 20px; border-radius: 8px; color: var(--cyan);">
+            python manage.py importar_matriz
+        </code>
+    </div>
+    {% else %}
+    <!-- Header -->
+    <div class="matriz-header">
+        <div>
+            <h1 class="matriz-title">
+                <i class="fas fa-brain"></i>
+                Motor de Decisao HEXAGON
+            </h1>
+            <p class="matriz-subtitle">
+                Analise automatica do estagio operacional da cidade
+            </p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-recalcular" onclick="recalcularEstagio()" id="btnRecalcular">
+                <i class="fas fa-sync-alt"></i>
+                Recalcular
+            </button>
+        </div>
+    </div>
+
+    <div class="matriz-grid">
+        <!-- Coluna Esquerda - Nivel Principal -->
+        <div>
+            <div class="nivel-card" id="nivelCard" style="--nivel-cor: {{ estagio.get_cor }}; --nivel-glow: {{ estagio.get_cor }}40;">
+                <div class="nivel-badge {% if estagio.nivel_cidade >= 4 %}pulsing{% endif %}" id="nivelBadge">
+                    {{ estagio.nivel_cidade }}
+                </div>
+                <div class="nivel-nomenclatura" id="nivelNomenclatura">
+                    {{ estagio.get_nomenclatura }}
+                </div>
+                <div class="nivel-decimal" id="nivelDecimal">
+                    Valor Ponderado: {{ estagio.nivel_cidade_decimal }}
+                </div>
+
+                <div class="proximidade-container">
+                    <div class="proximidade-label">Proximidade do Proximo Nivel</div>
+                    <div class="proximidade-bar">
+                        <div class="proximidade-fill" id="proximidadeFill" style="width: {{ estagio.percentual_proximo_nivel }}%;"></div>
+                    </div>
+                    <div class="proximidade-percent" id="proximidadePercent">
+                        {{ estagio.percentual_proximo_nivel|floatformat:1 }}%
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards dos Grupos -->
+            <div class="grupos-grid">
+                <div class="grupo-card">
+                    <div class="grupo-header">
+                        <div class="grupo-icon meteo">
+                            <i class="fas fa-cloud-sun-rain"></i>
+                        </div>
+                        <div class="grupo-nivel" id="nivelMeteo" style="color: var(--cyan);">
+                            {{ estagio.nivel_meteorologia }}
+                        </div>
+                    </div>
+                    <div class="grupo-nome">Meteorologia</div>
+                    <div class="grupo-peso">Peso: {{ matriz.peso_meteorologia }}</div>
+                </div>
+
+                <div class="grupo-card">
+                    <div class="grupo-header">
+                        <div class="grupo-icon incidentes">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="grupo-nivel" id="nivelIncidentes" style="color: var(--red-alert);">
+                            {{ estagio.nivel_incidentes }}
+                        </div>
+                    </div>
+                    <div class="grupo-nome">Incidentes</div>
+                    <div class="grupo-peso">Peso: {{ matriz.peso_incidentes }}</div>
+                </div>
+
+                <div class="grupo-card">
+                    <div class="grupo-header">
+                        <div class="grupo-icon mobilidade">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        <div class="grupo-nivel" id="nivelMobilidade" style="color: var(--yellow-warn);">
+                            {{ estagio.nivel_mobilidade }}
+                        </div>
+                    </div>
+                    <div class="grupo-nome">Mobilidade</div>
+                    <div class="grupo-peso">Peso: {{ matriz.peso_mobilidade }}</div>
+                </div>
+
+                <div class="grupo-card">
+                    <div class="grupo-header">
+                        <div class="grupo-icon eventos">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="grupo-nivel" id="nivelEventos" style="color: var(--purple-neon);">
+                            {{ estagio.nivel_eventos }}
+                        </div>
+                    </div>
+                    <div class="grupo-nome">Eventos</div>
+                    <div class="grupo-peso">Peso: {{ matriz.peso_eventos }}</div>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="info-box">
+                <div class="info-box-title">
+                    <i class="fas fa-info-circle"></i> Detalhes do Calculo
+                </div>
+                <div class="info-box-content" id="detalhesCalculo">
+                    {% if estagio.detalhes_incidentes.razao %}
+                    <strong>Incidentes:</strong> {{ estagio.detalhes_incidentes.razao }}
+                    <br>
+                    <small>Total: {{ estagio.detalhes_incidentes.total }} ocorrencias nas ultimas {{ estagio.detalhes_incidentes.horas_analisadas }}h</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna Direita -->
+        <div class="right-panel">
+            <!-- Grafico de Historico -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-chart-line"></i>
+                        Evolucao (24h)
+                    </div>
+                    <a href="{% url 'matriz_historico' %}" style="color: var(--cyan); font-size: 0.8rem;">
+                        Ver historico completo <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="panel-body">
+                    <div class="grafico-container">
+                        <canvas id="historicoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estatisticas de Ocorrencias -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-clipboard-list"></i>
+                        Ocorrencias Ativas (24h)
+                    </div>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">
+                        Total: {{ stats_ocorrencias.total|default:0 }}
+                    </span>
+                </div>
+                <div class="panel-body">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value baixa">{{ stats_ocorrencias.baixas|default:0 }}</div>
+                            <div class="stat-label">Baixas</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value media">{{ stats_ocorrencias.medias|default:0 }}</div>
+                            <div class="stat-label">Medias</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value alta">{{ stats_ocorrencias.altas|default:0 }}</div>
+                            <div class="stat-label">Altas</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value critica">{{ stats_ocorrencias.criticas|default:0 }}</div>
+                            <div class="stat-label">Criticas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acoes Recomendadas -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-tasks"></i>
+                        Acoes Recomendadas
+                    </div>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">
+                        {{ acoes|length }} acao(oes)
+                    </span>
+                </div>
+                <div class="panel-body">
+                    <div class="acoes-list" id="acoesList">
+                        {% for acao in acoes %}
+                        <div class="acao-item" style="--acao-cor: {{ acao.cor_prioridade }};">
+                            <div class="acao-prioridade {{ acao.prioridade }}"></div>
+                            <div class="acao-content">
+                                <div class="acao-titulo">{{ acao.titulo }}</div>
+                                <div class="acao-descricao">{{ acao.descricao }}</div>
+                                <div class="acao-meta">
+                                    <span>
+                                        <i class="fas fa-flag"></i>
+                                        {{ acao.prioridade_display }}
+                                    </span>
+                                    {% if acao.prazo_horas %}
+                                    <span>
+                                        <i class="fas fa-clock"></i>
+                                        {{ acao.prazo_horas }}h
+                                    </span>
+                                    {% endif %}
+                                    {% if acao.agencias %}
+                                    <span>
+                                        <i class="fas fa-building"></i>
+                                        {% for ag in acao.agencias %}{{ ag.sigla }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                            <i class="fas fa-check-circle" style="font-size: 2rem; color: var(--green-neon); margin-bottom: 10px;"></i>
+                            <p>Nenhuma acao recomendada para o nivel atual</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+{% if not erro %}
+// Cores por nivel
+const coresNiveis = {
+    0: '#00ff88',
+    1: '#00D4FF',
+    2: '#FFB800',
+    3: '#FF6B00',
+    4: '#FF4444',
+    5: '#B537F2',
+    6: '#FF0055'
+};
+
+const nomenclaturaNiveis = {
+    0: 'Normal',
+    1: 'Atencao',
+    2: 'Alerta',
+    3: 'Mobilizacao',
+    4: 'Crise',
+    5: 'Calamidade',
+    6: 'Colapso'
+};
+
+// Dados do grafico
+const graficoData = {{ grafico_data|safe }};
+
+// Inicializar grafico
+let historicoChart = null;
+
+function initChart() {
+    const ctx = document.getElementById('historicoChart').getContext('2d');
+
+    const labels = graficoData.map(d => d.timestamp);
+    const valores = graficoData.map(d => d.nivel);
+    const cores = graficoData.map(d => d.cor);
+
+    historicoChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Nivel da Cidade',
+                data: valores,
+                borderColor: '#00D4FF',
+                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: cores,
+                pointBorderColor: cores,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(10, 14, 23, 0.95)',
+                    borderColor: '#00D4FF',
+                    borderWidth: 1,
+                    titleColor: '#00D4FF',
+                    bodyColor: '#fff',
+                    callbacks: {
+                        label: function(context) {
+                            const idx = context.dataIndex;
+                            const d = graficoData[idx];
+                            return `Nivel ${d.nivel} (${d.nomenclatura})`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    min: 0,
+                    max: 6,
+                    ticks: {
+                        stepSize: 1,
+                        color: '#6B7280',
+                        callback: function(value) {
+                            return nomenclaturaNiveis[value] || value;
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#6B7280',
+                        maxTicksLimit: 8
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Recalcular estagio
+async function recalcularEstagio() {
+    const btn = document.getElementById('btnRecalcular');
+    btn.classList.add('loading');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calculando...';
+
+    try {
+        const response = await fetch('{% url "api_calcular_estagio" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                nivel_meteo: 0,
+                nivel_mob: 0,
+                nivel_eventos: 0
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Atualizar UI
+            atualizarNivel(data);
+            showToast('Estagio recalculado!', 'success');
+        } else {
+            showToast(data.error || 'Erro ao calcular', 'error');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('Erro de conexao', 'error');
+    } finally {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Recalcular';
+    }
+}
+
+// Atualizar UI com novo nivel
+function atualizarNivel(data) {
+    const cor = data.cor;
+    const corGlow = cor + '40';
+
+    // Card principal
+    const card = document.getElementById('nivelCard');
+    card.style.setProperty('--nivel-cor', cor);
+    card.style.setProperty('--nivel-glow', corGlow);
+
+    // Badge
+    const badge = document.getElementById('nivelBadge');
+    badge.textContent = data.nivel_cidade;
+    badge.classList.toggle('pulsing', data.nivel_cidade >= 4);
+
+    // Nomenclatura
+    document.getElementById('nivelNomenclatura').textContent = data.nomenclatura;
+    document.getElementById('nivelDecimal').textContent = `Valor Ponderado: ${data.nivel_decimal.toFixed(3)}`;
+
+    // Proximidade
+    document.getElementById('proximidadeFill').style.width = `${data.percentual_proximo}%`;
+    document.getElementById('proximidadePercent').textContent = `${data.percentual_proximo.toFixed(1)}%`;
+
+    // Niveis dos grupos
+    document.getElementById('nivelMeteo').textContent = data.niveis.meteorologia;
+    document.getElementById('nivelIncidentes').textContent = data.niveis.incidentes;
+    document.getElementById('nivelMobilidade').textContent = data.niveis.mobilidade;
+    document.getElementById('nivelEventos').textContent = data.niveis.eventos;
+
+    // Detalhes
+    if (data.detalhes_incidentes) {
+        document.getElementById('detalhesCalculo').innerHTML = `
+            <strong>Incidentes:</strong> ${data.detalhes_incidentes.razao}
+            <br>
+            <small>Total: ${data.detalhes_incidentes.total} ocorrencias nas ultimas ${data.detalhes_incidentes.horas_analisadas}h</small>
+        `;
+    }
+
+    // Atualizar acoes
+    if (data.acoes) {
+        atualizarAcoes(data.acoes);
+    }
+}
+
+// Atualizar lista de acoes
+function atualizarAcoes(acoes) {
+    const container = document.getElementById('acoesList');
+
+    if (acoes.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                <i class="fas fa-check-circle" style="font-size: 2rem; color: var(--green-neon); margin-bottom: 10px;"></i>
+                <p>Nenhuma acao recomendada para o nivel atual</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = acoes.map(acao => `
+        <div class="acao-item" style="--acao-cor: ${acao.cor_prioridade};">
+            <div class="acao-prioridade ${acao.prioridade}"></div>
+            <div class="acao-content">
+                <div class="acao-titulo">${acao.titulo}</div>
+                <div class="acao-descricao">${acao.descricao}</div>
+                <div class="acao-meta">
+                    <span>
+                        <i class="fas fa-flag"></i>
+                        ${acao.prioridade_display}
+                    </span>
+                    ${acao.prazo_horas ? `<span><i class="fas fa-clock"></i> ${acao.prazo_horas}h</span>` : ''}
+                    ${acao.agencias && acao.agencias.length ? `<span><i class="fas fa-building"></i> ${acao.agencias.map(a => a.sigla).join(', ')}</span>` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Auto-refresh a cada 5 minutos
+let refreshInterval;
+
+function startAutoRefresh() {
+    refreshInterval = setInterval(async () => {
+        try {
+            const response = await fetch('{% url "api_ultimo_estagio" %}');
+            const data = await response.json();
+
+            if (data.success) {
+                atualizarNivel(data);
+            }
+        } catch (error) {
+            console.warn('Erro no auto-refresh:', error);
+        }
+    }, 5 * 60 * 1000); // 5 minutos
+}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    initChart();
+    startAutoRefresh();
+});
+{% endif %}
+</script>
+{% endblock %}

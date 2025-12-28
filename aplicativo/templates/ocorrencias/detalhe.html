@@ -516,6 +516,217 @@
         margin-bottom: 10px;
         color: rgba(0, 212, 255, 0.3);
     }
+
+    /* Agencias Acionadas */
+    .agencia-item {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+
+    .agencia-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .agencia-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    .agencia-info {
+        flex: 1;
+    }
+
+    .agencia-nome {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.95rem;
+        color: var(--text-primary);
+    }
+
+    .agencia-full {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .agencia-status {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .agencia-meta {
+        display: flex;
+        gap: 15px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+    }
+
+    .agencia-meta span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .agencia-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .agencia-status-select {
+        flex: 1;
+        padding: 8px 12px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .agencia-status-select:focus {
+        outline: none;
+        border-color: var(--cyan);
+    }
+
+    .btn-remove-agencia {
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--red-alert);
+        background: rgba(255, 0, 85, 0.1);
+        color: var(--red-alert);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .btn-remove-agencia:hover {
+        background: var(--red-alert);
+        color: #fff;
+    }
+
+    /* Modal de Agencias */
+    .agencia-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .agencia-modal.active {
+        display: flex;
+    }
+
+    .agencia-modal-content {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow: hidden;
+    }
+
+    .agencia-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .agencia-modal-header h3 {
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .agencia-modal-close {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 1.2rem;
+    }
+
+    .agencia-modal-close:hover {
+        color: var(--red-alert);
+    }
+
+    .agencia-modal-body {
+        padding: 20px;
+        max-height: 50vh;
+        overflow-y: auto;
+    }
+
+    .agencia-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 15px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .agencia-option:hover {
+        border-color: var(--cyan);
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .agencia-option-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    .agencia-option-info {
+        flex: 1;
+    }
+
+    .agencia-option-nome {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .agencia-option-sigla {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
 </style>
 {% endblock %}
 
@@ -816,27 +1027,63 @@
             </div>
             {% endif %}
 
-            <!-- Agencias -->
-            {% if ocorrencia.agencias.exists %}
+            <!-- Agencias Acionadas -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title">
                         <i class="fas fa-building"></i>
-                        Agencias
+                        Agencias Acionadas
                     </div>
+                    <button class="btn-tech" style="padding: 6px 12px; font-size: 0.75rem;" onclick="openAgenciaModal()">
+                        <i class="fas fa-plus"></i> Acionar
+                    </button>
                 </div>
                 <div class="panel-body">
-                    <div class="agencies-list">
-                        {% for ag in ocorrencia.agencias.all %}
-                        <div class="agency-chip">
-                            <i class="fas {{ ag.icone }}" style="color: {{ ag.cor }};"></i>
-                            <span>{{ ag.sigla }}</span>
+                    <div id="agenciasContainer">
+                        {% for acionamento in agencias_acionadas %}
+                        <div class="agencia-item" id="agencia-{{ acionamento.id }}">
+                            <div class="agencia-header">
+                                <div class="agencia-icon" style="background: {{ acionamento.agencia.cor }}20; color: {{ acionamento.agencia.cor }};">
+                                    <i class="fas {{ acionamento.agencia.icone }}"></i>
+                                </div>
+                                <div class="agencia-info">
+                                    <div class="agencia-nome">{{ acionamento.agencia.sigla }}</div>
+                                    <div class="agencia-full">{{ acionamento.agencia.nome }}</div>
+                                </div>
+                                <div class="agencia-status" style="background: {{ acionamento.status_cor }}20; color: {{ acionamento.status_cor }}; border: 1px solid {{ acionamento.status_cor }};">
+                                    <i class="fas {{ acionamento.status_icone }}"></i>
+                                    {{ acionamento.get_status_display }}
+                                </div>
+                            </div>
+                            <div class="agencia-meta">
+                                <span><i class="fas fa-clock"></i> {{ acionamento.data_acionamento|date:"d/m/Y H:i" }}</span>
+                                {% if acionamento.acionado_por %}
+                                <span><i class="fas fa-user"></i> {{ acionamento.acionado_por.get_full_name|default:acionamento.acionado_por.username }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="agencia-actions">
+                                <select class="agencia-status-select" onchange="updateAgenciaStatus('{{ acionamento.id }}', this.value)">
+                                    {% for code, label in agencia_status_choices %}
+                                    <option value="{{ code }}" {% if code == acionamento.status %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn-remove-agencia" onclick="removeAgencia('{{ acionamento.id }}')" title="Remover">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state" id="noAgenciasMsg">
+                            <i class="fas fa-building"></i>
+                            <p>Nenhuma agencia acionada</p>
+                            <button class="btn-tech" style="margin-top: 10px;" onclick="openAgenciaModal()">
+                                <i class="fas fa-plus"></i> Acionar Agencia
+                            </button>
                         </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
-            {% endif %}
 
             <!-- Anexos -->
             <div class="panel">
@@ -996,5 +1243,184 @@ async function updateStatus(novoStatus) {
         showToast('Erro de conexao', 'error');
     }
 }
+
+// ==========================================
+// GERENCIAMENTO DE AGÊNCIAS
+// ==========================================
+
+let agenciasDisponiveis = [];
+
+async function openAgenciaModal() {
+    const modal = document.getElementById('agenciaModal');
+    const container = document.getElementById('agenciasDisponivelContainer');
+
+    modal.classList.add('active');
+    container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyan);"></i><p style="margin-top: 10px; color: var(--text-muted);">Carregando agencias...</p></div>';
+
+    try {
+        const response = await fetch('{% url "api_agencias_disponiveis" ocorrencia_id=ocorrencia.id %}');
+        const data = await response.json();
+
+        if (data.success) {
+            agenciasDisponiveis = data.agencias;
+
+            if (agenciasDisponiveis.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Todas as agencias ja foram acionadas</p></div>';
+            } else {
+                container.innerHTML = agenciasDisponiveis.map(agencia => `
+                    <div class="agencia-option" onclick="acionarAgencia('${agencia.id}')">
+                        <div class="agencia-option-icon" style="background: ${agencia.cor}20; color: ${agencia.cor};">
+                            <i class="fas ${agencia.icone}"></i>
+                        </div>
+                        <div class="agencia-option-info">
+                            <div class="agencia-option-nome">${agencia.nome}</div>
+                            <div class="agencia-option-sigla">${agencia.sigla}</div>
+                        </div>
+                        <i class="fas fa-plus" style="color: var(--cyan);"></i>
+                    </div>
+                `).join('');
+            }
+        } else {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color: var(--red-alert);"></i><p>Erro ao carregar agencias</p></div>';
+        }
+    } catch (error) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color: var(--red-alert);"></i><p>Erro de conexao</p></div>';
+    }
+}
+
+function closeAgenciaModal() {
+    document.getElementById('agenciaModal').classList.remove('active');
+}
+
+async function acionarAgencia(agenciaId) {
+    try {
+        const response = await fetch('{% url "ocorrencia_adicionar_agencia" ocorrencia_id=ocorrencia.id %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ agencia_id: agenciaId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Agencia acionada com sucesso!', 'success');
+            closeAgenciaModal();
+            location.reload();
+        } else {
+            showToast(data.error || 'Erro ao acionar agencia', 'error');
+        }
+    } catch (error) {
+        showToast('Erro de conexao', 'error');
+    }
+}
+
+async function updateAgenciaStatus(acionamentoId, novoStatus) {
+    try {
+        const response = await fetch(`/integracity/ocorrencias/{{ ocorrencia.id }}/agencias/${acionamentoId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ status: novoStatus })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Status atualizado!', 'success');
+            // Atualizar o badge de status visualmente sem recarregar
+            const agenciaItem = document.getElementById(`agencia-${acionamentoId}`);
+            if (agenciaItem) {
+                const statusBadge = agenciaItem.querySelector('.agencia-status');
+                if (statusBadge) {
+                    statusBadge.style.background = `${data.status_cor}20`;
+                    statusBadge.style.color = data.status_cor;
+                    statusBadge.style.borderColor = data.status_cor;
+                    statusBadge.innerHTML = `<i class="fas ${data.status_icone}"></i> ${data.status_display}`;
+                }
+            }
+        } else {
+            showToast(data.error || 'Erro ao atualizar status', 'error');
+            location.reload(); // Recarregar para restaurar estado correto
+        }
+    } catch (error) {
+        showToast('Erro de conexao', 'error');
+    }
+}
+
+async function removeAgencia(acionamentoId) {
+    if (!confirm('Deseja remover esta agencia do acionamento?')) return;
+
+    try {
+        const response = await fetch(`/integracity/ocorrencias/{{ ocorrencia.id }}/agencias/${acionamentoId}/remover/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Agencia removida!', 'success');
+            // Remover visualmente
+            const agenciaItem = document.getElementById(`agencia-${acionamentoId}`);
+            if (agenciaItem) {
+                agenciaItem.remove();
+            }
+            // Verificar se restam agencias
+            const container = document.getElementById('agenciasContainer');
+            if (!container.querySelector('.agencia-item')) {
+                container.innerHTML = `
+                    <div class="empty-state" id="noAgenciasMsg">
+                        <i class="fas fa-building"></i>
+                        <p>Nenhuma agencia acionada</p>
+                        <button class="btn-tech" style="margin-top: 10px;" onclick="openAgenciaModal()">
+                            <i class="fas fa-plus"></i> Acionar Agencia
+                        </button>
+                    </div>
+                `;
+            }
+        } else {
+            showToast(data.error || 'Erro ao remover agencia', 'error');
+        }
+    } catch (error) {
+        showToast('Erro de conexao', 'error');
+    }
+}
+
+// Fechar modal ao clicar fora
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('agenciaModal');
+    if (e.target === modal) {
+        closeAgenciaModal();
+    }
+});
+
+// Fechar modal com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeAgenciaModal();
+    }
+});
 </script>
+
+<!-- Modal de Selecao de Agencias -->
+<div class="agencia-modal" id="agenciaModal">
+    <div class="agencia-modal-content">
+        <div class="agencia-modal-header">
+            <h3><i class="fas fa-building"></i> Acionar Agencia</h3>
+            <button class="agencia-modal-close" onclick="closeAgenciaModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="agencia-modal-body" id="agenciasDisponivelContainer">
+            <!-- Conteudo carregado via JS -->
+        </div>
+    </div>
+</div>
 {% endblock %}

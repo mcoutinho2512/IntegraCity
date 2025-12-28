@@ -556,6 +556,21 @@
                         <span class="layer-count" id="countBolsoes">--</span>
                     </div>
                 </div>
+
+                <!-- Ocorrencias -->
+                <div class="layer-item">
+                    <label class="layer-checkbox">
+                        <input type="checkbox" id="layerOcorrencias" onchange="toggleMapLayer('ocorrencias')" checked>
+                        <span class="checkmark"></span>
+                    </label>
+                    <div class="layer-icon" style="background: rgba(255, 0, 85, 0.2); color: #FF0055;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="layer-info">
+                        <span class="layer-name">Ocorrencias</span>
+                        <span class="layer-count" id="countOcorrencias">--</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Acoes rapidas -->
@@ -685,7 +700,7 @@
     function refreshData() {
         showLoading('ATUALIZANDO DADOS...');
 
-        fetch('/api/dashboard/status/')
+        fetch('/integracity/api/dashboard/status/')
             .then(response => response.json())
             .then(data => {
                 // Atualizar valores no header
@@ -727,7 +742,8 @@
         metro: L.layerGroup(),
         brt: L.layerGroup(),
         waze: L.layerGroup(),
-        bolsoes: L.layerGroup()
+        bolsoes: L.layerGroup(),
+        ocorrencias: L.layerGroup()
     };
 
     // Cache dos dados carregados
@@ -740,7 +756,8 @@
         metro: null,
         brt: null,
         waze: null,
-        bolsoes: null
+        bolsoes: null,
+        ocorrencias: null
     };
 
     // Estado dos filtros de cameras
@@ -761,7 +778,16 @@
         metro: { icon: 'fa-subway', color: '#FF5722' },
         brt: { icon: 'fa-bus', color: '#009688' },
         waze: { icon: 'fa-car', color: '#00d4ff' },
-        bolsoes: { icon: 'fa-water', color: '#06b6d4' }
+        bolsoes: { icon: 'fa-water', color: '#06b6d4' },
+        ocorrencias: { icon: 'fa-exclamation-triangle', color: '#FF0055' }
+    };
+
+    // Cores por prioridade de ocorrencia
+    var coresPrioridade = {
+        baixa: '#4CAF50',
+        media: '#00D4FF',
+        alta: '#FFB800',
+        critica: '#FF0055'
     };
 
     // ============================================
@@ -1029,15 +1055,16 @@
 
     function loadLayerData(layerName) {
         var apiUrls = {
-            escolas: baseUrl + 'api/escolas/',
-            hospitais: baseUrl + 'api/hospitais/',
-            pluviometros: baseUrl + 'api/pluviometros/',
-            sirenes: baseUrl + 'api/sirenes/',
-            cameras: baseUrl + '/integracity/api/cameras/',
-            metro: baseUrl + 'api/metro/',
-            brt: baseUrl + 'api/brt/',
-            waze: baseUrl + 'api/waze/',
-            bolsoes: baseUrl + 'api/bolsoes/'
+            escolas: baseUrl + 'integracity/api/escolas/',
+            hospitais: baseUrl + 'integracity/api/hospitais/',
+            pluviometros: baseUrl + 'integracity/api/pluviometros/',
+            sirenes: baseUrl + 'integracity/api/sirenes/',
+            cameras: baseUrl + 'integracity/api/cameras/',
+            metro: baseUrl + 'integracity/api/metro/',
+            brt: baseUrl + 'integracity/api/brt/',
+            waze: baseUrl + 'integracity/api/waze/',
+            bolsoes: baseUrl + 'integracity/api/bolsoes/',
+            ocorrencias: baseUrl + 'integracity/api/ocorrencias/mapa/'
         };
 
         var url = apiUrls[layerName];
@@ -1065,6 +1092,10 @@
                     if (cameraFilters.fixas) mapLayers.camerasFixas.addTo(map);
                     if (cameraFilters.moveis) mapLayers.camerasMoveis.addTo(map);
                     showToast('Cameras carregadas com sucesso', 'success');
+                } else if (layerName === 'ocorrencias') {
+                    renderOcorrenciasMarkers(data);
+                    updateLayerCount(layerName, data);
+                    showToast('Ocorrencias carregadas com sucesso', 'success');
                 } else {
                     renderLayerMarkers(layerName, data);
                     updateLayerCount(layerName, data);
@@ -1208,6 +1239,76 @@
             '<i class="fas ' + config.icon + '"></i> ' + title.substring(0, 30) + '</h4>' +
             '<div style="font-size: 0.85rem; color: #ccc;">' + details + '</div>' +
             '</div>';
+    }
+
+    // Renderizar marcadores de ocorrencias com cores por prioridade
+    function renderOcorrenciasMarkers(data) {
+        // Limpar camada existente
+        mapLayers.ocorrencias.clearLayers();
+
+        var items = [];
+        if (data.data && Array.isArray(data.data)) {
+            items = data.data;
+        } else if (Array.isArray(data)) {
+            items = data;
+        }
+
+        console.log('Renderizando ' + items.length + ' ocorrencias no mapa');
+
+        items.forEach(function(oc) {
+            if (oc.latitude && oc.longitude) {
+                // Cor baseada na prioridade
+                var cor = coresPrioridade[oc.prioridade] || '#00D4FF';
+                var icone = oc.categoria_icone || 'fa-exclamation-triangle';
+
+                var icon = L.divIcon({
+                    className: 'custom-marker ocorrencia-marker',
+                    html: '<div style="background: ' + cor + '; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 0 15px rgba(0,0,0,0.4), 0 0 20px ' + cor + '50;"><i class="fas ' + icone + '" style="color: white; font-size: 14px;"></i></div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                var marker = L.marker([oc.latitude, oc.longitude], { icon: icon });
+
+                // Popup com informacoes da ocorrencia
+                var popupContent = '<div style="font-family: Rajdhani, sans-serif; min-width: 250px;">' +
+                    '<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">' +
+                    '<div style="background: ' + cor + '30; color: ' + cor + '; padding: 8px; border-radius: 8px;">' +
+                    '<i class="fas ' + icone + '"></i></div>' +
+                    '<div>' +
+                    '<h4 style="margin: 0; color: #00d4ff; font-size: 1rem;">' + oc.protocolo + '</h4>' +
+                    '<span style="font-size: 0.75rem; color: #888;">' + oc.categoria + '</span>' +
+                    '</div></div>' +
+                    '<div style="font-size: 0.9rem; color: #fff; margin-bottom: 8px;">' + oc.titulo + '</div>' +
+                    '<div style="display: flex; gap: 8px; margin-bottom: 8px;">' +
+                    '<span style="background: ' + cor + '30; color: ' + cor + '; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">' + oc.prioridade_display + '</span>' +
+                    '<span style="background: rgba(0,212,255,0.2); color: #00d4ff; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">' + oc.status_display + '</span>' +
+                    '</div>' +
+                    '<div style="font-size: 0.8rem; color: #aaa;">' +
+                    '<i class="fas fa-map-marker-alt"></i> ' + (oc.endereco || '--') + (oc.bairro ? ', ' + oc.bairro : '') +
+                    '</div>' +
+                    '<div style="font-size: 0.75rem; color: #666; margin-top: 5px;">' +
+                    '<i class="fas fa-clock"></i> ' + oc.data_abertura +
+                    '</div>' +
+                    '<div style="margin-top: 10px;">' +
+                    '<a href="/integracity/ocorrencias/' + oc.id + '/" target="_blank" style="display: inline-block; background: #00d4ff; color: #000; padding: 6px 15px; border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: bold;">' +
+                    '<i class="fas fa-eye"></i> Ver Detalhes</a>' +
+                    '</div></div>';
+
+                marker.bindPopup(popupContent, {
+                    maxWidth: 350,
+                    className: 'ocorrencia-popup'
+                });
+
+                mapLayers.ocorrencias.addLayer(marker);
+            }
+        });
+
+        // Atualizar contador
+        var countEl = document.getElementById('countOcorrencias');
+        if (countEl) {
+            countEl.textContent = items.length;
+        }
     }
 
     // Atualizar contador de itens da camada
@@ -1791,7 +1892,24 @@
                     console.error('Erro ao carregar câmeras para mosaico:', err);
                 });
         }
+
+        // Carregar camada de ocorrencias automaticamente (checkbox marcado por padrao)
+        var ocorrenciasCheckbox = document.getElementById('layerOcorrencias');
+        if (ocorrenciasCheckbox && ocorrenciasCheckbox.checked) {
+            console.log('Carregando ocorrencias automaticamente...');
+            mapLayers.ocorrencias.addTo(map);
+            loadLayerData('ocorrencias');
+        }
     });
+
+    // Atualizar ocorrencias a cada 2 minutos
+    setInterval(function() {
+        var ocorrenciasCheckbox = document.getElementById('layerOcorrencias');
+        if (ocorrenciasCheckbox && ocorrenciasCheckbox.checked) {
+            console.log('Atualizando ocorrencias...');
+            loadLayerData('ocorrencias');
+        }
+    }, 120000);
 
 </script>
 

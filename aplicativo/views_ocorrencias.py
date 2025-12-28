@@ -21,6 +21,7 @@ from .models import (
     AgenciaResponsavel,
     HistoricoOcorrenciaGerenciada,
     AnexoOcorrenciaGerenciada,
+    AgenciaOcorrencia,
     AuditLog
 )
 
@@ -221,10 +222,8 @@ def ocorrencia_criar(request):
                 except (ValueError, TypeError):
                     pass
 
-            # Responsável
-            responsavel_id = request.POST.get('responsavel')
-            if responsavel_id:
-                ocorrencia.responsavel_id = responsavel_id
+            # Responsável - sempre é o usuário logado ao criar
+            ocorrencia.responsavel = request.user
 
             ocorrencia.save()
 
@@ -274,6 +273,17 @@ def ocorrencia_criar(request):
                 str(ocorrencia.id),
                 {'protocolo': ocorrencia.numero_protocolo}
             )
+
+            # Recalcular estágio operacional da cidade
+            try:
+                from .services.motor_decisao import MotorDecisao
+                motor = MotorDecisao()
+                motor.calcular_nivel_cidade(usuario=request.user)
+            except Exception as e:
+                # Log do erro mas não impede a criação da ocorrência
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Erro ao recalcular estágio após criar ocorrência: {e}")
 
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
@@ -328,7 +338,7 @@ def ocorrencia_detalhe(request, ocorrencia_id):
     ocorrencia = get_object_or_404(
         OcorrenciaGerenciada.objects.select_related(
             'categoria', 'procedimento', 'aberto_por', 'responsavel'
-        ).prefetch_related('agencias', 'historico', 'anexos'),
+        ).prefetch_related('agencias', 'historico', 'anexos', 'agencias_acionadas__agencia'),
         id=ocorrencia_id
     )
 
@@ -337,6 +347,11 @@ def ocorrencia_detalhe(request, ocorrencia_id):
 
     # Anexos
     anexos = ocorrencia.anexos.select_related('uploaded_por').order_by('-uploaded_at')
+
+    # Agências acionadas (com o novo modelo)
+    agencias_acionadas = ocorrencia.agencias_acionadas.select_related(
+        'agencia', 'acionado_por'
+    ).order_by('-data_acionamento')
 
     # Estatísticas da ocorrência
     tempo_aberto = None
@@ -347,8 +362,10 @@ def ocorrencia_detalhe(request, ocorrencia_id):
         'ocorrencia': ocorrencia,
         'historico': historico,
         'anexos': anexos,
+        'agencias_acionadas': agencias_acionadas,
         'tempo_aberto': tempo_aberto,
         'status_choices': OcorrenciaGerenciada.STATUS_CHOICES,
+        'agencia_status_choices': AgenciaOcorrencia.STATUS_CHOICES,
     }
 
     return render(request, 'ocorrencias/detalhe.html', context)
@@ -804,3 +821,205 @@ def api_estatisticas_ocorrencias(request):
         'por_status': por_status,
         'por_prioridade': por_prioridade,
     })
+
+
+# ============================================
+# GERENCIAMENTO DE AGÊNCIAS NA OCORRÊNCIA
+# ============================================
+
+@login_required
+@require_http_methods(["POST"])
+def ocorrencia_adicionar_agencia(request, ocorrencia_id):
+    """Adicionar/Acionar uma agência na ocorrência"""
+
+    ocorrencia = get_object_or_404(OcorrenciaGerenciada, id=ocorrencia_id)
+
+    try:
+        data = json.loads(request.body)
+        agencia_id = data.get('agencia_id')
+        observacoes = data.get('observacoes', '')
+
+        if not agencia_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'ID da agência é obrigatório'
+            }, status=400)
+
+        agencia = get_object_or_404(AgenciaResponsavel, id=agencia_id)
+
+        # Verificar se já existe
+        if AgenciaOcorrencia.objects.filter(ocorrencia=ocorrencia, agencia=agencia).exists():
+            return JsonResponse({
+                'success': False,
+                'error': f'A agência {agencia.sigla} já foi acionada nesta ocorrência'
+            }, status=400)
+
+        # Criar acionamento
+        acionamento = AgenciaOcorrencia.objects.create(
+            ocorrencia=ocorrencia,
+            agencia=agencia,
+            status='informada',
+            acionado_por=request.user,
+            observacoes=observacoes
+        )
+
+        # Histórico
+        HistoricoOcorrenciaGerenciada.objects.create(
+            ocorrencia=ocorrencia,
+            tipo='atualizacao',
+            descricao=f'Agência {agencia.sigla} ({agencia.nome}) acionada',
+            usuario=request.user
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Agência {agencia.sigla} acionada com sucesso!',
+            'acionamento': {
+                'id': str(acionamento.id),
+                'agencia': {
+                    'id': str(agencia.id),
+                    'nome': agencia.nome,
+                    'sigla': agencia.sigla,
+                    'icone': agencia.icone,
+                    'cor': agencia.cor
+                },
+                'status': acionamento.status,
+                'status_display': acionamento.get_status_display(),
+                'status_cor': acionamento.status_cor,
+                'status_icone': acionamento.status_icone,
+                'data_acionamento': acionamento.data_acionamento.strftime('%d/%m/%Y %H:%M'),
+                'acionado_por': request.user.get_full_name() or request.user.username
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def ocorrencia_atualizar_agencia(request, ocorrencia_id, acionamento_id):
+    """Atualizar status de uma agência na ocorrência"""
+
+    ocorrencia = get_object_or_404(OcorrenciaGerenciada, id=ocorrencia_id)
+    acionamento = get_object_or_404(AgenciaOcorrencia, id=acionamento_id, ocorrencia=ocorrencia)
+
+    try:
+        data = json.loads(request.body)
+        novo_status = data.get('status')
+        observacoes = data.get('observacoes')
+
+        if novo_status and novo_status not in dict(AgenciaOcorrencia.STATUS_CHOICES):
+            return JsonResponse({
+                'success': False,
+                'error': 'Status inválido'
+            }, status=400)
+
+        status_anterior = acionamento.status
+
+        if novo_status:
+            acionamento.status = novo_status
+
+            # Atualizar datas conforme o status
+            if novo_status == 'presente' and not acionamento.data_chegada:
+                acionamento.data_chegada = timezone.now()
+            elif novo_status in ['concluida', 'dispensada'] and not acionamento.data_conclusao:
+                acionamento.data_conclusao = timezone.now()
+
+        if observacoes is not None:
+            acionamento.observacoes = observacoes
+
+        acionamento.save()
+
+        # Histórico
+        if novo_status and status_anterior != novo_status:
+            HistoricoOcorrenciaGerenciada.objects.create(
+                ocorrencia=ocorrencia,
+                tipo='atualizacao',
+                descricao=f'Status da agência {acionamento.agencia.sigla} alterado de "{dict(AgenciaOcorrencia.STATUS_CHOICES)[status_anterior]}" para "{dict(AgenciaOcorrencia.STATUS_CHOICES)[novo_status]}"',
+                usuario=request.user
+            )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Agência {acionamento.agencia.sigla} atualizada!',
+            'status': acionamento.status,
+            'status_display': acionamento.get_status_display(),
+            'status_cor': acionamento.status_cor,
+            'status_icone': acionamento.status_icone,
+            'acionamento': {
+                'id': str(acionamento.id),
+                'status': acionamento.status,
+                'status_display': acionamento.get_status_display(),
+                'status_cor': acionamento.status_cor,
+                'status_icone': acionamento.status_icone,
+                'data_chegada': acionamento.data_chegada.strftime('%d/%m/%Y %H:%M') if acionamento.data_chegada else None,
+                'data_conclusao': acionamento.data_conclusao.strftime('%d/%m/%Y %H:%M') if acionamento.data_conclusao else None,
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def ocorrencia_remover_agencia(request, ocorrencia_id, acionamento_id):
+    """Remover uma agência da ocorrência"""
+
+    ocorrencia = get_object_or_404(OcorrenciaGerenciada, id=ocorrencia_id)
+    acionamento = get_object_or_404(AgenciaOcorrencia, id=acionamento_id, ocorrencia=ocorrencia)
+
+    try:
+        agencia_sigla = acionamento.agencia.sigla
+        agencia_nome = acionamento.agencia.nome
+
+        acionamento.delete()
+
+        # Histórico
+        HistoricoOcorrenciaGerenciada.objects.create(
+            ocorrencia=ocorrencia,
+            tipo='atualizacao',
+            descricao=f'Agência {agencia_sigla} ({agencia_nome}) removida da ocorrência',
+            usuario=request.user
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Agência {agencia_sigla} removida da ocorrência'
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+def api_agencias_disponiveis(request, ocorrencia_id):
+    """API para listar agências disponíveis para acionar (que ainda não foram acionadas)"""
+
+    ocorrencia = get_object_or_404(OcorrenciaGerenciada, id=ocorrencia_id)
+
+    # IDs das agências já acionadas
+    agencias_acionadas_ids = AgenciaOcorrencia.objects.filter(
+        ocorrencia=ocorrencia
+    ).values_list('agencia_id', flat=True)
+
+    # Agências disponíveis (ativas e não acionadas)
+    agencias = AgenciaResponsavel.objects.filter(
+        ativa=True
+    ).exclude(
+        id__in=agencias_acionadas_ids
+    ).order_by('nome')
+
+    data = []
+    for ag in agencias:
+        data.append({
+            'id': str(ag.id),
+            'nome': ag.nome,
+            'sigla': ag.sigla,
+            'icone': ag.icone,
+            'cor': ag.cor,
+            'telefone': ag.telefone,
+        })
+
+    return JsonResponse({'success': True, 'data': data})

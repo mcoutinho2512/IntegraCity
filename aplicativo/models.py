@@ -5848,3 +5848,317 @@ class AnexoOcorrenciaGerenciada(models.Model):
             return f"{self.tamanho / 1024:.1f} KB"
         else:
             return f"{self.tamanho / (1024 * 1024):.1f} MB"
+
+
+class AgenciaOcorrencia(models.Model):
+    """
+    Relação entre Agência e Ocorrência com status de acionamento.
+    Permite controlar o status de cada agência: informada, presente, concluída.
+    """
+
+    STATUS_CHOICES = [
+        ('informada', 'Informada'),
+        ('a_caminho', 'A Caminho'),
+        ('presente', 'Presente no Local'),
+        ('atuando', 'Em Atuação'),
+        ('concluida', 'Concluída'),
+        ('dispensada', 'Dispensada'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    ocorrencia = models.ForeignKey(
+        OcorrenciaGerenciada,
+        on_delete=models.CASCADE,
+        related_name='agencias_acionadas'
+    )
+    agencia = models.ForeignKey(
+        AgenciaResponsavel,
+        on_delete=models.CASCADE,
+        related_name='acionamentos'
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='informada')
+
+    # Controle de datas
+    data_acionamento = models.DateTimeField(auto_now_add=True)
+    data_chegada = models.DateTimeField(null=True, blank=True)
+    data_conclusao = models.DateTimeField(null=True, blank=True)
+
+    # Quem acionou e observações
+    acionado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='agencias_acionadas'
+    )
+    observacoes = models.TextField(blank=True)
+
+    class Meta:
+        db_table = 'agencias_ocorrencias'
+        verbose_name = 'Agência Acionada'
+        verbose_name_plural = 'Agências Acionadas'
+        ordering = ['-data_acionamento']
+        unique_together = ['ocorrencia', 'agencia']
+
+    def __str__(self):
+        return f"{self.agencia.sigla} - {self.ocorrencia.numero_protocolo} ({self.get_status_display()})"
+
+    @property
+    def status_cor(self):
+        """Retorna cor CSS baseada no status"""
+        cores = {
+            'informada': '#FFB800',
+            'a_caminho': '#00D4FF',
+            'presente': '#B537F2',
+            'atuando': '#00D4FF',
+            'concluida': '#4CAF50',
+            'dispensada': '#6B7280',
+        }
+        return cores.get(self.status, '#00D4FF')
+
+    @property
+    def status_icone(self):
+        """Retorna ícone FontAwesome baseado no status"""
+        icones = {
+            'informada': 'fa-phone',
+            'a_caminho': 'fa-truck',
+            'presente': 'fa-map-marker-alt',
+            'atuando': 'fa-tools',
+            'concluida': 'fa-check-circle',
+            'dispensada': 'fa-times-circle',
+        }
+        return icones.get(self.status, 'fa-building')
+
+
+# ==========================================
+# MATRIZ DECISÓRIA - MOTOR DE DECISÃO
+# ==========================================
+
+class MatrizDecisoria(models.Model):
+    """
+    Versão da Matriz Decisória HEXAGON.
+    Define os pesos e configurações para cálculo do estágio operacional da cidade.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    versao = models.CharField(max_length=20, unique=True)  # ex: "3.5"
+    nome = models.CharField(max_length=200)
+    descricao = models.TextField(blank=True)
+
+    # Status
+    STATUS_CHOICES = [
+        ('rascunho', 'Rascunho'),
+        ('em_aprovacao', 'Em Aprovação'),
+        ('publicada', 'Publicada'),
+        ('arquivada', 'Arquivada'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='rascunho')
+    ativa = models.BooleanField(default=False)  # Apenas 1 pode estar ativa
+
+    # Pesos dos grupos (conforme planilha HEXAGON)
+    peso_meteorologia = models.DecimalField(max_digits=3, decimal_places=1, default=2.0)
+    peso_incidentes = models.DecimalField(max_digits=3, decimal_places=1, default=2.0)
+    peso_mobilidade = models.DecimalField(max_digits=3, decimal_places=1, default=1.0)
+    peso_eventos = models.DecimalField(max_digits=3, decimal_places=1, default=1.0)
+
+    # Configuração detalhada dos grupos em JSON
+    config_grupo1 = models.JSONField(default=dict, blank=True)  # Meteorologia
+    config_grupo2 = models.JSONField(default=dict, blank=True)  # Incidentes
+    config_grupo3 = models.JSONField(default=dict, blank=True)  # Mobilidade
+    config_grupo4 = models.JSONField(default=dict, blank=True)  # Eventos
+
+    # Auditoria
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='matrizes_criadas')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'matrizes_decisorias'
+        verbose_name = 'Matriz Decisória'
+        verbose_name_plural = 'Matrizes Decisórias'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Matriz {self.versao} - {self.nome}"
+
+    def save(self, *args, **kwargs):
+        # Se marcada como ativa, desativar outras
+        if self.ativa:
+            MatrizDecisoria.objects.exclude(pk=self.pk).update(ativa=False)
+        super().save(*args, **kwargs)
+
+    @property
+    def peso_total(self):
+        """Soma de todos os pesos"""
+        return float(self.peso_meteorologia + self.peso_incidentes + self.peso_mobilidade + self.peso_eventos)
+
+
+class EstagioOperacional(models.Model):
+    """
+    Registro de cálculo de estágio operacional em momento específico.
+    Armazena todos os dados usados no cálculo para auditoria.
+    """
+
+    # Nomenclatura oficial dos níveis
+    NOMENCLATURA_NIVEIS = {
+        0: 'Normal',
+        1: 'Atenção',
+        2: 'Alerta',
+        3: 'Mobilização',
+        4: 'Crise',
+        5: 'Calamidade',
+        6: 'Colapso',
+    }
+
+    # Cores por nível (tema high-tech)
+    CORES_NIVEIS = {
+        0: '#00ff88',   # Verde neon
+        1: '#00D4FF',   # Cyan
+        2: '#FFB800',   # Amarelo
+        3: '#FF6B00',   # Laranja
+        4: '#FF4444',   # Vermelho
+        5: '#B537F2',   # Roxo
+        6: '#FF0055',   # Vermelho intenso
+    }
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    matriz = models.ForeignKey(MatrizDecisoria, on_delete=models.PROTECT, related_name='calculos')
+
+    # Níveis calculados por grupo (0-6)
+    nivel_meteorologia = models.IntegerField(default=0)
+    nivel_incidentes = models.IntegerField(default=0)
+    nivel_mobilidade = models.IntegerField(default=0)
+    nivel_eventos = models.IntegerField(default=0)
+
+    # Nível final da cidade
+    nivel_cidade = models.IntegerField()
+    nivel_cidade_decimal = models.DecimalField(max_digits=5, decimal_places=3)
+    proximidade_proximo_nivel = models.DecimalField(max_digits=5, decimal_places=4)
+
+    # Dados de entrada usados no cálculo (para auditoria)
+    dados_entrada = models.JSONField(default=dict)
+
+    # Detalhamento de cada grupo
+    detalhes_meteorologia = models.JSONField(default=dict, blank=True)
+    detalhes_incidentes = models.JSONField(default=dict, blank=True)
+    detalhes_mobilidade = models.JSONField(default=dict, blank=True)
+    detalhes_eventos = models.JSONField(default=dict, blank=True)
+
+    # Justificativa do cálculo
+    justificativa = models.TextField(blank=True)
+
+    # Ações recomendadas geradas automaticamente
+    acoes_geradas = models.JSONField(default=list, blank=True)
+
+    # Timestamp
+    calculado_em = models.DateTimeField(auto_now_add=True)
+
+    # Usuário que solicitou (pode ser automático/sistema)
+    solicitado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='estagios_solicitados'
+    )
+
+    class Meta:
+        db_table = 'estagios_operacionais'
+        verbose_name = 'Estágio Operacional'
+        verbose_name_plural = 'Estágios Operacionais'
+        ordering = ['-calculado_em']
+        indexes = [
+            models.Index(fields=['-calculado_em', 'nivel_cidade']),
+        ]
+
+    def __str__(self):
+        return f"Nível {self.nivel_cidade} ({self.get_nomenclatura()}) - {self.calculado_em.strftime('%d/%m/%Y %H:%M')}"
+
+    def get_nomenclatura(self):
+        """Retorna nomenclatura textual do nível"""
+        return self.NOMENCLATURA_NIVEIS.get(self.nivel_cidade, 'Desconhecido')
+
+    def get_cor(self):
+        """Retorna cor CSS do nível"""
+        return self.CORES_NIVEIS.get(self.nivel_cidade, '#00D4FF')
+
+    @property
+    def percentual_proximo_nivel(self):
+        """Retorna proximidade em percentual"""
+        return float(self.proximidade_proximo_nivel) * 100
+
+
+class AcaoRecomendada(models.Model):
+    """
+    Ações recomendadas para cada faixa de nível.
+    Vincula agências, POPs e categorias automaticamente.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    matriz = models.ForeignKey(MatrizDecisoria, on_delete=models.CASCADE, related_name='acoes')
+
+    # Faixa de nível que dispara esta ação
+    nivel_minimo = models.IntegerField()
+    nivel_maximo = models.IntegerField()
+
+    # Descrição da ação
+    titulo = models.CharField(max_length=200)
+    descricao = models.TextField()
+
+    # Vinculação com entidades existentes
+    agencias = models.ManyToManyField(
+        'AgenciaResponsavel',
+        blank=True,
+        related_name='acoes_matriz'
+    )
+    pop = models.ForeignKey(
+        'ProcedimentoOperacional',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='acoes_matriz'
+    )
+    categoria = models.ForeignKey(
+        'CategoriaOcorrencia',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='acoes_matriz'
+    )
+
+    # Priorização automática
+    PRIORIDADE_CHOICES = [
+        ('baixa', 'Baixa'),
+        ('media', 'Média'),
+        ('alta', 'Alta'),
+        ('critica', 'Crítica'),
+    ]
+    prioridade_automatica = models.CharField(max_length=20, choices=PRIORIDADE_CHOICES, default='media')
+    prazo_horas = models.IntegerField(null=True, blank=True, help_text='Prazo em horas para execução')
+
+    # Ordenação e status
+    ordem = models.IntegerField(default=0)
+    ativa = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'acoes_recomendadas'
+        verbose_name = 'Ação Recomendada'
+        verbose_name_plural = 'Ações Recomendadas'
+        ordering = ['nivel_minimo', 'ordem']
+
+    def __str__(self):
+        return f"{self.titulo} (Níveis {self.nivel_minimo}-{self.nivel_maximo})"
+
+    def aplicavel_para_nivel(self, nivel):
+        """Verifica se ação é aplicável para um nível específico"""
+        return self.nivel_minimo <= nivel <= self.nivel_maximo
+
+    @property
+    def cor_prioridade(self):
+        """Retorna cor CSS baseada na prioridade"""
+        cores = {
+            'baixa': '#00ff88',
+            'media': '#00D4FF',
+            'alta': '#FFB800',
+            'critica': '#FF0055',
+        }
+        return cores.get(self.prioridade_automatica, '#00D4FF')
