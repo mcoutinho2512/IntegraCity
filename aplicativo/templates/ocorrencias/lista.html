@@ -1,0 +1,687 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}Lista de Ocorrencias - IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ocorrencias-container {
+        padding: 20px;
+        height: calc(100vh - var(--header-height));
+        overflow-y: auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 15px;
+    }
+
+    .btn-tech {
+        padding: 10px 20px;
+        border: 1px solid var(--cyan);
+        background: rgba(0, 212, 255, 0.1);
+        color: var(--cyan);
+        font-family: 'Orbitron', monospace;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-tech:hover {
+        background: var(--cyan);
+        color: #000;
+        box-shadow: 0 0 20px var(--cyan-glow);
+    }
+
+    .btn-tech.primary {
+        background: var(--cyan);
+        color: #000;
+    }
+
+    /* Filters Panel */
+    .filters-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+    .filters-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+
+    .filter-input, .filter-select {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 10px 14px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        transition: all var(--transition-fast);
+    }
+
+    .filter-input:focus, .filter-select:focus {
+        outline: none;
+        border-color: var(--cyan);
+        box-shadow: 0 0 10px var(--cyan-glow);
+    }
+
+    .filter-select {
+        cursor: pointer;
+    }
+
+    .filter-select option {
+        background: var(--bg-card);
+        color: var(--text-primary);
+    }
+
+    .filters-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        padding-top: 15px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-filter {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .btn-filter.apply {
+        background: var(--cyan);
+        color: #000;
+        border: none;
+    }
+
+    .btn-filter.clear {
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-filter:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Results Info */
+    .results-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 10px 15px;
+        background: rgba(0, 212, 255, 0.05);
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+
+    .results-count {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .results-count strong {
+        color: var(--cyan);
+        font-family: 'Orbitron', monospace;
+    }
+
+    /* Table Panel */
+    .table-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .ocorrencias-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .ocorrencias-table th {
+        text-align: left;
+        padding: 15px;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 212, 255, 0.05);
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .ocorrencias-table th:hover {
+        color: var(--cyan);
+    }
+
+    .ocorrencias-table th i {
+        margin-left: 5px;
+        font-size: 0.7rem;
+    }
+
+    .ocorrencias-table td {
+        padding: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        vertical-align: middle;
+    }
+
+    .ocorrencias-table tbody tr {
+        transition: all var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .ocorrencias-table tbody tr:hover {
+        background: rgba(0, 212, 255, 0.08);
+    }
+
+    .protocolo-link {
+        color: var(--cyan);
+        text-decoration: none;
+        font-family: 'Orbitron', monospace;
+        font-size: 0.85rem;
+    }
+
+    .protocolo-link:hover {
+        text-decoration: underline;
+    }
+
+    .titulo-cell {
+        max-width: 250px;
+    }
+
+    .titulo-text {
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+    }
+
+    .titulo-endereco {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-aberta {
+        background: rgba(0, 212, 255, 0.2);
+        color: var(--cyan);
+        border: 1px solid var(--cyan);
+    }
+
+    .status-em_andamento {
+        background: rgba(255, 204, 0, 0.2);
+        color: var(--yellow-warn);
+        border: 1px solid var(--yellow-warn);
+    }
+
+    .status-aguardando {
+        background: rgba(181, 55, 242, 0.2);
+        color: var(--purple-neon);
+        border: 1px solid var(--purple-neon);
+    }
+
+    .status-resolvida {
+        background: rgba(0, 255, 136, 0.2);
+        color: var(--green-neon);
+        border: 1px solid var(--green-neon);
+    }
+
+    .status-fechada, .status-cancelada {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-muted);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .prioridade-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .prioridade-baixa {
+        background: rgba(0, 255, 136, 0.15);
+        color: var(--green-neon);
+    }
+
+    .prioridade-media {
+        background: rgba(0, 212, 255, 0.15);
+        color: var(--cyan);
+    }
+
+    .prioridade-alta {
+        background: rgba(255, 204, 0, 0.15);
+        color: var(--yellow-warn);
+    }
+
+    .prioridade-critica {
+        background: rgba(255, 0, 85, 0.15);
+        color: var(--red-alert);
+        animation: pulse-critical 2s infinite;
+    }
+
+    @keyframes pulse-critical {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .categoria-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+    }
+
+    .data-cell {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .origem-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-secondary);
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .action-btn:hover {
+        background: var(--cyan);
+        color: #000;
+        border-color: var(--cyan);
+    }
+
+    .action-btn.danger:hover {
+        background: var(--red-alert);
+        border-color: var(--red-alert);
+    }
+
+    /* Pagination */
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        gap: 5px;
+    }
+
+    .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        height: 40px;
+        padding: 0 12px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-surface);
+        color: var(--text-secondary);
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        transition: all var(--transition-fast);
+    }
+
+    .page-link:hover {
+        background: rgba(0, 212, 255, 0.1);
+        border-color: var(--cyan);
+        color: var(--cyan);
+    }
+
+    .page-link.active {
+        background: var(--cyan);
+        color: #000;
+        border-color: var(--cyan);
+    }
+
+    .page-link.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        color: rgba(0, 212, 255, 0.3);
+    }
+
+    .empty-state h3 {
+        color: var(--text-primary);
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block monitoring_cards %}
+<!-- Stats cards na sidebar -->
+<div class="monitoring-card">
+    <div class="card-header">
+        <span class="card-title"><i class="fas fa-chart-bar"></i> Resumo</span>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(0, 212, 255, 0.1); border-radius: 6px;">
+                <span>Resultados</span>
+                <strong style="color: var(--cyan);">{{ total_resultados }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="ocorrencias-container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-list"></i>
+            Lista de Ocorrencias
+        </h1>
+        <div class="header-actions">
+            <a href="{% url 'ocorrencias_dashboard' %}" class="btn-tech">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a href="{% url 'ocorrencia_criar' %}" class="btn-tech primary">
+                <i class="fas fa-plus"></i> Nova Ocorrencia
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="GET" class="filters-panel" id="filtersForm">
+        <div class="filters-row">
+            <div class="filter-group">
+                <label class="filter-label">Buscar</label>
+                <input type="text" name="search" class="filter-input"
+                       placeholder="Protocolo, titulo, endereco..."
+                       value="{{ search }}">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Status</label>
+                <select name="status" class="filter-select">
+                    <option value="">Todos</option>
+                    {% for code, label in status_choices %}
+                    <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Prioridade</label>
+                <select name="prioridade" class="filter-select">
+                    <option value="">Todas</option>
+                    {% for code, label in prioridade_choices %}
+                    <option value="{{ code }}" {% if prioridade_filter == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Categoria</label>
+                <select name="categoria" class="filter-select">
+                    <option value="">Todas</option>
+                    {% for cat in categorias %}
+                    <option value="{{ cat.id }}" {% if categoria_filter == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Origem</label>
+                <select name="origem" class="filter-select">
+                    <option value="">Todas</option>
+                    {% for code, label in origem_choices %}
+                    <option value="{{ code }}" {% if origem_filter == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Data Inicio</label>
+                <input type="date" name="data_inicio" class="filter-input" value="{{ data_inicio }}">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Data Fim</label>
+                <input type="date" name="data_fim" class="filter-input" value="{{ data_fim }}">
+            </div>
+        </div>
+        <div class="filters-actions">
+            <button type="button" class="btn-filter clear" onclick="clearFilters()">
+                <i class="fas fa-times"></i> Limpar
+            </button>
+            <button type="submit" class="btn-filter apply">
+                <i class="fas fa-search"></i> Filtrar
+            </button>
+        </div>
+    </form>
+
+    <!-- Results Info -->
+    <div class="results-info">
+        <span class="results-count">
+            Mostrando <strong>{{ ocorrencias.paginator.count }}</strong> ocorrencia(s)
+        </span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-panel">
+        {% if ocorrencias %}
+        <table class="ocorrencias-table">
+            <thead>
+                <tr>
+                    <th onclick="sortBy('numero_protocolo')">Protocolo <i class="fas fa-sort"></i></th>
+                    <th onclick="sortBy('titulo')">Titulo <i class="fas fa-sort"></i></th>
+                    <th>Categoria</th>
+                    <th onclick="sortBy('status')">Status <i class="fas fa-sort"></i></th>
+                    <th onclick="sortBy('prioridade')">Prioridade <i class="fas fa-sort"></i></th>
+                    <th>Origem</th>
+                    <th onclick="sortBy('-data_abertura')">Data <i class="fas fa-sort"></i></th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for oc in ocorrencias %}
+                <tr onclick="window.location.href='{% url 'ocorrencia_detalhe' ocorrencia_id=oc.id %}'">
+                    <td>
+                        <a href="{% url 'ocorrencia_detalhe' ocorrencia_id=oc.id %}" class="protocolo-link" onclick="event.stopPropagation();">
+                            {{ oc.numero_protocolo }}
+                        </a>
+                    </td>
+                    <td class="titulo-cell">
+                        <div class="titulo-text">{{ oc.titulo|truncatechars:40 }}</div>
+                        {% if oc.endereco or oc.bairro %}
+                        <div class="titulo-endereco">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ oc.bairro }}{% if oc.bairro and oc.endereco %} - {% endif %}{{ oc.endereco|truncatechars:30 }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="categoria-badge" style="background: {{ oc.categoria.cor }}20; color: {{ oc.categoria.cor }};">
+                            <i class="fas {{ oc.categoria.icone }}"></i>
+                            {{ oc.categoria.nome }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ oc.status }}">
+                            {{ oc.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="prioridade-badge prioridade-{{ oc.prioridade }}">
+                            {{ oc.get_prioridade_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="origem-badge">
+                            {{ oc.get_origem_display }}
+                        </span>
+                    </td>
+                    <td class="data-cell">
+                        {{ oc.data_abertura|date:"d/m/Y" }}<br>
+                        <small>{{ oc.data_abertura|time:"H:i" }}</small>
+                    </td>
+                    <td onclick="event.stopPropagation();">
+                        <div class="actions-cell">
+                            <a href="{% url 'ocorrencia_detalhe' ocorrencia_id=oc.id %}" class="action-btn" title="Ver detalhes">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'ocorrencia_editar' ocorrencia_id=oc.id %}" class="action-btn" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if ocorrencias.has_other_pages %}
+        <div class="pagination-container">
+            {% if ocorrencias.has_previous %}
+            <a href="?page=1{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if prioridade_filter %}&prioridade={{ prioridade_filter }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}" class="page-link">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ ocorrencias.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if prioridade_filter %}&prioridade={{ prioridade_filter }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}" class="page-link">
+                <i class="fas fa-angle-left"></i>
+            </a>
+            {% endif %}
+
+            {% for num in ocorrencias.paginator.page_range %}
+                {% if ocorrencias.number == num %}
+                <span class="page-link active">{{ num }}</span>
+                {% elif num > ocorrencias.number|add:'-3' and num < ocorrencias.number|add:'3' %}
+                <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if prioridade_filter %}&prioridade={{ prioridade_filter }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}" class="page-link">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if ocorrencias.has_next %}
+            <a href="?page={{ ocorrencias.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if prioridade_filter %}&prioridade={{ prioridade_filter }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}" class="page-link">
+                <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ ocorrencias.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if prioridade_filter %}&prioridade={{ prioridade_filter }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}" class="page-link">
+                <i class="fas fa-angle-double-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h3>Nenhuma ocorrencia encontrada</h3>
+            <p>Tente ajustar os filtros ou crie uma nova ocorrencia.</p>
+            <a href="{% url 'ocorrencia_criar' %}" class="btn-tech primary" style="margin-top: 20px;">
+                <i class="fas fa-plus"></i> Nova Ocorrencia
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function clearFilters() {
+    window.location.href = '{% url "ocorrencias_lista" %}';
+}
+
+function sortBy(field) {
+    const url = new URL(window.location.href);
+    const currentOrder = url.searchParams.get('ordem');
+
+    if (currentOrder === field) {
+        url.searchParams.set('ordem', '-' + field);
+    } else if (currentOrder === '-' + field) {
+        url.searchParams.set('ordem', field);
+    } else {
+        url.searchParams.set('ordem', field);
+    }
+
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

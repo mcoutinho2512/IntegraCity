@@ -1,0 +1,1000 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}{{ ocorrencia.numero_protocolo }} - IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detalhe-container {
+        padding: 20px;
+        height: calc(100vh - var(--header-height));
+        overflow-y: auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .page-title-group {
+        flex: 1;
+    }
+
+    .protocolo-badge {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .ocorrencia-titulo {
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+    }
+
+    .meta-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-tech {
+        padding: 10px 18px;
+        border: 1px solid var(--cyan);
+        background: rgba(0, 212, 255, 0.1);
+        color: var(--cyan);
+        font-family: 'Orbitron', monospace;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-tech:hover {
+        background: var(--cyan);
+        color: #000;
+    }
+
+    .btn-tech.primary {
+        background: var(--cyan);
+        color: #000;
+    }
+
+    .btn-tech.warning {
+        border-color: var(--yellow-warn);
+        color: var(--yellow-warn);
+        background: rgba(255, 204, 0, 0.1);
+    }
+
+    .btn-tech.warning:hover {
+        background: var(--yellow-warn);
+        color: #000;
+    }
+
+    /* Status and Priority Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-aberta { background: rgba(0, 212, 255, 0.2); color: var(--cyan); border: 1px solid var(--cyan); }
+    .status-em_andamento { background: rgba(255, 204, 0, 0.2); color: var(--yellow-warn); border: 1px solid var(--yellow-warn); }
+    .status-aguardando { background: rgba(181, 55, 242, 0.2); color: var(--purple-neon); border: 1px solid var(--purple-neon); }
+    .status-resolvida { background: rgba(0, 255, 136, 0.2); color: var(--green-neon); border: 1px solid var(--green-neon); }
+    .status-fechada, .status-cancelada { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); border: 1px solid rgba(255, 255, 255, 0.2); }
+
+    .prioridade-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .prioridade-baixa { background: rgba(0, 255, 136, 0.15); color: var(--green-neon); }
+    .prioridade-media { background: rgba(0, 212, 255, 0.15); color: var(--cyan); }
+    .prioridade-alta { background: rgba(255, 204, 0, 0.15); color: var(--yellow-warn); }
+    .prioridade-critica { background: rgba(255, 0, 85, 0.15); color: var(--red-alert); animation: pulse-critical 2s infinite; }
+
+    @keyframes pulse-critical {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .categoria-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+    }
+
+    /* Content Grid */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 25px;
+    }
+
+    @media (max-width: 1200px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Panels */
+    .panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .panel-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.95rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .panel-body {
+        padding: 20px;
+    }
+
+    /* Info Grid */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .info-item {
+        padding: 15px;
+        background: var(--bg-surface);
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-size: 0.95rem;
+        color: var(--text-primary);
+    }
+
+    .info-value.highlight {
+        color: var(--cyan);
+        font-family: 'Orbitron', monospace;
+    }
+
+    /* Description */
+    .description-text {
+        font-size: 0.95rem;
+        line-height: 1.7;
+        color: var(--text-secondary);
+        white-space: pre-wrap;
+    }
+
+    /* Map */
+    #detalheMap {
+        height: 200px;
+        border-radius: 8px;
+        background: var(--bg-surface);
+    }
+
+    .no-location {
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        background: var(--bg-surface);
+        border-radius: 8px;
+    }
+
+    /* Timeline */
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border-color);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+
+    .timeline-icon {
+        position: absolute;
+        left: -30px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        z-index: 1;
+    }
+
+    .timeline-content {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px 15px;
+    }
+
+    .timeline-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .timeline-type {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .timeline-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .timeline-desc {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .timeline-user {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 8px;
+    }
+
+    /* Agencies */
+    .agencies-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .agency-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.85rem;
+    }
+
+    /* Attachments */
+    .attachments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 15px;
+    }
+
+    .attachment-item {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .attachment-item:hover {
+        border-color: var(--cyan);
+        transform: translateY(-3px);
+    }
+
+    .attachment-preview {
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .attachment-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .attachment-preview i {
+        font-size: 2.5rem;
+        color: var(--cyan);
+    }
+
+    .attachment-info {
+        padding: 10px;
+    }
+
+    .attachment-name {
+        font-size: 0.75rem;
+        color: var(--text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .attachment-size {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+    }
+
+    /* POP Link */
+    .pop-link {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: rgba(181, 55, 242, 0.1);
+        border: 1px solid var(--purple-neon);
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all var(--transition-fast);
+    }
+
+    .pop-link:hover {
+        background: rgba(181, 55, 242, 0.2);
+        box-shadow: 0 0 20px var(--purple-glow);
+    }
+
+    .pop-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        background: var(--purple-neon);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.3rem;
+    }
+
+    .pop-info {
+        flex: 1;
+    }
+
+    .pop-codigo {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.9rem;
+        color: var(--purple-neon);
+    }
+
+    .pop-titulo {
+        font-size: 0.85rem;
+        color: var(--text-primary);
+    }
+
+    /* Comment Form */
+    .comment-form {
+        display: flex;
+        gap: 10px;
+    }
+
+    .comment-input {
+        flex: 1;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px 16px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        resize: none;
+    }
+
+    .comment-input:focus {
+        outline: none;
+        border-color: var(--cyan);
+    }
+
+    .btn-comment {
+        padding: 12px 20px;
+        background: var(--cyan);
+        border: none;
+        border-radius: 8px;
+        color: #000;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all var(--transition-fast);
+    }
+
+    .btn-comment:hover {
+        box-shadow: 0 0 20px var(--cyan-glow);
+    }
+
+    /* Status Actions */
+    .status-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .status-btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        border: 1px solid;
+    }
+
+    .status-btn.em_andamento {
+        border-color: var(--yellow-warn);
+        background: rgba(255, 204, 0, 0.1);
+        color: var(--yellow-warn);
+    }
+
+    .status-btn.resolvida {
+        border-color: var(--green-neon);
+        background: rgba(0, 255, 136, 0.1);
+        color: var(--green-neon);
+    }
+
+    .status-btn.fechada {
+        border-color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-muted);
+    }
+
+    .status-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 30px;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: rgba(0, 212, 255, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block monitoring_cards %}
+<div class="monitoring-card">
+    <div class="card-header">
+        <span class="card-title"><i class="fas fa-clock"></i> Tempo</span>
+    </div>
+    <div class="card-body">
+        {% if tempo_aberto %}
+        <div style="text-align: center;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">EM ABERTO HA</div>
+            <div style="font-family: 'Orbitron', monospace; font-size: 1.3rem; color: var(--cyan);">
+                {% if tempo_aberto.days > 0 %}{{ tempo_aberto.days }}d {% endif %}{{ tempo_aberto|time:"H:i" }}
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align: center; color: var(--green-neon);">
+            <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+            <div style="font-size: 0.85rem;">CONCLUIDA</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="monitoring-card">
+    <div class="card-header">
+        <span class="card-title"><i class="fas fa-tasks"></i> Acoes Rapidas</span>
+    </div>
+    <div class="card-body">
+        <div class="status-actions">
+            {% if ocorrencia.status != 'em_andamento' %}
+            <button class="status-btn em_andamento" onclick="updateStatus('em_andamento')">
+                <i class="fas fa-play"></i> Iniciar
+            </button>
+            {% endif %}
+            {% if ocorrencia.status != 'resolvida' %}
+            <button class="status-btn resolvida" onclick="updateStatus('resolvida')">
+                <i class="fas fa-check"></i> Resolver
+            </button>
+            {% endif %}
+            {% if ocorrencia.status != 'fechada' %}
+            <button class="status-btn fechada" onclick="updateStatus('fechada')">
+                <i class="fas fa-archive"></i> Fechar
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="detalhe-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="page-title-group">
+            <div class="protocolo-badge">
+                <i class="fas fa-clipboard-list"></i>
+                {{ ocorrencia.numero_protocolo }}
+            </div>
+            <h2 class="ocorrencia-titulo">{{ ocorrencia.titulo }}</h2>
+            <div class="meta-badges">
+                <span class="status-badge status-{{ ocorrencia.status }}">
+                    {{ ocorrencia.get_status_display }}
+                </span>
+                <span class="prioridade-badge prioridade-{{ ocorrencia.prioridade }}">
+                    <i class="fas fa-flag"></i>
+                    {{ ocorrencia.get_prioridade_display }}
+                </span>
+                <span class="categoria-badge" style="background: {{ ocorrencia.categoria.cor }}20; color: {{ ocorrencia.categoria.cor }};">
+                    <i class="fas {{ ocorrencia.categoria.icone }}"></i>
+                    {{ ocorrencia.categoria.nome }}
+                </span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'ocorrencias_lista' %}" class="btn-tech">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            <a href="{% url 'ocorrencia_editar' ocorrencia_id=ocorrencia.id %}" class="btn-tech warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <!-- Main Content -->
+        <div>
+            <!-- Descricao -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-file-alt"></i>
+                        Descricao
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="description-text">{{ ocorrencia.descricao }}</div>
+                </div>
+            </div>
+
+            <!-- POP -->
+            {% if ocorrencia.procedimento %}
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-book"></i>
+                        Procedimento Operacional
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <a href="{% static ocorrencia.procedimento.arquivo_path %}" target="_blank" class="pop-link">
+                        <div class="pop-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="pop-info">
+                            <div class="pop-codigo">{{ ocorrencia.procedimento.codigo }}</div>
+                            <div class="pop-titulo">{{ ocorrencia.procedimento.titulo }}</div>
+                        </div>
+                        <i class="fas fa-external-link-alt" style="color: var(--purple-neon);"></i>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Localizacao -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Localizacao
+                    </div>
+                </div>
+                <div class="panel-body">
+                    {% if ocorrencia.latitude and ocorrencia.longitude %}
+                    <div id="detalheMap"></div>
+                    {% else %}
+                    <div class="no-location">
+                        <div>
+                            <i class="fas fa-map-marked-alt" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                            <p>Localizacao nao definida no mapa</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="info-grid" style="margin-top: 15px;">
+                        <div class="info-item">
+                            <div class="info-label">Endereco</div>
+                            <div class="info-value">{{ ocorrencia.endereco|default:"-" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Bairro</div>
+                            <div class="info-value">{{ ocorrencia.bairro|default:"-" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">CEP</div>
+                            <div class="info-value">{{ ocorrencia.cep|default:"-" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Referencia</div>
+                            <div class="info-value">{{ ocorrencia.referencia|default:"-" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-history"></i>
+                        Historico
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <!-- Add Comment -->
+                    <form class="comment-form" id="commentForm" style="margin-bottom: 20px;">
+                        <textarea class="comment-input" id="commentInput" rows="2" placeholder="Adicionar comentario..."></textarea>
+                        <button type="submit" class="btn-comment">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+
+                    <div class="timeline" id="timelineContainer">
+                        {% for item in historico %}
+                        <div class="timeline-item">
+                            <div class="timeline-icon" style="background: {{ item.tipo_cor }}; color: #fff;">
+                                <i class="fas {{ item.tipo_icone }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <span class="timeline-type" style="color: {{ item.tipo_cor }};">
+                                        {{ item.get_tipo_display }}
+                                    </span>
+                                    <span class="timeline-time">
+                                        {{ item.timestamp|date:"d/m/Y H:i" }}
+                                    </span>
+                                </div>
+                                <div class="timeline-desc">{{ item.descricao }}</div>
+                                {% if item.usuario %}
+                                <div class="timeline-user">
+                                    <i class="fas fa-user"></i>
+                                    {{ item.usuario.get_full_name|default:item.usuario.username }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <p>Nenhum historico registrado</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Info -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-info-circle"></i>
+                        Informacoes
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="info-grid" style="grid-template-columns: 1fr;">
+                        <div class="info-item">
+                            <div class="info-label">Origem</div>
+                            <div class="info-value">{{ ocorrencia.get_origem_display }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Aberto por</div>
+                            <div class="info-value">{{ ocorrencia.aberto_por.get_full_name|default:ocorrencia.aberto_por.username }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Data de Abertura</div>
+                            <div class="info-value highlight">{{ ocorrencia.data_abertura|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        {% if ocorrencia.responsavel %}
+                        <div class="info-item">
+                            <div class="info-label">Responsavel</div>
+                            <div class="info-value">{{ ocorrencia.responsavel.get_full_name|default:ocorrencia.responsavel.username }}</div>
+                        </div>
+                        {% endif %}
+                        {% if ocorrencia.data_conclusao %}
+                        <div class="info-item">
+                            <div class="info-label">Data de Conclusao</div>
+                            <div class="info-value highlight">{{ ocorrencia.data_conclusao|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Solicitante -->
+            {% if ocorrencia.solicitante_nome or ocorrencia.solicitante_telefone or ocorrencia.solicitante_email %}
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-user"></i>
+                        Solicitante
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="info-grid" style="grid-template-columns: 1fr;">
+                        {% if ocorrencia.solicitante_nome %}
+                        <div class="info-item">
+                            <div class="info-label">Nome</div>
+                            <div class="info-value">{{ ocorrencia.solicitante_nome }}</div>
+                        </div>
+                        {% endif %}
+                        {% if ocorrencia.solicitante_telefone %}
+                        <div class="info-item">
+                            <div class="info-label">Telefone</div>
+                            <div class="info-value">
+                                <a href="tel:{{ ocorrencia.solicitante_telefone }}" style="color: var(--cyan);">
+                                    {{ ocorrencia.solicitante_telefone }}
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if ocorrencia.solicitante_email %}
+                        <div class="info-item">
+                            <div class="info-label">E-mail</div>
+                            <div class="info-value">
+                                <a href="mailto:{{ ocorrencia.solicitante_email }}" style="color: var(--cyan);">
+                                    {{ ocorrencia.solicitante_email }}
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Agencias -->
+            {% if ocorrencia.agencias.exists %}
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-building"></i>
+                        Agencias
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="agencies-list">
+                        {% for ag in ocorrencia.agencias.all %}
+                        <div class="agency-chip">
+                            <i class="fas {{ ag.icone }}" style="color: {{ ag.cor }};"></i>
+                            <span>{{ ag.sigla }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Anexos -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-paperclip"></i>
+                        Anexos ({{ anexos.count }})
+                    </div>
+                </div>
+                <div class="panel-body">
+                    {% if anexos %}
+                    <div class="attachments-grid">
+                        {% for anexo in anexos %}
+                        <a href="{{ anexo.arquivo.url }}" target="_blank" class="attachment-item">
+                            <div class="attachment-preview">
+                                {% if anexo.tipo == 'foto' %}
+                                <img src="{{ anexo.arquivo.url }}" alt="{{ anexo.nome_original }}">
+                                {% else %}
+                                <i class="fas {{ anexo.tipo_icone }}"></i>
+                                {% endif %}
+                            </div>
+                            <div class="attachment-info">
+                                <div class="attachment-name">{{ anexo.nome_original }}</div>
+                                <div class="attachment-size">{{ anexo.tamanho_formatado }}</div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-paperclip"></i>
+                        <p>Nenhum anexo</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Observacoes -->
+            {% if ocorrencia.observacoes %}
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-sticky-note"></i>
+                        Observacoes
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                        {{ ocorrencia.observacoes }}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if ocorrencia.latitude and ocorrencia.longitude %}
+    // Inicializar mapa
+    const map = L.map('detalheMap').setView([{{ ocorrencia.latitude }}, {{ ocorrencia.longitude }}], 16);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Marcador
+    const iconHtml = `
+        <div style="
+            width: 35px;
+            height: 35px;
+            background: {{ ocorrencia.categoria.cor }};
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 16px;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        ">
+            <i class="fas {{ ocorrencia.categoria.icone }}"></i>
+        </div>
+    `;
+
+    const icon = L.divIcon({
+        html: iconHtml,
+        className: '',
+        iconSize: [35, 35],
+        iconAnchor: [17, 17]
+    });
+
+    L.marker([{{ ocorrencia.latitude }}, {{ ocorrencia.longitude }}], { icon: icon }).addTo(map);
+    {% endif %}
+
+    // Form de comentario
+    document.getElementById('commentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const comentario = document.getElementById('commentInput').value.trim();
+        if (!comentario) {
+            showToast('Digite um comentario', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('{% url "ocorrencia_adicionar_comentario" ocorrencia_id=ocorrencia.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ comentario: comentario })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('Comentario adicionado!', 'success');
+                document.getElementById('commentInput').value = '';
+                location.reload();
+            } else {
+                showToast(data.error || 'Erro ao adicionar comentario', 'error');
+            }
+        } catch (error) {
+            showToast('Erro de conexao', 'error');
+        }
+    });
+});
+
+async function updateStatus(novoStatus) {
+    if (!confirm(`Deseja alterar o status para "${novoStatus}"?`)) return;
+
+    try {
+        const response = await fetch('{% url "ocorrencia_atualizar_status" ocorrencia_id=ocorrencia.id %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ status: novoStatus })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast(data.message, 'success');
+            location.reload();
+        } else {
+            showToast(data.error || 'Erro ao atualizar status', 'error');
+        }
+    } catch (error) {
+        showToast('Erro de conexao', 'error');
+    }
+}
+</script>
+{% endblock %}

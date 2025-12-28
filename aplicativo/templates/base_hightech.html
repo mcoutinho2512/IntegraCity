@@ -41,6 +41,26 @@
                 <span class="status-dot"></span>
                 <span>Sistema Online</span>
             </div>
+
+            <!-- Navigation Menu -->
+            <nav class="header-nav">
+                <a href="{% url 'cor_dashboard_hightech' %}" class="nav-link {% if request.resolver_match.url_name == 'cor_dashboard_hightech' %}active{% endif %}" title="Dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'ocorrencias_dashboard' %}" class="nav-link {% if 'ocorrencia' in request.resolver_match.url_name %}active{% endif %}" title="Ocorrencias" target="_blank">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Ocorrencias</span>
+                </a>
+                <a href="{% url 'videomonitoramento' %}" class="nav-link {% if request.resolver_match.url_name == 'videomonitoramento' %}active{% endif %}" title="Cameras">
+                    <i class="fas fa-video"></i>
+                    <span>Cameras</span>
+                </a>
+                <a href="{% url 'user_management' %}" class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usuarios">
+                    <i class="fas fa-users"></i>
+                    <span>Usuarios</span>
+                </a>
+            </nav>
         </div>
 
         <div class="header-center">

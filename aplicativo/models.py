@@ -5454,3 +5454,397 @@ def save_user_profile(sender, instance, **kwargs):
         instance.profile.save()
     else:
         UserProfile.objects.get_or_create(user=instance)
+
+
+# ============================================
+# SISTEMA DE GERENCIAMENTO DE OCORRÊNCIAS
+# ============================================
+
+class CategoriaOcorrencia(models.Model):
+    """Categorias de Ocorrências para o sistema de gerenciamento"""
+
+    ICONES = [
+        ('fa-car-crash', 'Acidente de Trânsito'),
+        ('fa-fire', 'Incêndio'),
+        ('fa-tools', 'Infraestrutura'),
+        ('fa-water', 'Emergência Ambiental'),
+        ('fa-paw', 'Animal'),
+        ('fa-exclamation-triangle', 'Evento Especial'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nome = models.CharField(max_length=100, unique=True)
+    descricao = models.TextField(blank=True)
+    icone = models.CharField(max_length=50, choices=ICONES, default='fa-exclamation-triangle')
+    cor = models.CharField(max_length=7, default='#00D4FF')
+    ativa = models.BooleanField(default=True)
+    ordem = models.IntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'categorias_ocorrencias'
+        verbose_name = 'Categoria de Ocorrência'
+        verbose_name_plural = 'Categorias de Ocorrências'
+        ordering = ['ordem', 'nome']
+
+    def __str__(self):
+        return self.nome
+
+
+class AgenciaResponsavel(models.Model):
+    """Agências/Órgãos Responsáveis por atendimento de ocorrências"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nome = models.CharField(max_length=200, unique=True)
+    sigla = models.CharField(max_length=20, unique=True)
+    descricao = models.TextField(blank=True)
+    telefone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    website = models.URLField(blank=True)
+    icone = models.CharField(max_length=50, default='fa-building')
+    cor = models.CharField(max_length=7, default='#B537F2')
+    ativa = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'agencias_responsaveis'
+        verbose_name = 'Agência Responsável'
+        verbose_name_plural = 'Agências Responsáveis'
+        ordering = ['nome']
+
+    def __str__(self):
+        return f"{self.sigla} - {self.nome}"
+
+
+class ProcedimentoOperacional(models.Model):
+    """Procedimentos Operacionais Padrão (POPs)"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    codigo = models.CharField(max_length=50, unique=True)
+    titulo = models.CharField(max_length=200)
+    descricao = models.TextField(blank=True)
+    categoria = models.ForeignKey(
+        CategoriaOcorrencia,
+        on_delete=models.PROTECT,
+        related_name='procedimentos'
+    )
+    agencias = models.ManyToManyField(
+        AgenciaResponsavel,
+        related_name='procedimentos',
+        blank=True
+    )
+
+    arquivo_pdf = models.FileField(upload_to='pops/', blank=True, null=True)
+    arquivo_path = models.CharField(max_length=500, blank=True)
+
+    checklist = models.JSONField(default=list, blank=True)
+    tempo_resposta_esperado = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text='Tempo esperado em minutos'
+    )
+
+    ativo = models.BooleanField(default=True)
+    versao = models.CharField(max_length=20, default='R00')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='pops_criados'
+    )
+
+    class Meta:
+        db_table = 'procedimentos_operacionais'
+        verbose_name = 'Procedimento Operacional'
+        verbose_name_plural = 'Procedimentos Operacionais'
+        ordering = ['codigo']
+
+    def __str__(self):
+        return f"{self.codigo} - {self.titulo}"
+
+
+class OcorrenciaGerenciada(models.Model):
+    """Ocorrência/Chamado/Solicitação do Sistema de Gerenciamento"""
+
+    STATUS_CHOICES = [
+        ('aberta', 'Aberta'),
+        ('em_andamento', 'Em Andamento'),
+        ('aguardando', 'Aguardando Retorno'),
+        ('resolvida', 'Resolvida'),
+        ('fechada', 'Fechada'),
+        ('cancelada', 'Cancelada'),
+    ]
+
+    PRIORIDADE_CHOICES = [
+        ('baixa', 'Baixa'),
+        ('media', 'Média'),
+        ('alta', 'Alta'),
+        ('critica', 'Crítica'),
+    ]
+
+    ORIGEM_CHOICES = [
+        ('telefone', 'Telefone'),
+        ('email', 'E-mail'),
+        ('whatsapp', 'WhatsApp'),
+        ('redes_sociais', 'Redes Sociais'),
+        ('aplicativo', 'Aplicativo'),
+        ('presencial', 'Presencial'),
+        ('sistema', 'Sistema'),
+    ]
+
+    # Identificação
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    numero_protocolo = models.CharField(max_length=50, unique=True, editable=False)
+
+    # Classificação
+    categoria = models.ForeignKey(
+        CategoriaOcorrencia,
+        on_delete=models.PROTECT,
+        related_name='ocorrencias_gerenciadas'
+    )
+    procedimento = models.ForeignKey(
+        ProcedimentoOperacional,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ocorrencias'
+    )
+    agencias = models.ManyToManyField(
+        AgenciaResponsavel,
+        related_name='ocorrencias_gerenciadas',
+        blank=True
+    )
+
+    # Dados Básicos
+    titulo = models.CharField(max_length=200)
+    descricao = models.TextField()
+    origem = models.CharField(max_length=20, choices=ORIGEM_CHOICES)
+
+    # Status e Prioridade
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='aberta')
+    prioridade = models.CharField(max_length=20, choices=PRIORIDADE_CHOICES, default='media')
+
+    # Localização
+    endereco = models.CharField(max_length=500, blank=True)
+    bairro = models.CharField(max_length=100, blank=True)
+    cidade = models.CharField(max_length=100, default='Rio de Janeiro')
+    cep = models.CharField(max_length=10, blank=True)
+    referencia = models.CharField(max_length=200, blank=True)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+
+    # Solicitante
+    solicitante_nome = models.CharField(max_length=200, blank=True)
+    solicitante_telefone = models.CharField(max_length=20, blank=True)
+    solicitante_email = models.EmailField(blank=True)
+
+    # Datas
+    data_abertura = models.DateTimeField(auto_now_add=True)
+    data_prevista = models.DateTimeField(null=True, blank=True)
+    data_conclusao = models.DateTimeField(null=True, blank=True)
+
+    # Responsáveis
+    aberto_por = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='ocorrencias_gerenciadas_abertas'
+    )
+    responsavel = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ocorrencias_gerenciadas_responsavel'
+    )
+
+    # Metadados
+    observacoes = models.TextField(blank=True)
+    tags = models.JSONField(default=list, blank=True)
+    dados_extras = models.JSONField(default=dict, blank=True)
+
+    # Auditoria
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'ocorrencias_gerenciadas'
+        verbose_name = 'Ocorrência Gerenciada'
+        verbose_name_plural = 'Ocorrências Gerenciadas'
+        ordering = ['-data_abertura']
+        indexes = [
+            models.Index(fields=['status', 'prioridade']),
+            models.Index(fields=['categoria', 'data_abertura']),
+            models.Index(fields=['numero_protocolo']),
+            models.Index(fields=['data_abertura']),
+        ]
+
+    def __str__(self):
+        return f"{self.numero_protocolo} - {self.titulo}"
+
+    def save(self, *args, **kwargs):
+        if not self.numero_protocolo:
+            from django.db.models import Max
+            from django.utils import timezone as tz
+            hoje = tz.now().strftime('%Y%m%d')
+            ultimo = OcorrenciaGerenciada.objects.filter(
+                numero_protocolo__startswith=f'OCR-{hoje}'
+            ).aggregate(Max('numero_protocolo'))['numero_protocolo__max']
+
+            if ultimo:
+                seq = int(ultimo.split('-')[-1]) + 1
+            else:
+                seq = 1
+
+            self.numero_protocolo = f'OCR-{hoje}-{seq:04d}'
+
+        super().save(*args, **kwargs)
+
+    @property
+    def status_color(self):
+        """Retorna cor CSS baseada no status"""
+        colors = {
+            'aberta': '#00D4FF',
+            'em_andamento': '#FFB800',
+            'aguardando': '#B537F2',
+            'resolvida': '#4CAF50',
+            'fechada': '#6B7280',
+            'cancelada': '#EF4444',
+        }
+        return colors.get(self.status, '#00D4FF')
+
+    @property
+    def prioridade_color(self):
+        """Retorna cor CSS baseada na prioridade"""
+        colors = {
+            'baixa': '#4CAF50',
+            'media': '#00D4FF',
+            'alta': '#FFB800',
+            'critica': '#EF4444',
+        }
+        return colors.get(self.prioridade, '#00D4FF')
+
+
+class HistoricoOcorrenciaGerenciada(models.Model):
+    """Histórico de alterações da ocorrência gerenciada"""
+
+    TIPOS = [
+        ('criacao', 'Criação'),
+        ('atualizacao', 'Atualização'),
+        ('mudanca_status', 'Mudança de Status'),
+        ('atribuicao', 'Atribuição'),
+        ('comentario', 'Comentário'),
+        ('anexo', 'Anexo Adicionado'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    ocorrencia = models.ForeignKey(
+        OcorrenciaGerenciada,
+        on_delete=models.CASCADE,
+        related_name='historico'
+    )
+    tipo = models.CharField(max_length=20, choices=TIPOS)
+    descricao = models.TextField()
+    dados_alterados = models.JSONField(default=dict, blank=True)
+
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'historico_ocorrencias_gerenciadas'
+        verbose_name = 'Histórico de Ocorrência'
+        verbose_name_plural = 'Históricos de Ocorrências'
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.ocorrencia.numero_protocolo} - {self.tipo} - {self.timestamp}"
+
+    @property
+    def tipo_icone(self):
+        """Retorna ícone FontAwesome baseado no tipo"""
+        icones = {
+            'criacao': 'fa-plus-circle',
+            'atualizacao': 'fa-edit',
+            'mudanca_status': 'fa-exchange-alt',
+            'atribuicao': 'fa-user-plus',
+            'comentario': 'fa-comment',
+            'anexo': 'fa-paperclip',
+        }
+        return icones.get(self.tipo, 'fa-info-circle')
+
+    @property
+    def tipo_cor(self):
+        """Retorna cor CSS baseada no tipo"""
+        cores = {
+            'criacao': '#4CAF50',
+            'atualizacao': '#00D4FF',
+            'mudanca_status': '#FFB800',
+            'atribuicao': '#B537F2',
+            'comentario': '#6B7280',
+            'anexo': '#00D4FF',
+        }
+        return cores.get(self.tipo, '#00D4FF')
+
+
+class AnexoOcorrenciaGerenciada(models.Model):
+    """Anexos da ocorrência gerenciada (fotos, documentos)"""
+
+    TIPOS = [
+        ('foto', 'Foto'),
+        ('documento', 'Documento'),
+        ('video', 'Vídeo'),
+        ('audio', 'Áudio'),
+        ('outro', 'Outro'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    ocorrencia = models.ForeignKey(
+        OcorrenciaGerenciada,
+        on_delete=models.CASCADE,
+        related_name='anexos'
+    )
+    tipo = models.CharField(max_length=20, choices=TIPOS)
+    arquivo = models.FileField(upload_to='ocorrencias/%Y/%m/')
+    nome_original = models.CharField(max_length=255)
+    descricao = models.CharField(max_length=500, blank=True)
+    tamanho = models.IntegerField(help_text='Tamanho em bytes')
+
+    uploaded_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'anexos_ocorrencias_gerenciadas'
+        verbose_name = 'Anexo de Ocorrência'
+        verbose_name_plural = 'Anexos de Ocorrências'
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.ocorrencia.numero_protocolo} - {self.nome_original}"
+
+    @property
+    def tipo_icone(self):
+        """Retorna ícone FontAwesome baseado no tipo"""
+        icones = {
+            'foto': 'fa-image',
+            'documento': 'fa-file-alt',
+            'video': 'fa-video',
+            'audio': 'fa-volume-up',
+            'outro': 'fa-file',
+        }
+        return icones.get(self.tipo, 'fa-file')
+
+    @property
+    def tamanho_formatado(self):
+        """Retorna tamanho formatado (KB, MB, etc.)"""
+        if self.tamanho < 1024:
+            return f"{self.tamanho} B"
+        elif self.tamanho < 1024 * 1024:
+            return f"{self.tamanho / 1024:.1f} KB"
+        else:
+            return f"{self.tamanho / (1024 * 1024):.1f} MB"

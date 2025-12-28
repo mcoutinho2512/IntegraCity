@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.http import JsonResponse
 from aplicativo import views
 from aplicativo import views_users
+from aplicativo import views_ocorrencias
 
 urlpatterns = [
     # LOGIN - PÁGINA PRINCIPAL
@@ -99,6 +100,23 @@ urlpatterns = [
     # Matriz Decisória
     path('matriz-decisoria/', views.matriz_decisoria, name='matriz_decisoria'),
     path('api/matriz-decisoria/', views.api_matriz_decisoria, name='api_matriz_decisoria'),
+
+    # ============================================
+    # SISTEMA DE GERENCIAMENTO DE OCORRÊNCIAS
+    # ============================================
+    path('ocorrencias/', views_ocorrencias.ocorrencias_dashboard, name='ocorrencias_dashboard'),
+    path('ocorrencias/lista/', views_ocorrencias.ocorrencias_lista, name='ocorrencias_lista'),
+    path('ocorrencias/criar/', views_ocorrencias.ocorrencia_criar, name='ocorrencia_criar'),
+    path('ocorrencias/<uuid:ocorrencia_id>/', views_ocorrencias.ocorrencia_detalhe, name='ocorrencia_detalhe'),
+    path('ocorrencias/<uuid:ocorrencia_id>/editar/', views_ocorrencias.ocorrencia_editar, name='ocorrencia_editar'),
+    path('ocorrencias/<uuid:ocorrencia_id>/status/', views_ocorrencias.ocorrencia_atualizar_status, name='ocorrencia_atualizar_status'),
+    path('ocorrencias/<uuid:ocorrencia_id>/comentario/', views_ocorrencias.ocorrencia_adicionar_comentario, name='ocorrencia_adicionar_comentario'),
+
+    # APIs de Ocorrências
+    path('api/cep/', views_ocorrencias.buscar_cep, name='api_buscar_cep'),
+    path('api/ocorrencias/mapa/', views_ocorrencias.api_ocorrencias_mapa, name='api_ocorrencias_mapa'),
+    path('api/ocorrencias/estatisticas/', views_ocorrencias.api_estatisticas_ocorrencias, name='api_estatisticas_ocorrencias'),
+    path('api/pops/categoria/<uuid:categoria_id>/', views_ocorrencias.api_pops_por_categoria, name='api_pops_por_categoria'),
 ]
 
 # Servir arquivos estáticos em desenvolvimento

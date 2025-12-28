@@ -345,6 +345,12 @@
         <button class="map-control-btn" id="layersToggleBtn" onclick="toggleLayersSidebar()" title="Camadas do Mapa">
             <i class="fas fa-layer-group"></i>
         </button>
+        <button class="map-control-btn ocorrencias-btn" onclick="window.open('{% url 'ocorrencias_dashboard' %}', '_blank')" title="Gerenciar Ocorrencias">
+            <i class="fas fa-clipboard-list"></i>
+        </button>
+        <button class="map-control-btn nova-ocorrencia-btn" onclick="window.open('{% url 'ocorrencia_criar' %}', '_blank')" title="Nova Ocorrencia">
+            <i class="fas fa-plus-circle"></i>
+        </button>
     </div>
 
     <!-- ============================================

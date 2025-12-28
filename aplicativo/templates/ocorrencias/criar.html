@@ -1,0 +1,974 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}Nova Ocorrencia - IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        padding: 20px;
+        height: calc(100vh - var(--header-height));
+        overflow-y: auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .btn-tech {
+        padding: 10px 20px;
+        border: 1px solid var(--cyan);
+        background: rgba(0, 212, 255, 0.1);
+        color: var(--cyan);
+        font-family: 'Orbitron', monospace;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-tech:hover {
+        background: var(--cyan);
+        color: #000;
+    }
+
+    .btn-tech.primary {
+        background: var(--cyan);
+        color: #000;
+    }
+
+    .btn-tech:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Form Layout */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 25px;
+    }
+
+    @media (max-width: 1200px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .form-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .panel-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .panel-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.95rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .panel-body {
+        padding: 20px;
+    }
+
+    /* Form Groups */
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .form-label .required {
+        color: var(--red-alert);
+    }
+
+    .form-input, .form-select, .form-textarea {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px 16px;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        transition: all var(--transition-fast);
+        font-family: inherit;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: var(--cyan);
+        box-shadow: 0 0 15px var(--cyan-glow);
+    }
+
+    .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .form-select {
+        cursor: pointer;
+    }
+
+    .form-select option {
+        background: var(--bg-card);
+        color: var(--text-primary);
+    }
+
+    /* Categories Grid */
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+    }
+
+    .category-option {
+        position: relative;
+    }
+
+    .category-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .category-card {
+        background: var(--bg-surface);
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        padding: 15px 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .category-option input:checked + .category-card {
+        border-color: var(--cyan);
+        background: rgba(0, 212, 255, 0.1);
+        box-shadow: 0 0 20px var(--cyan-glow);
+    }
+
+    .category-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--cyan);
+    }
+
+    .category-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        font-size: 1.2rem;
+    }
+
+    .category-name {
+        font-size: 0.75rem;
+        color: var(--text-primary);
+    }
+
+    /* Map */
+    #locationMap {
+        height: 250px;
+        border-radius: 8px;
+        background: var(--bg-surface);
+        margin-bottom: 15px;
+    }
+
+    .map-instructions {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .cep-search {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .cep-search input {
+        flex: 1;
+    }
+
+    .btn-cep {
+        padding: 12px 20px;
+        background: var(--purple-neon);
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .btn-cep:hover {
+        box-shadow: 0 0 15px var(--purple-glow);
+    }
+
+    /* Agencies */
+    .agencies-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+    }
+
+    .agency-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 15px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .agency-option:hover {
+        border-color: var(--cyan);
+    }
+
+    .agency-option input {
+        accent-color: var(--cyan);
+    }
+
+    .agency-option.selected {
+        background: rgba(0, 212, 255, 0.1);
+        border-color: var(--cyan);
+    }
+
+    /* File Upload */
+    .upload-zone {
+        border: 2px dashed var(--border-color);
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+        border-color: var(--cyan);
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .upload-zone i {
+        font-size: 2.5rem;
+        color: var(--cyan);
+        margin-bottom: 10px;
+    }
+
+    .upload-zone p {
+        color: var(--text-secondary);
+        margin-bottom: 5px;
+    }
+
+    .upload-zone small {
+        color: var(--text-muted);
+    }
+
+    .files-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .file-item {
+        position: relative;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+    }
+
+    .file-item img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 6px;
+        margin-bottom: 5px;
+    }
+
+    .file-item .file-name {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .file-item .remove-file {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--red-alert);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+    }
+
+    /* Submit Section */
+    .submit-section {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        padding: 20px;
+        border-top: 1px solid var(--border-color);
+        background: rgba(0, 212, 255, 0.03);
+    }
+
+    /* Prioridade Selector */
+    .prioridade-options {
+        display: flex;
+        gap: 10px;
+    }
+
+    .prioridade-option {
+        flex: 1;
+    }
+
+    .prioridade-option input {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .prioridade-btn {
+        display: block;
+        padding: 12px;
+        text-align: center;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 2px solid var(--border-color);
+        background: var(--bg-surface);
+        transition: all var(--transition-fast);
+        font-size: 0.85rem;
+    }
+
+    .prioridade-option input:checked + .prioridade-btn {
+        box-shadow: 0 0 15px currentColor;
+    }
+
+    .prioridade-option.baixa .prioridade-btn {
+        color: var(--green-neon);
+    }
+    .prioridade-option.baixa input:checked + .prioridade-btn {
+        border-color: var(--green-neon);
+        background: rgba(0, 255, 136, 0.1);
+    }
+
+    .prioridade-option.media .prioridade-btn {
+        color: var(--cyan);
+    }
+    .prioridade-option.media input:checked + .prioridade-btn {
+        border-color: var(--cyan);
+        background: rgba(0, 212, 255, 0.1);
+    }
+
+    .prioridade-option.alta .prioridade-btn {
+        color: var(--yellow-warn);
+    }
+    .prioridade-option.alta input:checked + .prioridade-btn {
+        border-color: var(--yellow-warn);
+        background: rgba(255, 204, 0, 0.1);
+    }
+
+    .prioridade-option.critica .prioridade-btn {
+        color: var(--red-alert);
+    }
+    .prioridade-option.critica input:checked + .prioridade-btn {
+        border-color: var(--red-alert);
+        background: rgba(255, 0, 85, 0.1);
+    }
+
+    /* Loading overlay */
+    .form-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-loading.active {
+        display: flex;
+    }
+
+    .form-loading .spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid var(--border-color);
+        border-top-color: var(--cyan);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block monitoring_cards %}
+<div class="monitoring-card">
+    <div class="card-header">
+        <span class="card-title"><i class="fas fa-info-circle"></i> Ajuda</span>
+    </div>
+    <div class="card-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
+            Preencha os dados da ocorrencia. Campos marcados com <span style="color: var(--red-alert);">*</span> sao obrigatorios.
+        </p>
+        <ul style="font-size: 0.8rem; color: var(--text-muted); list-style: none;">
+            <li style="margin-bottom: 8px;"><i class="fas fa-map-marker-alt" style="color: var(--cyan); margin-right: 8px;"></i> Clique no mapa para definir a localizacao</li>
+            <li style="margin-bottom: 8px;"><i class="fas fa-search" style="color: var(--purple-neon); margin-right: 8px;"></i> Ou busque pelo CEP</li>
+            <li style="margin-bottom: 8px;"><i class="fas fa-paperclip" style="color: var(--green-neon); margin-right: 8px;"></i> Arraste arquivos para anexar</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-plus-circle"></i>
+            Nova Ocorrencia
+        </h1>
+        <a href="{% url 'ocorrencias_lista' %}" class="btn-tech">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <form id="ocorrenciaForm" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-grid">
+            <!-- Main Form -->
+            <div>
+                <!-- Categoria -->
+                <div class="form-panel" style="margin-bottom: 20px;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-folder"></i>
+                            Categoria <span class="required">*</span>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="categories-grid">
+                            {% for cat in categorias %}
+                            <label class="category-option">
+                                <input type="radio" name="categoria" value="{{ cat.id }}" required>
+                                <div class="category-card">
+                                    <div class="category-icon" style="background: {{ cat.cor }}20; color: {{ cat.cor }};">
+                                        <i class="fas {{ cat.icone }}"></i>
+                                    </div>
+                                    <div class="category-name">{{ cat.nome }}</div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label class="form-label">Procedimento Operacional (POP)</label>
+                            <select name="procedimento" class="form-select" id="procedimentoSelect">
+                                <option value="">-- Selecione a categoria primeiro --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dados Basicos -->
+                <div class="form-panel" style="margin-bottom: 20px;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-file-alt"></i>
+                            Dados da Ocorrencia
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label class="form-label">Titulo <span class="required">*</span></label>
+                                <input type="text" name="titulo" class="form-input" required
+                                       placeholder="Resumo breve da ocorrencia">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label class="form-label">Descricao <span class="required">*</span></label>
+                                <textarea name="descricao" class="form-textarea" required
+                                          placeholder="Descreva a ocorrencia com detalhes..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Origem <span class="required">*</span></label>
+                                <select name="origem" class="form-select" required>
+                                    <option value="">Selecione...</option>
+                                    {% for code, label in origem_choices %}
+                                    <option value="{{ code }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Responsavel</label>
+                                <select name="responsavel" class="form-select">
+                                    <option value="">Nao atribuido</option>
+                                    {% for u in usuarios %}
+                                    <option value="{{ u.id }}">{{ u.get_full_name|default:u.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Prioridade <span class="required">*</span></label>
+                            <div class="prioridade-options">
+                                {% for code, label in prioridade_choices %}
+                                <label class="prioridade-option {{ code }}">
+                                    <input type="radio" name="prioridade" value="{{ code }}" {% if code == 'media' %}checked{% endif %}>
+                                    <span class="prioridade-btn">{{ label }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Localizacao -->
+                <div class="form-panel" style="margin-bottom: 20px;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Localizacao
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="map-instructions">
+                            Clique no mapa para definir a localizacao ou busque pelo CEP
+                        </div>
+
+                        <div id="locationMap"></div>
+
+                        <div class="cep-search">
+                            <input type="text" id="cepInput" class="form-input" placeholder="Digite o CEP...">
+                            <button type="button" class="btn-cep" onclick="buscarCEP()">
+                                <i class="fas fa-search"></i> Buscar
+                            </button>
+                        </div>
+
+                        <input type="hidden" name="latitude" id="latitudeInput">
+                        <input type="hidden" name="longitude" id="longitudeInput">
+
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 2;">
+                                <label class="form-label">Endereco</label>
+                                <input type="text" name="endereco" id="enderecoInput" class="form-input"
+                                       placeholder="Rua, Avenida...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CEP</label>
+                                <input type="text" name="cep" id="cepField" class="form-input" placeholder="00000-000">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Bairro</label>
+                                <input type="text" name="bairro" id="bairroInput" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Referencia</label>
+                                <input type="text" name="referencia" class="form-input"
+                                       placeholder="Proximo a...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Solicitante -->
+                <div class="form-panel" style="margin-bottom: 20px;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-user"></i>
+                            Dados do Solicitante
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Nome</label>
+                                <input type="text" name="solicitante_nome" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Telefone</label>
+                                <input type="tel" name="solicitante_telefone" class="form-input"
+                                       placeholder="(00) 00000-0000">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">E-mail</label>
+                                <input type="email" name="solicitante_email" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Agencias -->
+                <div class="form-panel" style="margin-bottom: 20px;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-building"></i>
+                            Agencias Envolvidas
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="agencies-grid">
+                            {% for ag in agencias %}
+                            <label class="agency-option">
+                                <input type="checkbox" name="agencias" value="{{ ag.id }}">
+                                <span style="color: {{ ag.cor }};">
+                                    <i class="fas {{ ag.icone }}"></i>
+                                </span>
+                                <span>{{ ag.sigla }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anexos -->
+                <div class="form-panel" style="margin-bottom: 20px;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-paperclip"></i>
+                            Anexos
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="upload-zone" id="uploadZone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Arraste arquivos aqui</p>
+                            <small>ou clique para selecionar</small>
+                            <input type="file" name="anexos" id="fileInput" multiple style="display: none;"
+                                   accept="image/*,.pdf,.doc,.docx">
+                        </div>
+                        <div class="files-preview" id="filesPreview"></div>
+                    </div>
+                </div>
+
+                <!-- Observacoes -->
+                <div class="form-panel" style="margin-bottom: 20px;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-sticky-note"></i>
+                            Observacoes
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <textarea name="observacoes" class="form-textarea" style="min-height: 100px;"
+                                  placeholder="Observacoes adicionais..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="submit-section">
+            <a href="{% url 'ocorrencias_lista' %}" class="btn-tech">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+            <button type="submit" class="btn-tech primary" id="submitBtn">
+                <i class="fas fa-save"></i> Registrar Ocorrencia
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="form-loading" id="formLoading">
+    <div class="spinner"></div>
+    <span style="color: var(--cyan);">Registrando ocorrencia...</span>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// POPs por categoria
+const popsPorCategoria = {{ pops_por_categoria|safe }};
+
+// Mapa
+let map, marker;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar mapa
+    map = L.map('locationMap').setView([-22.9068, -43.1729], 12);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Click no mapa
+    map.on('click', function(e) {
+        setMarker(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Categoria change - carregar POPs
+    document.querySelectorAll('input[name="categoria"]').forEach(input => {
+        input.addEventListener('change', function() {
+            const categoriaId = this.value;
+            const select = document.getElementById('procedimentoSelect');
+            select.innerHTML = '<option value="">-- Selecione um POP --</option>';
+
+            if (popsPorCategoria[categoriaId]) {
+                popsPorCategoria[categoriaId].forEach(pop => {
+                    select.innerHTML += `<option value="${pop.id}">${pop.codigo} - ${pop.titulo}</option>`;
+                });
+            }
+        });
+    });
+
+    // Upload zone
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+
+    // Form submit
+    document.getElementById('ocorrenciaForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Validacao
+        if (!document.querySelector('input[name="categoria"]:checked')) {
+            showToast('Selecione uma categoria', 'error');
+            return;
+        }
+
+        const formLoading = document.getElementById('formLoading');
+        formLoading.classList.add('active');
+
+        try {
+            const formData = new FormData(this);
+            const response = await fetch(this.action || window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = '/ocorrencias/' + data.id + '/';
+                }, 1000);
+            } else {
+                showToast(data.error || 'Erro ao registrar ocorrencia', 'error');
+            }
+        } catch (error) {
+            showToast('Erro de conexao', 'error');
+        } finally {
+            formLoading.classList.remove('active');
+        }
+    });
+
+    // Agency options toggle
+    document.querySelectorAll('.agency-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const checkbox = this.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            this.classList.toggle('selected', checkbox.checked);
+        });
+    });
+});
+
+function setMarker(lat, lng) {
+    if (marker) {
+        map.removeLayer(marker);
+    }
+
+    marker = L.marker([lat, lng], {
+        icon: L.divIcon({
+            html: '<div style="width:30px;height:30px;background:var(--cyan);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#000;border:2px solid #fff;"><i class="fas fa-map-marker-alt"></i></div>',
+            className: '',
+            iconSize: [30, 30],
+            iconAnchor: [15, 30]
+        })
+    }).addTo(map);
+
+    document.getElementById('latitudeInput').value = lat.toFixed(7);
+    document.getElementById('longitudeInput').value = lng.toFixed(7);
+}
+
+function buscarCEP() {
+    const cep = document.getElementById('cepInput').value.replace(/\D/g, '');
+
+    if (cep.length !== 8) {
+        showToast('CEP deve ter 8 digitos', 'error');
+        return;
+    }
+
+    fetch('/api/cep/?cep=' + cep)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('enderecoInput').value = data.endereco;
+                document.getElementById('bairroInput').value = data.bairro;
+                document.getElementById('cepField').value = data.cep;
+                showToast('Endereco encontrado!', 'success');
+
+                // Geocode para obter coordenadas
+                geocodeAddress(data.endereco + ', ' + data.bairro + ', Rio de Janeiro');
+            } else {
+                showToast(data.error || 'CEP nao encontrado', 'error');
+            }
+        })
+        .catch(() => {
+            showToast('Erro ao buscar CEP', 'error');
+        });
+}
+
+function geocodeAddress(address) {
+    // Usando Nominatim para geocoding
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lng = parseFloat(data[0].lon);
+                setMarker(lat, lng);
+                map.setView([lat, lng], 16);
+            }
+        });
+}
+
+let selectedFiles = [];
+
+function handleFiles(files) {
+    const preview = document.getElementById('filesPreview');
+
+    Array.from(files).forEach(file => {
+        selectedFiles.push(file);
+
+        const div = document.createElement('div');
+        div.className = 'file-item';
+
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="${file.name}">
+                    <div class="file-name">${file.name}</div>
+                    <button type="button" class="remove-file" onclick="removeFile(this, '${file.name}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            div.innerHTML = `
+                <i class="fas fa-file" style="font-size: 2rem; color: var(--cyan); margin-bottom: 5px;"></i>
+                <div class="file-name">${file.name}</div>
+                <button type="button" class="remove-file" onclick="removeFile(this, '${file.name}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        }
+
+        preview.appendChild(div);
+    });
+}
+
+function removeFile(btn, fileName) {
+    selectedFiles = selectedFiles.filter(f => f.name !== fileName);
+    btn.closest('.file-item').remove();
+}
+</script>
+{% endblock %}
