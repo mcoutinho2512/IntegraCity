@@ -1,5 +1,5 @@
 """
-Comando Django para importar matriz decisoria inicial HEXAGON 3.5
+Comando Django para importar matriz decisoria inicial v3.5
 
 Uso:
     python manage.py importar_matriz
@@ -13,7 +13,7 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Importa matriz decisoria inicial HEXAGON 3.5'
+    help = 'Importa matriz decisoria inicial v3.5'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -24,7 +24,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.NOTICE('\n' + '=' * 60))
-        self.stdout.write(self.style.NOTICE('IMPORTACAO DA MATRIZ DECISORIA HEXAGON'))
+        self.stdout.write(self.style.NOTICE('IMPORTACAO DA MATRIZ DECISORIA'))
         self.stdout.write(self.style.NOTICE('=' * 60 + '\n'))
 
         # Buscar ou criar usuario sistema
@@ -58,14 +58,14 @@ class Command(BaseCommand):
             matriz_existente.delete()
 
         # Criar matriz
-        self.stdout.write('\nCriando Matriz HEXAGON 3.5...')
+        self.stdout.write('\nCriando Matriz v3.5...')
 
         matriz = MatrizDecisoria.objects.create(
             versao='3.5',
-            nome='Matriz HEXAGON 3.5',
+            nome='Matriz Decisoria v3.5',
             descricao='''Matriz Decisoria para analise do estagio operacional da cidade.
 
-Baseada na planilha HEXAGON com 4 grupos de criterios:
+4 grupos de criterios:
 - Grupo 1: Meteorologia (Peso 2.0)
 - Grupo 2: Incidentes/Ocorrencias (Peso 2.0)
 - Grupo 3: Mobilidade (Peso 1.0)

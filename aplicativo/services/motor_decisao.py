@@ -1,6 +1,6 @@
 """
-Motor de Decisão - Matriz Decisória HEXAGON
-==========================================
+Motor de Decisão - Matriz Decisória IntegraCity
+==============================================
 
 Calcula o estágio operacional da cidade baseado em:
 - Grupo 1: Meteorologia (Peso 2.0)
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 class MotorDecisao:
     """
     Motor de cálculo do estágio operacional da cidade
-    baseado na Matriz Decisória HEXAGON
+    baseado na Matriz Decisória IntegraCity
     """
 
     def __init__(self, matriz=None):
@@ -60,7 +60,7 @@ class MotorDecisao:
         """
         Calcula nível do Grupo 2 (Incidentes) baseado em ocorrências
 
-        Regras conforme planilha HEXAGON:
+        Regras conforme matriz de decisão:
         - Conta ocorrências das últimas N horas (padrão 24h)
         - Separa por prioridade (baixa, média, alta, crítica)
         - Aplica tabela de níveis progressivos

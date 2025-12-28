@@ -2,7 +2,7 @@
 Views da Matriz Decisória
 ========================
 
-Dashboard e APIs para o Motor de Decisão HEXAGON.
+Dashboard e APIs para o Motor de Decisão IntegraCity.
 """
 
 import json

@@ -5935,7 +5935,7 @@ class AgenciaOcorrencia(models.Model):
 
 class MatrizDecisoria(models.Model):
     """
-    Versão da Matriz Decisória HEXAGON.
+    Versão da Matriz Decisória.
     Define os pesos e configurações para cálculo do estágio operacional da cidade.
     """
 
@@ -5954,7 +5954,7 @@ class MatrizDecisoria(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='rascunho')
     ativa = models.BooleanField(default=False)  # Apenas 1 pode estar ativa
 
-    # Pesos dos grupos (conforme planilha HEXAGON)
+    # Pesos dos grupos
     peso_meteorologia = models.DecimalField(max_digits=3, decimal_places=1, default=2.0)
     peso_incidentes = models.DecimalField(max_digits=3, decimal_places=1, default=2.0)
     peso_mobilidade = models.DecimalField(max_digits=3, decimal_places=1, default=1.0)

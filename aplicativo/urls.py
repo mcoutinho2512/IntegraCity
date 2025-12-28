@@ -99,7 +99,7 @@ urlpatterns = [
     path('api/bike-rio/', views.api_bike_rio, name='api_bike_rio'),
 
     # ============================================
-    # MATRIZ DECISÓRIA - MOTOR DE DECISÃO HEXAGON
+    # MATRIZ DECISÓRIA - MOTOR DE DECISÃO
     # ============================================
     path('matriz/', views_matriz.matriz_dashboard, name='matriz_dashboard'),
     path('matriz/historico/', views_matriz.matriz_historico, name='matriz_historico'),
