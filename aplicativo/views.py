@@ -329,22 +329,35 @@ def cor_dashboard_hightech_view(request):
     """Dashboard High-Tech Command Center"""
     from datetime import date, timedelta
     from django.db.models import Count
+    from .models import EstagioOperacional
 
-    # Estagio atual
+    # Estagio atual - usando Matriz Decisoria
     try:
-        estagio_obj = Estagio.objects.latest('data_i')
-        estagio_map = {
-            'Normalidade': 1,
-            'Mobilizacao': 2,
-            'Atencao': 3,
-            'Alerta': 4,
-            'Crise': 5,
-        }
-        estagio = estagio_map.get(estagio_obj.esta, 1)
-        estagio_label = estagio_obj.esta or 'Normalidade'
+        # Buscar ultimo estagio calculado pela matriz
+        estagio_matriz = EstagioOperacional.objects.select_related('matriz').order_by('-calculado_em').first()
+        if estagio_matriz:
+            estagio = estagio_matriz.nivel_cidade
+            estagio_label = estagio_matriz.get_nomenclatura()
+            estagio_cor = estagio_matriz.get_cor()
+        else:
+            # Fallback para modelo antigo se nao houver calculo da matriz
+            estagio_obj = Estagio.objects.latest('data_i')
+            estagio_map = {
+                'Normalidade': 0,
+                'Atencao': 1,
+                'Alerta': 2,
+                'Mobilizacao': 3,
+                'Crise': 4,
+                'Calamidade': 5,
+                'Colapso': 6,
+            }
+            estagio = estagio_map.get(estagio_obj.esta, 0)
+            estagio_label = estagio_obj.esta or 'Normal'
+            estagio_cor = '#00ff88'
     except:
-        estagio = 1
-        estagio_label = 'Normalidade'
+        estagio = 0
+        estagio_label = 'Normal'
+        estagio_cor = '#00ff88'
 
     # Eventos de hoje
     try:
@@ -401,10 +414,28 @@ def cor_dashboard_hightech_view(request):
     except:
         precipitacao = 0
 
+    # Determinar status do estagio
+    if estagio == 0:
+        estagio_status = 'NORMAL'
+    elif estagio == 1:
+        estagio_status = 'ATENCAO'
+    elif estagio == 2:
+        estagio_status = 'ALERTA'
+    elif estagio == 3:
+        estagio_status = 'MOBILIZACAO'
+    elif estagio == 4:
+        estagio_status = 'CRISE'
+    elif estagio == 5:
+        estagio_status = 'CALAMIDADE'
+    else:
+        estagio_status = 'COLAPSO'
+
     context = {
         # Estagio
         'estagio': estagio,
         'estagio_label': estagio_label,
+        'estagio_cor': estagio_cor,
+        'estagio_status': estagio_status,
 
         # Eventos
         'eventos_count': eventos_count,

@@ -8,24 +8,24 @@
      CARDS COMPACTOS RETRÁTEIS
      ============================================ -->
 
-<!-- Card 1: Estágio Operacional -->
+<!-- Card 1: Estágio Operacional (Integrado com Matriz Decisória) -->
 <div class="compact-card" onclick="toggleCard(this)">
     <div class="card-header">
         <div class="card-header-left">
-            <div class="card-icon {% if estagio <= 1 %}green{% elif estagio <= 3 %}orange{% else %}red{% endif %}">
+            <div class="card-icon" style="background: {{ estagio_cor|default:'#00ff88' }}20; color: {{ estagio_cor|default:'#00ff88' }};">
                 <i class="fas fa-shield-alt"></i>
             </div>
             <div class="card-main-info">
-                <div class="card-value {% if estagio <= 1 %}green{% elif estagio <= 3 %}orange{% else %}red{% endif %}">
-                    E{{ estagio|default:"1" }}
+                <div class="card-value" style="color: {{ estagio_cor|default:'#00ff88' }};">
+                    E{{ estagio|default:"0" }}
                 </div>
                 <div class="card-label">Estagio<br>Operacional</div>
             </div>
         </div>
         <div class="card-header-right">
-            <div class="status-badge {% if estagio <= 1 %}normal{% elif estagio <= 3 %}warning{% else %}critical{% endif %}">
-                <div class="status-dot"></div>
-                {% if estagio <= 1 %}NORMAL{% elif estagio <= 3 %}ATENCAO{% else %}CRITICO{% endif %}
+            <div class="status-badge" style="background: {{ estagio_cor|default:'#00ff88' }}20; color: {{ estagio_cor|default:'#00ff88' }}; border-color: {{ estagio_cor|default:'#00ff88' }};">
+                <div class="status-dot" style="background: {{ estagio_cor|default:'#00ff88' }};"></div>
+                {{ estagio_status|default:"NORMAL" }}
             </div>
             <i class="fas fa-chevron-down expand-icon"></i>
         </div>
@@ -34,7 +34,7 @@
         <div class="card-content">
             <div class="card-detail-row">
                 <span class="detail-label">Nivel</span>
-                <span class="detail-value">{{ estagio|default:"1" }} - {{ estagio_label|default:"Normalidade" }}</span>
+                <span class="detail-value" style="color: {{ estagio_cor|default:'#00ff88' }};">{{ estagio|default:"0" }} - {{ estagio_label|default:"Normal" }}</span>
             </div>
             <div class="card-detail-row">
                 <span class="detail-label">Regiao</span>
@@ -42,7 +42,7 @@
             </div>
             <div class="live-indicator">
                 <div class="live-dot"></div>
-                Dados em tempo real
+                Matriz Decisoria
             </div>
         </div>
     </div>
