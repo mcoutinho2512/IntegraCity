@@ -75,6 +75,38 @@ function toggleSidebar() {
     }
 }
 
+// Toggle sidebar para mobile (fullscreen)
+function toggleMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const menuBtn = document.querySelector('.mobile-menu-btn');
+
+    if (!sidebar) return;
+
+    sidebar.classList.toggle('mobile-open');
+
+    if (toggleBtn) {
+        toggleBtn.classList.toggle('mobile-open');
+    }
+
+    // Mudar ícone do botão hamburger
+    if (menuBtn) {
+        const icon = menuBtn.querySelector('i');
+        if (sidebar.classList.contains('mobile-open')) {
+            icon.className = 'fas fa-times';
+        } else {
+            icon.className = 'fas fa-bars';
+        }
+    }
+
+    // Redimensionar mapa após transição
+    setTimeout(() => {
+        if (typeof map !== 'undefined' && map.invalidateSize) {
+            map.invalidateSize();
+        }
+    }, 350);
+}
+
 // ============================================
 // 3. LOADING OVERLAY
 // ============================================
@@ -430,6 +462,7 @@ function handleWebSocketMessage(data) {
 window.IntegraCity = {
     showToast,
     toggleSidebar,
+    toggleMobileSidebar,
     showLoading,
     hideLoading,
     switchLayer,
