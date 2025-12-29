@@ -1,0 +1,544 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}Alertas e Incidentes | IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Fix scroll para pagina */
+    .map-wrapper {
+        position: absolute !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    :root {
+        --bg-primary: #0a0a0f;
+        --bg-secondary: #12121a;
+        --bg-card: #1a1a24;
+        --bg-surface: rgba(0, 0, 0, 0.4);
+        --border-color: rgba(0, 212, 255, 0.2);
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --text-muted: #6b6b6b;
+        --cyan: #00D4FF;
+        --green-neon: #00ff88;
+        --purple-neon: #b537f2;
+        --orange: #FF6B00;
+        --red: #FF0055;
+        --yellow: #FFB800;
+        --dark-red: #8B0000;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.8rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-back {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid var(--cyan);
+        color: var(--cyan);
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-family: 'Orbitron', monospace;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-back:hover {
+        background: rgba(0, 212, 255, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .stats-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .stat-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        position: relative;
+    }
+
+    .stat-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .stat-box.acidentes::before { background: var(--red); }
+    .stat-box.interdicoes::before { background: var(--orange); }
+    .stat-box.perigos::before { background: var(--yellow); }
+    .stat-box.outros::before { background: var(--purple-neon); }
+    .stat-box.total::before { background: var(--cyan); }
+
+    .stat-valor {
+        font-family: 'Orbitron', monospace;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .section-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.3rem;
+        color: var(--cyan);
+        margin: 30px 0 15px 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alertas-list {
+        display: grid;
+        gap: 15px;
+    }
+
+    .alerta-card {
+        background: var(--bg-card);
+        border-left: 4px solid;
+        border-radius: 8px;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .alerta-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 20px rgba(0, 212, 255, 0.2);
+    }
+
+    .alerta-card.acidente { border-left-color: var(--red); }
+    .alerta-card.interdicao { border-left-color: var(--orange); }
+    .alerta-card.perigo { border-left-color: var(--yellow); }
+    .alerta-card.outro { border-left-color: var(--purple-neon); }
+
+    .alerta-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 15px;
+    }
+
+    .alerta-tipo {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        flex: 1;
+    }
+
+    .alerta-badge {
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-family: 'Orbitron', monospace;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-left: 15px;
+    }
+
+    .badge-grave { background: var(--red); color: #fff; }
+    .badge-leve { background: var(--yellow); color: #000; }
+    .badge-perigo { background: var(--orange); color: #fff; }
+    .badge-outro { background: var(--purple-neon); color: #fff; }
+
+    .alerta-local {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .alerta-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .info-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .info-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .info-value.destaque {
+        color: var(--cyan);
+    }
+
+    .confidence-bar {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 5px;
+    }
+
+    .confidence-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .confidence-fill.high { background: var(--green-neon); }
+    .confidence-fill.medium { background: var(--yellow); }
+    .confidence-fill.low { background: var(--red); }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    .error-box {
+        background: rgba(255, 0, 85, 0.1);
+        border: 1px solid var(--red);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .error-box h3 {
+        color: var(--red);
+        margin-bottom: 10px;
+    }
+
+    .timestamp {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    /* Responsivo */
+    @media (max-width: 768px) {
+        .alerta-info {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .stats-bar {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-exclamation-triangle"></i>
+            Alertas e Incidentes
+        </h1>
+        <div class="header-actions">
+            <a href="{% url 'mobilidade_waze' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+
+    {% if erro %}
+    <div class="error-box">
+        <h3><i class="fas fa-exclamation-triangle"></i> Erro</h3>
+        <p>{{ erro }}</p>
+    </div>
+    {% else %}
+
+    <!-- Estatisticas -->
+    <div class="stats-bar">
+        <div class="stat-box acidentes">
+            <div class="stat-valor" style="color: var(--red);">{{ acidentes|length }}</div>
+            <div class="stat-label">Acidentes</div>
+        </div>
+        <div class="stat-box interdicoes">
+            <div class="stat-valor" style="color: var(--orange);">{{ interdicoes|length }}</div>
+            <div class="stat-label">Interdicoes</div>
+        </div>
+        <div class="stat-box perigos">
+            <div class="stat-valor" style="color: var(--yellow);">{{ perigos|length }}</div>
+            <div class="stat-label">Perigos</div>
+        </div>
+        <div class="stat-box outros">
+            <div class="stat-valor" style="color: var(--purple-neon);">{{ outros|length }}</div>
+            <div class="stat-label">Outros</div>
+        </div>
+        <div class="stat-box total">
+            <div class="stat-valor" style="color: var(--cyan);">{{ total_alertas }}</div>
+            <div class="stat-label">Total</div>
+        </div>
+    </div>
+
+    {% if total_alertas == 0 %}
+    <div class="empty-state">
+        <i class="fas fa-check-circle"></i>
+        <h3>Nenhum alerta no momento</h3>
+        <p>Nao ha incidentes reportados na regiao.</p>
+    </div>
+    {% else %}
+
+    <!-- Acidentes -->
+    {% if acidentes %}
+    <h2 class="section-title">
+        <i class="fas fa-car-crash" style="color: var(--red);"></i>
+        Acidentes ({{ acidentes|length }})
+    </h2>
+    <div class="alertas-list">
+        {% for alerta in acidentes %}
+        <div class="alerta-card acidente">
+            <div class="alerta-header">
+                <div class="alerta-tipo">
+                    <i class="fas fa-car-crash"></i>
+                    {{ alerta.subtipo|default:"Acidente" }}
+                </div>
+                <span class="alerta-badge {% if alerta.gravidade == 'GRAVE' %}badge-grave{% else %}badge-leve{% endif %}">
+                    {{ alerta.gravidade|default:"Reportado" }}
+                </span>
+            </div>
+            <div class="alerta-local">
+                <i class="fas fa-map-marker-alt"></i>
+                {{ alerta.rua|default:"Local nao identificado" }}{% if alerta.cidade %}, {{ alerta.cidade }}{% endif %}
+            </div>
+            <div class="alerta-info">
+                <div class="info-item">
+                    <div class="info-label">Confianca</div>
+                    <div class="info-value">{{ alerta.confianca|default:0 }}/10</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill {% if alerta.confianca >= 7 %}high{% elif alerta.confianca >= 4 %}medium{% else %}low{% endif %}"
+                             style="width: {{ alerta.confianca|default:0 }}0%;"></div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Confiabilidade</div>
+                    <div class="info-value">{{ alerta.confiabilidade|default:0 }}/10</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill {% if alerta.confiabilidade >= 7 %}high{% elif alerta.confiabilidade >= 4 %}medium{% else %}low{% endif %}"
+                             style="width: {{ alerta.confiabilidade|default:0 }}0%;"></div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Coordenadas</div>
+                    <div class="info-value destaque">{{ alerta.latitude|floatformat:4 }}, {{ alerta.longitude|floatformat:4 }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Interdicoes -->
+    {% if interdicoes %}
+    <h2 class="section-title">
+        <i class="fas fa-road-barrier" style="color: var(--orange);"></i>
+        Interdicoes ({{ interdicoes|length }})
+    </h2>
+    <div class="alertas-list">
+        {% for alerta in interdicoes %}
+        <div class="alerta-card interdicao">
+            <div class="alerta-header">
+                <div class="alerta-tipo">
+                    <i class="fas fa-road-barrier"></i>
+                    {{ alerta.subtipo|default:"Via Interditada" }}
+                </div>
+                <span class="alerta-badge badge-perigo">Interditado</span>
+            </div>
+            <div class="alerta-local">
+                <i class="fas fa-map-marker-alt"></i>
+                {{ alerta.rua|default:"Local nao identificado" }}{% if alerta.cidade %}, {{ alerta.cidade }}{% endif %}
+            </div>
+            <div class="alerta-info">
+                <div class="info-item">
+                    <div class="info-label">Confianca</div>
+                    <div class="info-value">{{ alerta.confianca|default:0 }}/10</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill {% if alerta.confianca >= 7 %}high{% elif alerta.confianca >= 4 %}medium{% else %}low{% endif %}"
+                             style="width: {{ alerta.confianca|default:0 }}0%;"></div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Confiabilidade</div>
+                    <div class="info-value">{{ alerta.confiabilidade|default:0 }}/10</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill {% if alerta.confiabilidade >= 7 %}high{% elif alerta.confiabilidade >= 4 %}medium{% else %}low{% endif %}"
+                             style="width: {{ alerta.confiabilidade|default:0 }}0%;"></div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Coordenadas</div>
+                    <div class="info-value destaque">{{ alerta.latitude|floatformat:4 }}, {{ alerta.longitude|floatformat:4 }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Perigos -->
+    {% if perigos %}
+    <h2 class="section-title">
+        <i class="fas fa-exclamation-circle" style="color: var(--yellow);"></i>
+        Perigos na Via ({{ perigos|length }})
+    </h2>
+    <div class="alertas-list">
+        {% for alerta in perigos %}
+        <div class="alerta-card perigo">
+            <div class="alerta-header">
+                <div class="alerta-tipo">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ alerta.subtipo|default:"Perigo" }}
+                </div>
+                <span class="alerta-badge badge-leve">Atencao</span>
+            </div>
+            <div class="alerta-local">
+                <i class="fas fa-map-marker-alt"></i>
+                {{ alerta.rua|default:"Local nao identificado" }}{% if alerta.cidade %}, {{ alerta.cidade }}{% endif %}
+            </div>
+            <div class="alerta-info">
+                <div class="info-item">
+                    <div class="info-label">Confianca</div>
+                    <div class="info-value">{{ alerta.confianca|default:0 }}/10</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill {% if alerta.confianca >= 7 %}high{% elif alerta.confianca >= 4 %}medium{% else %}low{% endif %}"
+                             style="width: {{ alerta.confianca|default:0 }}0%;"></div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Confiabilidade</div>
+                    <div class="info-value">{{ alerta.confiabilidade|default:0 }}/10</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill {% if alerta.confiabilidade >= 7 %}high{% elif alerta.confiabilidade >= 4 %}medium{% else %}low{% endif %}"
+                             style="width: {{ alerta.confiabilidade|default:0 }}0%;"></div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Coordenadas</div>
+                    <div class="info-value destaque">{{ alerta.latitude|floatformat:4 }}, {{ alerta.longitude|floatformat:4 }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Outros -->
+    {% if outros %}
+    <h2 class="section-title">
+        <i class="fas fa-info-circle" style="color: var(--purple-neon);"></i>
+        Outros Alertas ({{ outros|length }})
+    </h2>
+    <div class="alertas-list">
+        {% for alerta in outros %}
+        <div class="alerta-card outro">
+            <div class="alerta-header">
+                <div class="alerta-tipo">
+                    <i class="fas fa-info-circle"></i>
+                    {{ alerta.tipo|default:"Alerta" }} - {{ alerta.subtipo|default:"" }}
+                </div>
+                <span class="alerta-badge badge-outro">Info</span>
+            </div>
+            <div class="alerta-local">
+                <i class="fas fa-map-marker-alt"></i>
+                {{ alerta.rua|default:"Local nao identificado" }}{% if alerta.cidade %}, {{ alerta.cidade }}{% endif %}
+            </div>
+            <div class="alerta-info">
+                <div class="info-item">
+                    <div class="info-label">Confianca</div>
+                    <div class="info-value">{{ alerta.confianca|default:0 }}/10</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill {% if alerta.confianca >= 7 %}high{% elif alerta.confianca >= 4 %}medium{% else %}low{% endif %}"
+                             style="width: {{ alerta.confianca|default:0 }}0%;"></div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Confiabilidade</div>
+                    <div class="info-value">{{ alerta.confiabilidade|default:0 }}/10</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill {% if alerta.confiabilidade >= 7 %}high{% elif alerta.confiabilidade >= 4 %}medium{% else %}low{% endif %}"
+                             style="width: {{ alerta.confiabilidade|default:0 }}0%;"></div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Coordenadas</div>
+                    <div class="info-value destaque">{{ alerta.latitude|floatformat:4 }}, {{ alerta.longitude|floatformat:4 }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh a cada 2 minutos
+setInterval(() => {
+    location.reload();
+}, 2 * 60 * 1000);
+</script>
+{% endblock %}

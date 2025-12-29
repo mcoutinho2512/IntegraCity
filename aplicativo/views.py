@@ -848,6 +848,7 @@ def waze_data_view(request):
     """Busca dados do Waze (alertas e congestionamentos)"""
     try:
         import requests
+        import time
         
         url = "https://www.waze.com/row-partnerhub-api/partners/14420996249/waze-feeds/c5c19146-e0f9-44a7-9815-3862c8a6ed67?format=1"
         
@@ -861,9 +862,32 @@ def waze_data_view(request):
         
         data = response.json()
         
+        # Parametros de filtro
+        try:
+            since_minutes = int(request.GET.get('since_minutes', 60))
+        except (TypeError, ValueError):
+            since_minutes = 60
+
+        since_minutes = max(5, min(since_minutes, 360))
+        now_ms = int(time.time() * 1000)
+        min_pub_ms = now_ms - (since_minutes * 60 * 1000)
+
+        def alert_severidade(alert_type, alert_subtype):
+            if alert_type in ['ACCIDENT', 'ROAD_CLOSED']:
+                return 'alta'
+            if alert_subtype in ['JAM_HEAVY_TRAFFIC', 'JAM_STAND_STILL_TRAFFIC']:
+                return 'media'
+            if alert_type == 'HAZARD':
+                return 'media'
+            return 'baixa'
+
         # Processar alertas
         alertas_processados = []
         for alert in data.get('alerts', [])[:100]:  # Limitar a 100 para performance
+            pub_ms = alert.get('pubMillis')
+            if pub_ms and pub_ms < min_pub_ms:
+                continue
+
             tipo_map = {
                 'HAZARD': 'Perigo',
                 'ACCIDENT': 'Acidente',
@@ -887,6 +911,7 @@ def waze_data_view(request):
             alertas_processados.append({
                 'id': alert.get('uuid'),
                 'tipo': tipo_map.get(alert.get('type'), alert.get('type')),
+                'tipo_raw': alert.get('type'),
                 'subtipo': subtipo_map.get(alert.get('subtype'), alert.get('subtype', '')),
                 'lat': alert.get('location', {}).get('y'),
                 'lng': alert.get('location', {}).get('x'),
@@ -894,12 +919,17 @@ def waze_data_view(request):
                 'cidade': alert.get('city', 'Rio de Janeiro'),
                 'confianca': alert.get('confidence', 0),
                 'confiabilidade': alert.get('reliability', 0),
-                'data': alert.get('pubMillis')
+                'data': pub_ms,
+                'severidade': alert_severidade(alert.get('type'), alert.get('subtype'))
             })
         
         # Processar congestionamentos
         jams_processados = []
         for jam in data.get('jams', [])[:50]:  # Limitar a 50
+            pub_ms = jam.get('pubMillis')
+            if pub_ms and pub_ms < min_pub_ms:
+                continue
+
             # Pegar primeiro e último ponto da linha
             line = jam.get('line', [])
             if len(line) > 0:
@@ -928,14 +958,17 @@ def waze_data_view(request):
                     'velocidade': round(jam.get('speedKMH', 0), 1),
                     'comprimento': jam.get('length', 0),
                     'atraso': jam.get('delay', 0),
+                    'atraso_min': round((jam.get('delay', 0) or 0) / 60),
+                    'critico': jam.get('level', 0) >= 4,
                     'lat': centro_lat,
                     'lng': centro_lng,
                     'linha': line,  # Pontos para desenhar linha no mapa
-                    'data': jam.get('pubMillis')
+                    'data': pub_ms
                 })
         
         return Response({
             'success': True,
+            'since_minutes': since_minutes,
             'alertas': alertas_processados,
             'congestionamentos': jams_processados,
             'total_alertas': len(data.get('alerts', [])),

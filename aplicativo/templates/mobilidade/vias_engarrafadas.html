@@ -1,0 +1,419 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}Vias Engarrafadas | IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Fix scroll para pagina */
+    .map-wrapper {
+        position: absolute !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    :root {
+        --bg-primary: #0a0a0f;
+        --bg-secondary: #12121a;
+        --bg-card: #1a1a24;
+        --bg-surface: rgba(0, 0, 0, 0.4);
+        --border-color: rgba(0, 212, 255, 0.2);
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --text-muted: #6b6b6b;
+        --cyan: #00D4FF;
+        --green-neon: #00ff88;
+        --purple-neon: #b537f2;
+        --orange: #FF6B00;
+        --red: #FF0055;
+        --yellow: #FFB800;
+        --dark-red: #8B0000;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.8rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-back {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid var(--cyan);
+        color: var(--cyan);
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-family: 'Orbitron', monospace;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-back:hover {
+        background: rgba(0, 212, 255, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .stats-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .stat-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .stat-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .stat-box.severa::before { background: var(--dark-red); }
+    .stat-box.intensa::before { background: var(--red); }
+    .stat-box.moderada::before { background: var(--orange); }
+    .stat-box.total::before { background: var(--cyan); }
+
+    .stat-valor {
+        font-family: 'Orbitron', monospace;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .section-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.3rem;
+        color: var(--cyan);
+        margin: 30px 0 15px 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .vias-list {
+        display: grid;
+        gap: 15px;
+    }
+
+    .via-card {
+        background: var(--bg-card);
+        border-left: 4px solid;
+        border-radius: 8px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .via-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 20px rgba(0, 212, 255, 0.2);
+    }
+
+    .via-card.nivel-4 { border-left-color: var(--dark-red); }
+    .via-card.nivel-3 { border-left-color: var(--red); }
+    .via-card.nivel-2 { border-left-color: var(--orange); }
+
+    .via-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 15px;
+    }
+
+    .via-nome {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        flex: 1;
+    }
+
+    .via-badge {
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-family: 'Orbitron', monospace;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-left: 15px;
+    }
+
+    .badge-parado { background: var(--dark-red); color: #fff; }
+    .badge-intenso { background: var(--red); color: #fff; }
+    .badge-moderado { background: var(--orange); color: #000; }
+
+    .via-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .info-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .info-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .info-value.destaque {
+        color: var(--cyan);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    .error-box {
+        background: rgba(255, 0, 85, 0.1);
+        border: 1px solid var(--red);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .error-box h3 {
+        color: var(--red);
+        margin-bottom: 10px;
+    }
+
+    /* Responsivo */
+    @media (max-width: 768px) {
+        .via-info {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-traffic-light"></i>
+            Vias Engarrafadas
+        </h1>
+        <div class="header-actions">
+            <a href="{% url 'mobilidade_waze' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+
+    {% if erro %}
+    <div class="error-box">
+        <h3><i class="fas fa-exclamation-triangle"></i> Erro</h3>
+        <p>{{ erro }}</p>
+    </div>
+    {% else %}
+
+    <!-- Estatísticas -->
+    <div class="stats-bar">
+        <div class="stat-box severa">
+            <div class="stat-valor" style="color: var(--dark-red);">{{ vias_severas|length }}</div>
+            <div class="stat-label">Parado/Severo</div>
+        </div>
+        <div class="stat-box intensa">
+            <div class="stat-valor" style="color: var(--red);">{{ vias_intensas|length }}</div>
+            <div class="stat-label">Trânsito Intenso</div>
+        </div>
+        <div class="stat-box moderada">
+            <div class="stat-valor" style="color: var(--orange);">{{ vias_moderadas|length }}</div>
+            <div class="stat-label">Trânsito Moderado</div>
+        </div>
+        <div class="stat-box total">
+            <div class="stat-valor" style="color: var(--cyan);">{{ total_vias }}</div>
+            <div class="stat-label">Total de Vias</div>
+        </div>
+    </div>
+
+    {% if total_vias == 0 %}
+    <div class="empty-state">
+        <i class="fas fa-road"></i>
+        <h3>Nenhuma via engarrafada no momento</h3>
+        <p>O trânsito está fluindo normalmente.</p>
+    </div>
+    {% else %}
+
+    <!-- Vias Severas/Paradas -->
+    {% if vias_severas %}
+    <h2 class="section-title">
+        <i class="fas fa-exclamation-circle" style="color: var(--dark-red);"></i>
+        Trânsito Parado ({{ vias_severas|length }})
+    </h2>
+    <div class="vias-list">
+        {% for via in vias_severas %}
+        <div class="via-card nivel-{{ via.nivel }}">
+            <div class="via-header">
+                <div class="via-nome">{{ via.nome }}</div>
+                <span class="via-badge badge-parado">{{ via.nivel_texto }}</span>
+            </div>
+            <div class="via-info">
+                <div class="info-item">
+                    <div class="info-label">Extensão</div>
+                    <div class="info-value">{{ via.extensao_km }} km</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tempo Estimado</div>
+                    <div class="info-value">{{ via.tempo_atual_min }} min</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tempo Normal</div>
+                    <div class="info-value">{{ via.tempo_historico_min }} min</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Atraso</div>
+                    <div class="info-value destaque">+{{ via.atraso_percent }}%</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Vias Intensas -->
+    {% if vias_intensas %}
+    <h2 class="section-title">
+        <i class="fas fa-exclamation-triangle" style="color: var(--red);"></i>
+        Trânsito Intenso ({{ vias_intensas|length }})
+    </h2>
+    <div class="vias-list">
+        {% for via in vias_intensas %}
+        <div class="via-card nivel-{{ via.nivel }}">
+            <div class="via-header">
+                <div class="via-nome">{{ via.nome }}</div>
+                <span class="via-badge badge-intenso">{{ via.nivel_texto }}</span>
+            </div>
+            <div class="via-info">
+                <div class="info-item">
+                    <div class="info-label">Extensão</div>
+                    <div class="info-value">{{ via.extensao_km }} km</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tempo Estimado</div>
+                    <div class="info-value">{{ via.tempo_atual_min }} min</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tempo Normal</div>
+                    <div class="info-value">{{ via.tempo_historico_min }} min</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Atraso</div>
+                    <div class="info-value destaque">+{{ via.atraso_percent }}%</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Vias Moderadas -->
+    {% if vias_moderadas %}
+    <h2 class="section-title">
+        <i class="fas fa-info-circle" style="color: var(--orange);"></i>
+        Trânsito Moderado ({{ vias_moderadas|length }})
+    </h2>
+    <div class="vias-list">
+        {% for via in vias_moderadas %}
+        <div class="via-card nivel-{{ via.nivel }}">
+            <div class="via-header">
+                <div class="via-nome">{{ via.nome }}</div>
+                <span class="via-badge badge-moderado">{{ via.nivel_texto }}</span>
+            </div>
+            <div class="via-info">
+                <div class="info-item">
+                    <div class="info-label">Extensão</div>
+                    <div class="info-value">{{ via.extensao_km }} km</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tempo Estimado</div>
+                    <div class="info-value">{{ via.tempo_atual_min }} min</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tempo Normal</div>
+                    <div class="info-value">{{ via.tempo_historico_min }} min</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Atraso</div>
+                    <div class="info-value destaque">+{{ via.atraso_percent }}%</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh a cada 2 minutos
+setInterval(() => {
+    location.reload();
+}, 2 * 60 * 1000);
+</script>
+{% endblock %}

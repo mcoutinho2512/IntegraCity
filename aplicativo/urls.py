@@ -8,6 +8,7 @@ from aplicativo import views_users
 from aplicativo import views_ocorrencias
 from aplicativo import views_matriz
 from aplicativo import views_meteorologia
+from aplicativo import views_mobilidade
 
 urlpatterns = [
     # LOGIN - PÁGINA PRINCIPAL
@@ -44,6 +45,23 @@ urlpatterns = [
     path('cor-hightech/', views.cor_dashboard_hightech_view, name='cor_dashboard_hightech'),
     path('api/estagio-externo/', views.estagio_proxy, name='estagio_proxy'),
 
+    # ============================================
+    # MOBILIDADE - INTEGRAÇÃO WAZE
+    # ============================================
+    path('mob/', views_mobilidade.mobilidade_dashboard, name='mobilidade_waze'),
+    path('api/mob/coletar/', views_mobilidade.api_coletar_mobilidade_agora, name='api_coletar_mobilidade'),
+    path('api/mob/nivel/', views_mobilidade.api_nivel_mobilidade, name='api_nivel_mobilidade'),
+    path('api/mob/dados/', views_mobilidade.api_dados_mobilidade, name='api_dados_mobilidade'),
+    path('api/mob/jams/', views_mobilidade.api_jams_mapa, name='api_jams_mapa'),
+    path('api/mob/alerts/', views_mobilidade.api_alerts_mapa, name='api_alerts_mapa'),
+    path('api/mob/resumo/', views_mobilidade.api_resumo_mobilidade, name='api_resumo_mobilidade'),
+    path('api/mob/waze-completo/', views_mobilidade.api_waze_completo, name='api_waze_completo'),
+    # APIs de mobilidade - vias e alertas
+    path('api/mob/vias-engarrafadas/', views_mobilidade.api_vias_engarrafadas, name='api_vias_engarrafadas'),
+    path('api/mob/alertas-categorizados/', views_mobilidade.api_alertas_categorizados, name='api_alertas_categorizados'),
+    path('mob/vias/', views_mobilidade.vias_engarrafadas_view, name='vias_engarrafadas'),
+    path('mob/alertas/', views_mobilidade.alertas_categorizados_view, name='alertas_categorizados'),
+    # Manter URL antiga para compatibilidade
     path('mobilidade/', views.mobilidade_dashboard_view, name='mobilidade_dashboard'),
 
     # ============================================

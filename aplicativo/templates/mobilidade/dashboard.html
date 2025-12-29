@@ -1,0 +1,715 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}Mobilidade - Waze | IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Fix scroll para pagina de mobilidade */
+    .map-wrapper {
+        position: absolute !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    :root {
+        --bg-primary: #0a0a0f;
+        --bg-secondary: #12121a;
+        --bg-card: #1a1a24;
+        --bg-surface: rgba(0, 0, 0, 0.4);
+        --border-color: rgba(0, 212, 255, 0.2);
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --text-muted: #6b6b6b;
+        --cyan: #00D4FF;
+        --green-neon: #00ff88;
+        --purple-neon: #b537f2;
+        --orange: #FF6B00;
+        --red: #FF0055;
+        --yellow: #FFB800;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.8rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .page-title i {
+        color: var(--cyan);
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-collect {
+        background: linear-gradient(135deg, var(--cyan), var(--purple-neon));
+        color: #000;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-family: 'Orbitron', monospace;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-collect:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+    }
+
+    .btn-collect:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--cyan), var(--purple-neon));
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .panel-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .nivel-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        font-family: 'Orbitron', monospace;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #000;
+        text-shadow: none;
+        margin: 0 auto;
+    }
+
+    .nivel-container {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .nivel-nome {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.2rem;
+        margin-top: 10px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .stat-card {
+        background: var(--bg-surface);
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .info-item {
+        background: var(--bg-surface);
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        font-size: 1.2rem;
+    }
+
+    .info-icon.jams { background: rgba(255, 0, 85, 0.2); color: var(--red); }
+    .info-icon.acidentes { background: rgba(255, 107, 0, 0.2); color: var(--orange); }
+    .info-icon.interdicoes { background: rgba(255, 184, 0, 0.2); color: var(--yellow); }
+    .info-icon.velocidade { background: rgba(0, 212, 255, 0.2); color: var(--cyan); }
+
+    .info-valor {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .info-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .razao-box {
+        background: var(--bg-surface);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .razao-box i {
+        color: var(--cyan);
+        margin-right: 8px;
+    }
+
+    .chart-container {
+        height: 250px;
+        margin-top: 20px;
+    }
+
+    .ultima-coleta {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-align: right;
+        margin-top: 15px;
+    }
+
+    .error-box {
+        background: rgba(255, 0, 85, 0.1);
+        border: 1px solid var(--red);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .error-box h3 {
+        color: var(--red);
+        margin-bottom: 10px;
+    }
+
+    .config-box {
+        background: rgba(255, 184, 0, 0.1);
+        border: 1px solid var(--yellow);
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    .config-box h4 {
+        color: var(--yellow);
+        margin-bottom: 10px;
+    }
+
+    .config-box code {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    /* Cores dos niveis (E1-E5 padrao COR Rio) */
+    .nivel-1 { background: var(--green-neon); }
+    .nivel-2 { background: var(--cyan); }
+    .nivel-3 { background: var(--yellow); }
+    .nivel-4 { background: var(--orange); }
+    .nivel-5 { background: var(--red); }
+
+    /* Links de navegacao */
+    .quick-link-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 20px rgba(0, 212, 255, 0.3);
+        border-color: var(--cyan);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-car"></i>
+            Mobilidade - Waze Traffic Feeds
+        </h1>
+        <div class="header-actions">
+            <button class="btn-collect" id="btnColetar" {% if not has_feed %}disabled{% endif %}>
+                <i class="fas fa-sync-alt"></i>
+                Coletar Agora
+            </button>
+        </div>
+    </div>
+
+    {% if erro %}
+    <div class="error-box">
+        <h3><i class="fas fa-exclamation-triangle"></i> Erro</h3>
+        <p>{{ erro }}</p>
+    </div>
+    {% else %}
+
+    {% if not has_feed %}
+    <div class="config-box">
+        <h4><i class="fas fa-cog"></i> Configuracao Necessaria</h4>
+        <p>O feed_id do Waze nao esta configurado para este cliente.</p>
+        <p>Para configurar, execute no Django shell:</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; margin-top: 10px;">
+python manage.py shell
+>>> from aplicativo.models import Cliente
+>>> cliente = Cliente.objects.get(cidade='{{ cliente.cidade }}')
+>>> cliente.config_apis['waze_feed_id'] = '18577882871'  # Rio de Janeiro
+>>> cliente.save()
+        </pre>
+    </div>
+    {% endif %}
+
+    <!-- Links de Navegacao Rapida -->
+    <div class="quick-links" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+        <a href="{% url 'vias_engarrafadas' %}" class="quick-link-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; text-decoration: none; display: flex; align-items: center; gap: 15px; transition: all 0.3s ease;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(255, 0, 85, 0.2); display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-traffic-light" style="font-size: 1.5rem; color: var(--red);"></i>
+            </div>
+            <div>
+                <div style="font-family: 'Orbitron', monospace; font-size: 1rem; color: var(--text-primary);">Vias Engarrafadas</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Ver detalhes por nivel</div>
+            </div>
+        </a>
+        <a href="{% url 'alertas_categorizados' %}" class="quick-link-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; text-decoration: none; display: flex; align-items: center; gap: 15px; transition: all 0.3s ease;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(255, 107, 0, 0.2); display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; color: var(--orange);"></i>
+            </div>
+            <div>
+                <div style="font-family: 'Orbitron', monospace; font-size: 1rem; color: var(--text-primary);">Alertas e Incidentes</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Acidentes, interdicoes, perigos</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- Card Nivel de Mobilidade -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Nivel de Mobilidade
+                </div>
+            </div>
+
+            <div class="nivel-container">
+                <div class="nivel-badge nivel-{{ nivel }}">
+                    E{{ nivel }}
+                </div>
+                <div class="nivel-nome" style="color: {{ nivel_cor }};">
+                    {{ nivel_nome }}
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" style="color: var(--red);">
+                        {% if ultimo_dado %}{{ ultimo_dado.jams_severos }}{% else %}--{% endif %}
+                    </div>
+                    <div class="stat-label">Jams Severos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: var(--orange);">
+                        {% if ultimo_dado %}{{ ultimo_dado.acidentes_maiores }}{% else %}--{% endif %}
+                    </div>
+                    <div class="stat-label">Acidentes Graves</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: var(--yellow);">
+                        {% if ultimo_dado %}{{ ultimo_dado.vias_interditadas }}{% else %}--{% endif %}
+                    </div>
+                    <div class="stat-label">Vias Interditadas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: var(--cyan);">
+                        {% if ultimo_dado %}{{ ultimo_dado.total_jams }}{% else %}--{% endif %}
+                    </div>
+                    <div class="stat-label">Total Jams</div>
+                </div>
+            </div>
+
+            <div class="razao-box">
+                <i class="fas fa-info-circle"></i>
+                {% if detalhes.razao %}
+                    {{ detalhes.razao }}
+                {% else %}
+                    Mobilidade normal - transito fluindo
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Card Estatisticas -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Estatisticas Atuais
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-icon jams">
+                        <i class="fas fa-traffic-light"></i>
+                    </div>
+                    <div class="info-valor">
+                        {% if ultimo_dado %}{{ ultimo_dado.total_jams }}{% else %}--{% endif %}
+                    </div>
+                    <div class="info-label">Congestionamentos</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon acidentes">
+                        <i class="fas fa-car-crash"></i>
+                    </div>
+                    <div class="info-valor">
+                        {% if ultimo_dado %}{{ ultimo_dado.acidentes_maiores|add:ultimo_dado.acidentes_menores }}{% else %}--{% endif %}
+                    </div>
+                    <div class="info-label">Acidentes</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon interdicoes">
+                        <i class="fas fa-road"></i>
+                    </div>
+                    <div class="info-valor">
+                        {% if ultimo_dado %}{{ ultimo_dado.vias_interditadas }}{% else %}--{% endif %}
+                    </div>
+                    <div class="info-label">Interdicoes</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon velocidade">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <div class="info-valor">
+                        {% if ultimo_dado and ultimo_dado.velocidade_media_kmh %}{{ ultimo_dado.velocidade_media_kmh|floatformat:0 }}{% else %}--{% endif %}
+                    </div>
+                    <div class="info-label">Vel. Media (km/h)</div>
+                </div>
+            </div>
+
+            {% if ultimo_dado %}
+            <div class="ultima-coleta">
+                <i class="fas fa-clock"></i>
+                Ultima coleta: {{ ultimo_dado.data_hora|date:"d/m H:i" }}
+                ({{ ultimo_dado.idade_minutos }} min atras)
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Card Grafico de Evolucao -->
+        <div class="panel" style="grid-column: span 2;">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-chart-line"></i>
+                    Evolucao (24h)
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartEvolucao"></canvas>
+            </div>
+        </div>
+
+        <!-- Card Detalhes -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-list-alt"></i>
+                    Detalhes Waze
+                </div>
+            </div>
+
+            {% if ultimo_dado %}
+            <table style="width: 100%; font-size: 0.9rem;">
+                <tr>
+                    <td style="padding: 8px 0; color: var(--text-muted);">Jams Severos (Level 4-5)</td>
+                    <td style="text-align: right; font-weight: bold; color: var(--red);">{{ ultimo_dado.jams_severos }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: var(--text-muted);">Jams Moderados (Level 2-3)</td>
+                    <td style="text-align: right; font-weight: bold; color: var(--orange);">{{ ultimo_dado.jams_moderados }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: var(--text-muted);">Jams Leves (Level 0-1)</td>
+                    <td style="text-align: right; font-weight: bold; color: var(--green-neon);">{{ ultimo_dado.jams_leves }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><hr style="border-color: var(--border-color); margin: 10px 0;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: var(--text-muted);">Acidentes Graves</td>
+                    <td style="text-align: right; font-weight: bold; color: var(--red);">{{ ultimo_dado.acidentes_maiores }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: var(--text-muted);">Acidentes Leves</td>
+                    <td style="text-align: right; font-weight: bold; color: var(--orange);">{{ ultimo_dado.acidentes_menores }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: var(--text-muted);">Perigos</td>
+                    <td style="text-align: right; font-weight: bold; color: var(--yellow);">{{ ultimo_dado.perigos }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><hr style="border-color: var(--border-color); margin: 10px 0;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: var(--text-muted);">Vias Interditadas</td>
+                    <td style="text-align: right; font-weight: bold; color: var(--red);">{{ ultimo_dado.vias_interditadas }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: var(--text-muted);">Obras</td>
+                    <td style="text-align: right; font-weight: bold; color: var(--yellow);">{{ ultimo_dado.obras }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><hr style="border-color: var(--border-color); margin: 10px 0;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: var(--text-muted);">Extensao Total Congestionamentos</td>
+                    <td style="text-align: right; font-weight: bold; color: var(--cyan);">{{ ultimo_dado.extensao_total_km }} km</td>
+                </tr>
+            </table>
+            {% else %}
+            <p style="color: var(--text-muted); text-align: center; padding: 40px 0;">
+                <i class="fas fa-database"></i><br>
+                Nenhum dado coletado ainda.<br>
+                Clique em "Coletar Agora" para iniciar.
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Card Regras -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-gavel"></i>
+                    Regras de Nivel
+                </div>
+            </div>
+
+            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                <p><strong>Criterios para Nivel de Mobilidade (E1-E5):</strong></p>
+
+                <p style="margin-top: 10px;"><strong>Congestionamentos Severos:</strong></p>
+                <ul style="margin-top: 5px; margin-left: 20px;">
+                    <li>E2: >= 5 jams severos</li>
+                    <li>E3: >= 10 jams severos</li>
+                    <li>E4: >= 15 jams severos</li>
+                    <li>E5: >= 20 jams severos</li>
+                </ul>
+
+                <p style="margin-top: 10px;"><strong>Acidentes Graves:</strong></p>
+                <ul style="margin-top: 5px; margin-left: 20px;">
+                    <li>E3: >= 1 acidente grave</li>
+                    <li>E4: >= 2 acidentes graves</li>
+                    <li>E5: >= 4 acidentes graves</li>
+                </ul>
+
+                <p style="margin-top: 10px;"><strong>Vias Interditadas:</strong></p>
+                <ul style="margin-top: 5px; margin-left: 20px;">
+                    <li>E3: >= 1 via interditada</li>
+                    <li>E4: >= 3 vias interditadas</li>
+                    <li>E5: >= 5 vias interditadas</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+{% if not erro %}
+// Dados do grafico
+const graficoData = {{ grafico_data|safe }};
+
+// Inicializar grafico
+let evolucaoChart = null;
+
+function initChart() {
+    const ctx = document.getElementById('chartEvolucao');
+    if (!ctx) return;
+
+    if (graficoData.length === 0) {
+        ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 60px 0;"><i class="fas fa-chart-line"></i><br>Sem dados historicos para exibir</p>';
+        return;
+    }
+
+    evolucaoChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: graficoData.map(d => d.timestamp),
+            datasets: [
+                {
+                    label: 'Jams Severos',
+                    data: graficoData.map(d => d.jams_severos),
+                    borderColor: '#FF0055',
+                    backgroundColor: 'rgba(255, 0, 85, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                },
+                {
+                    label: 'Jams Moderados',
+                    data: graficoData.map(d => d.jams_moderados),
+                    borderColor: '#FF6B00',
+                    backgroundColor: 'rgba(255, 107, 0, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                },
+                {
+                    label: 'Acidentes',
+                    data: graficoData.map(d => d.acidentes),
+                    borderColor: '#FFB800',
+                    backgroundColor: 'rgba(255, 184, 0, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index',
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#a0a0a0'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#6B7280' },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                },
+                x: {
+                    ticks: { color: '#6B7280' },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                }
+            }
+        }
+    });
+}
+
+// Botao coletar
+document.getElementById('btnColetar')?.addEventListener('click', async function() {
+    const btn = this;
+    const icon = btn.querySelector('i');
+
+    btn.disabled = true;
+    icon.classList.remove('fa-sync-alt');
+    icon.classList.add('fa-spinner', 'fa-spin');
+
+    try {
+        const response = await fetch('/integracity/api/mob/coletar/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert(`Coleta realizada com sucesso!\n\nJams: ${data.total_jams} (${data.jams_severos} severos)\nNivel: E${data.nivel} (${data.nivel_nome})`);
+            location.reload();
+        } else {
+            alert('Erro na coleta: ' + (data.error || 'Erro desconhecido'));
+        }
+    } catch (e) {
+        alert('Erro na coleta: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        icon.classList.remove('fa-spinner', 'fa-spin');
+        icon.classList.add('fa-sync-alt');
+    }
+});
+
+// Auto-refresh a cada 10 minutos
+setInterval(() => {
+    location.reload();
+}, 10 * 60 * 1000);
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', initChart);
+{% endif %}
+</script>
+{% endblock %}

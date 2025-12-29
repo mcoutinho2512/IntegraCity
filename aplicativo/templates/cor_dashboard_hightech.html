@@ -531,18 +531,143 @@
                     </div>
                 </div>
 
-                <!-- Waze -->
-                <div class="layer-item">
-                    <label class="layer-checkbox">
-                        <input type="checkbox" id="layerWaze" onchange="toggleMapLayer('waze')">
-                        <span class="checkmark"></span>
-                    </label>
-                    <div class="layer-icon" style="background: rgba(0, 212, 255, 0.2); color: #00d4ff;">
-                        <i class="fab fa-waze"></i>
+                <!-- Waze - Com Submenu de Filtros -->
+                <div class="layer-item-group">
+                    <div class="layer-item has-submenu" onclick="toggleWazeSubmenu(event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerWaze" onchange="toggleAllWaze()">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(0, 212, 255, 0.2); color: #00d4ff;">
+                            <i class="fab fa-waze"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Waze</span>
+                            <span class="layer-count" id="countWaze">--</span>
+                        </div>
+                        <div class="submenu-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
                     </div>
-                    <div class="layer-info">
-                        <span class="layer-name">Waze</span>
-                        <span class="layer-count" id="countWaze">--</span>
+
+                    <!-- Submenu Waze -->
+                    <div class="layer-submenu" id="wazeSubmenu">
+                        <!-- Congestionamentos -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerWazeCongestionamentos" onchange="toggleWazeFilter('congestionamentos')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(255, 165, 0, 0.2); color: #ffa500; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-traffic-light" style="font-size: 12px;"></i>
+                            </div>
+                            <span class="submenu-label">Congestionamentos</span>
+                            <span class="submenu-badge" id="countWazeCongestionamentos">--</span>
+                        </div>
+
+                        <!-- Vias Interditadas -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerWazeInterdicoes" onchange="toggleWazeFilter('interdicoes')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(255, 0, 85, 0.2); color: #FF0055; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-ban" style="font-size: 12px;"></i>
+                            </div>
+                            <span class="submenu-label">Vias Interditadas</span>
+                            <span class="submenu-badge" id="countWazeInterdicoes">--</span>
+                        </div>
+
+                        <!-- Eventos Especiais -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerWazeEventos" onchange="toggleWazeFilter('eventos')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(156, 39, 176, 0.2); color: #9C27B0; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-calendar-alt" style="font-size: 12px;"></i>
+                            </div>
+                            <span class="submenu-label">Eventos</span>
+                            <span class="submenu-badge" id="countWazeEventos">--</span>
+                        </div>
+
+                        <!-- Acidentes -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerWazeAcidentes" onchange="toggleWazeFilter('acidentes')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(255, 0, 85, 0.2); color: #FF0055; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-car-crash" style="font-size: 12px;"></i>
+                            </div>
+                            <span class="submenu-label">Acidentes</span>
+                            <span class="submenu-badge" id="countWazeAcidentes">--</span>
+                        </div>
+
+                        <!-- Buracos -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerWazeBuracos" onchange="toggleWazeFilter('buracos')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(139, 69, 19, 0.2); color: #8B4513; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-road-circle-exclamation" style="font-size: 12px;"></i>
+                            </div>
+                            <span class="submenu-label">Buracos</span>
+                            <span class="submenu-badge" id="countWazeBuracos">--</span>
+                        </div>
+
+                        <!-- Perigos na Via -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerWazePerigos" onchange="toggleWazeFilter('perigos')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(255, 193, 7, 0.2); color: #FFC107; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-triangle-exclamation" style="font-size: 12px;"></i>
+                            </div>
+                            <span class="submenu-label">Perigos</span>
+                            <span class="submenu-badge" id="countWazePerigos">--</span>
+                        </div>
+
+                        <!-- Carro Parado -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerWazeCarroParado" onchange="toggleWazeFilter('carroParado')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(100, 100, 100, 0.2); color: #888; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-car-on" style="font-size: 12px;"></i>
+                            </div>
+                            <span class="submenu-label">Carro Parado</span>
+                            <span class="submenu-badge" id="countWazeCarroParado">--</span>
+                        </div>
+
+                        <!-- Policia -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerWazePolicia" onchange="toggleWazeFilter('policia')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(0, 123, 255, 0.2); color: #007bff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-user-shield" style="font-size: 12px;"></i>
+                            </div>
+                            <span class="submenu-label">Policia</span>
+                            <span class="submenu-badge" id="countWazePolicia">--</span>
+                        </div>
+
+                        <!-- Outros Alertas -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerWazeOutros" onchange="toggleWazeFilter('outros')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(128, 128, 128, 0.2); color: #808080; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-circle-info" style="font-size: 12px;"></i>
+                            </div>
+                            <span class="submenu-label">Outros</span>
+                            <span class="submenu-badge" id="countWazeOutros">--</span>
+                        </div>
                     </div>
                 </div>
 
@@ -746,6 +871,15 @@
         metro: L.layerGroup(),
         brt: L.layerGroup(),
         waze: L.layerGroup(),
+        wazeCongestionamentos: L.layerGroup(),
+        wazeInterdicoes: L.layerGroup(),
+        wazeEventos: L.layerGroup(),
+        wazeAcidentes: L.layerGroup(),
+        wazeBuracos: L.layerGroup(),
+        wazePerigos: L.layerGroup(),
+        wazeCarroParado: L.layerGroup(),
+        wazePolicia: L.layerGroup(),
+        wazeOutros: L.layerGroup(),
         bolsoes: L.layerGroup(),
         ocorrencias: L.layerGroup()
     };
@@ -768,6 +902,19 @@
     var cameraFilters = {
         fixas: true,
         moveis: true
+    };
+
+    // Estado dos filtros de Waze
+    var wazeFilters = {
+        congestionamentos: true,
+        interdicoes: true,
+        eventos: true,
+        acidentes: true,
+        buracos: true,
+        perigos: true,
+        carroParado: true,
+        policia: true,
+        outros: true
     };
 
     // Icones customizados para cada tipo
@@ -998,6 +1145,419 @@
         if (el) el.textContent = value;
     }
 
+    // ============================================
+    // SUBMENU DE WAZE
+    // ============================================
+
+    // Toggle do submenu de Waze
+    function toggleWazeSubmenu(event) {
+        if (event) event.stopPropagation();
+
+        var layerItems = document.querySelectorAll('.layer-item.has-submenu');
+        var submenu = document.getElementById('wazeSubmenu');
+        var wazeLayerItem = null;
+
+        // Encontrar o item correto do Waze
+        layerItems.forEach(function(item) {
+            if (item.querySelector('#layerWaze')) {
+                wazeLayerItem = item;
+            }
+        });
+
+        if (wazeLayerItem && submenu) {
+            wazeLayerItem.classList.toggle('expanded');
+            submenu.classList.toggle('expanded');
+        }
+    }
+
+    // Toggle todas as camadas Waze (checkbox principal)
+    function toggleAllWaze() {
+        var mainCheckbox = document.getElementById('layerWaze');
+        var isChecked = mainCheckbox ? mainCheckbox.checked : false;
+        var layerItem = mainCheckbox ? mainCheckbox.closest('.layer-item') : null;
+
+        // Atualizar todos os checkboxes filhos
+        var tipos = ['Congestionamentos', 'Interdicoes', 'Eventos', 'Acidentes', 'Buracos', 'Perigos', 'CarroParado', 'Policia', 'Outros'];
+        tipos.forEach(function(tipo) {
+            var checkbox = document.getElementById('layerWaze' + tipo);
+            if (checkbox) checkbox.checked = isChecked;
+            // Converter para camelCase para o filtro
+            var filterKey = tipo.charAt(0).toLowerCase() + tipo.slice(1);
+            wazeFilters[filterKey] = isChecked;
+        });
+
+        if (isChecked) {
+            if (layerItem) layerItem.classList.add('active');
+
+            // Carregar dados se nao tiver
+            if (!layerDataCache.waze) {
+                loadWazeCompleto();
+            } else {
+                // Renderizar com filtros atuais
+                renderWazeCompleto(layerDataCache.waze);
+            }
+
+            // Adicionar camadas ao mapa
+            if (wazeFilters.congestionamentos) mapLayers.wazeCongestionamentos.addTo(map);
+            if (wazeFilters.interdicoes) mapLayers.wazeInterdicoes.addTo(map);
+            if (wazeFilters.eventos) mapLayers.wazeEventos.addTo(map);
+            if (wazeFilters.acidentes) mapLayers.wazeAcidentes.addTo(map);
+            if (wazeFilters.buracos) mapLayers.wazeBuracos.addTo(map);
+            if (wazeFilters.perigos) mapLayers.wazePerigos.addTo(map);
+            if (wazeFilters.carroParado) mapLayers.wazeCarroParado.addTo(map);
+            if (wazeFilters.policia) mapLayers.wazePolicia.addTo(map);
+            if (wazeFilters.outros) mapLayers.wazeOutros.addTo(map);
+
+            showToast('Camada Waze ativada', 'success');
+        } else {
+            if (layerItem) layerItem.classList.remove('active');
+            map.removeLayer(mapLayers.wazeCongestionamentos);
+            map.removeLayer(mapLayers.wazeInterdicoes);
+            map.removeLayer(mapLayers.wazeEventos);
+            map.removeLayer(mapLayers.wazeAcidentes);
+            map.removeLayer(mapLayers.wazeBuracos);
+            map.removeLayer(mapLayers.wazePerigos);
+            map.removeLayer(mapLayers.wazeCarroParado);
+            map.removeLayer(mapLayers.wazePolicia);
+            map.removeLayer(mapLayers.wazeOutros);
+
+            showToast('Camada Waze desativada', 'info');
+        }
+    }
+
+    // Toggle de filtro individual do Waze
+    function toggleWazeFilter(tipo) {
+        var tipoCapitalized = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+        var checkbox = document.getElementById('layerWaze' + tipoCapitalized);
+        var isChecked = checkbox ? checkbox.checked : false;
+
+        wazeFilters[tipo] = isChecked;
+
+        // Atualizar checkbox principal
+        var mainCheckbox = document.getElementById('layerWaze');
+        if (mainCheckbox) {
+            mainCheckbox.checked = wazeFilters.congestionamentos || wazeFilters.interdicoes ||
+                                   wazeFilters.eventos || wazeFilters.acidentes || wazeFilters.buracos ||
+                                   wazeFilters.perigos || wazeFilters.carroParado || wazeFilters.policia ||
+                                   wazeFilters.outros;
+        }
+
+        // Adicionar/remover camada do mapa
+        var layerName = 'waze' + tipoCapitalized;
+        if (isChecked) {
+            if (!map.hasLayer(mapLayers[layerName])) {
+                mapLayers[layerName].addTo(map);
+            }
+        } else {
+            if (map.hasLayer(mapLayers[layerName])) {
+                map.removeLayer(mapLayers[layerName]);
+            }
+        }
+
+        // Se nao tem dados, carregar
+        if (!layerDataCache.waze && isChecked) {
+            loadWazeCompleto();
+        }
+    }
+
+    // Carregar dados completos do Waze
+    function loadWazeCompleto() {
+        var url = baseUrl + 'integracity/api/mob/waze-completo/';
+        showToast('Carregando dados Waze...', 'info');
+        console.log('Carregando Waze completo de:', url);
+
+        fetch(url)
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('Dados Waze recebidos:', data);
+                layerDataCache.waze = data;
+                renderWazeCompleto(data);
+                showToast('Dados Waze carregados', 'success');
+            })
+            .catch(function(error) {
+                console.error('Erro ao carregar Waze:', error);
+                showToast('Erro ao carregar Waze: ' + error.message, 'error');
+            });
+    }
+
+    // Renderizar todos os dados do Waze
+    function renderWazeCompleto(data) {
+        // Limpar camadas existentes
+        mapLayers.wazeCongestionamentos.clearLayers();
+        mapLayers.wazeInterdicoes.clearLayers();
+        mapLayers.wazeEventos.clearLayers();
+        mapLayers.wazeAcidentes.clearLayers();
+        mapLayers.wazeBuracos.clearLayers();
+        mapLayers.wazePerigos.clearLayers();
+        mapLayers.wazeCarroParado.clearLayers();
+        mapLayers.wazePolicia.clearLayers();
+        mapLayers.wazeOutros.clearLayers();
+        mapLayers.waze.clearLayers();
+
+        // Cores por nivel de congestionamento
+        var jamColors = {
+            1: '#ffff00',  // Amarelo - leve
+            2: '#ffa500',  // Laranja - moderado
+            3: '#ff6600',  // Laranja escuro - medio
+            4: '#ff0000',  // Vermelho - severo
+            5: '#990000'   // Vermelho escuro - parado
+        };
+
+        // 1. CONGESTIONAMENTOS
+        var congestionamentos = data.congestionamentos || [];
+        congestionamentos.forEach(function(jam) {
+            if (!jam.coordinates || jam.coordinates.length < 2) return;
+
+            var latlngs = jam.coordinates.map(function(c) {
+                return [c[1], c[0]];  // [lat, lng] formato Leaflet
+            });
+
+            var color = jamColors[jam.level] || '#ffa500';
+
+            // Polyline para mostrar extensao
+            var polyline = L.polyline(latlngs, {
+                color: color,
+                weight: 6,
+                opacity: 0.8
+            });
+
+            var popupContent = '<div style="font-family: Rajdhani, sans-serif;">' +
+                '<div style="font-weight: 600; color: ' + color + '; margin-bottom: 5px;">' +
+                '<i class="fas fa-car-side"></i> Congestionamento</div>' +
+                '<div><strong>Via:</strong> ' + (jam.street || 'Via nao identificada') + '</div>' +
+                '<div><strong>Nivel:</strong> ' + jam.level + '/5</div>' +
+                '<div><strong>Velocidade:</strong> ' + jam.speed + ' km/h</div>' +
+                '<div><strong>Extensao:</strong> ' + Math.round(jam.length / 1000 * 10) / 10 + ' km</div>' +
+                '</div>';
+
+            polyline.bindPopup(popupContent);
+            mapLayers.wazeCongestionamentos.addLayer(polyline);
+            mapLayers.waze.addLayer(polyline);
+
+            // Marcador circular no ponto medio da linha
+            var midIndex = Math.floor(latlngs.length / 2);
+            var midPoint = latlngs[midIndex];
+            var marker = L.marker(midPoint, {
+                icon: L.divIcon({
+                    className: 'waze-congestionamento-marker',
+                    html: '<div style="background: ' + color + '; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"><i class="fas fa-car-side" style="color: white; font-size: 12px;"></i></div>',
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                })
+            });
+            marker.bindPopup(popupContent);
+            mapLayers.wazeCongestionamentos.addLayer(marker);
+            mapLayers.waze.addLayer(marker);
+        });
+
+        // 2. INTERDICOES
+        var interdicoes = data.interdicoes || [];
+        interdicoes.forEach(function(item) {
+            if (!item.coordinates || item.coordinates.length < 2) return;
+
+            var latlngs = item.coordinates.map(function(c) {
+                return [c[1], c[0]];
+            });
+
+            var colorInterdicao = '#FF0055';
+
+            // Polyline para mostrar extensao
+            var polyline = L.polyline(latlngs, {
+                color: colorInterdicao,
+                weight: 8,
+                opacity: 0.9,
+                dashArray: '10, 10'
+            });
+
+            var popupContent = '<div style="font-family: Rajdhani, sans-serif;">' +
+                '<div style="font-weight: 600; color: ' + colorInterdicao + '; margin-bottom: 5px;">' +
+                '<i class="fas fa-road-barrier"></i> Via Interditada</div>' +
+                '<div><strong>Motivo:</strong> ' + (item.reason || item.street || 'Nao informado') + '</div>' +
+                '<div><strong>Extensao:</strong> ' + Math.round(item.length / 1000 * 10) / 10 + ' km</div>' +
+                '</div>';
+
+            polyline.bindPopup(popupContent);
+            mapLayers.wazeInterdicoes.addLayer(polyline);
+            mapLayers.waze.addLayer(polyline);
+
+            // Marcador circular no ponto medio da linha
+            var midIndex = Math.floor(latlngs.length / 2);
+            var midPoint = latlngs[midIndex];
+            var marker = L.marker(midPoint, {
+                icon: L.divIcon({
+                    className: 'waze-interdicao-marker',
+                    html: '<div style="background: ' + colorInterdicao + '; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"><i class="fas fa-road-barrier" style="color: white; font-size: 12px;"></i></div>',
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                })
+            });
+            marker.bindPopup(popupContent);
+            mapLayers.wazeInterdicoes.addLayer(marker);
+            mapLayers.waze.addLayer(marker);
+        });
+
+        // 3. EVENTOS
+        var eventos = data.eventos || [];
+        eventos.forEach(function(item) {
+            if (!item.coordinates || item.coordinates.length < 2) return;
+
+            var latlngs = item.coordinates.map(function(c) {
+                return [c[1], c[0]];
+            });
+
+            var colorEvento = '#9C27B0';
+
+            // Polyline para mostrar extensao
+            var polyline = L.polyline(latlngs, {
+                color: colorEvento,
+                weight: 6,
+                opacity: 0.8,
+                dashArray: '5, 10'
+            });
+
+            var popupContent = '<div style="font-family: Rajdhani, sans-serif;">' +
+                '<div style="font-weight: 600; color: ' + colorEvento + '; margin-bottom: 5px;">' +
+                '<i class="fas fa-calendar-alt"></i> Evento</div>' +
+                '<div><strong>Descricao:</strong> ' + (item.street || 'Evento especial') + '</div>' +
+                '<div><strong>Extensao:</strong> ' + Math.round(item.length / 1000 * 10) / 10 + ' km</div>' +
+                '</div>';
+
+            polyline.bindPopup(popupContent);
+            mapLayers.wazeEventos.addLayer(polyline);
+            mapLayers.waze.addLayer(polyline);
+
+            // Marcador circular no ponto medio da linha
+            var midIndex = Math.floor(latlngs.length / 2);
+            var midPoint = latlngs[midIndex];
+            var marker = L.marker(midPoint, {
+                icon: L.divIcon({
+                    className: 'waze-evento-marker',
+                    html: '<div style="background: ' + colorEvento + '; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"><i class="fas fa-calendar-alt" style="color: white; font-size: 12px;"></i></div>',
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                })
+            });
+            marker.bindPopup(popupContent);
+            mapLayers.wazeEventos.addLayer(marker);
+            mapLayers.waze.addLayer(marker);
+        });
+
+        // 4. ALERTAS (pontos) - separados por tipo
+        var alertas = data.alertas || [];
+        var alertIcons = {
+            'ACCIDENT': { icon: 'fa-car-crash', color: '#FF0055', layer: 'wazeAcidentes' },
+            'HAZARD': { icon: 'fa-exclamation-triangle', color: '#FFC107', layer: 'wazePerigos' },
+            'ROAD_CLOSED': { icon: 'fa-road-barrier', color: '#FF5722', layer: 'wazeInterdicoes' },
+            'JAM': { icon: 'fa-traffic-light', color: '#ff6600', layer: 'wazeCongestionamentos' },
+            'POLICE': { icon: 'fa-shield-halved', color: '#007bff', layer: 'wazePolicia' },
+            'CONSTRUCTION': { icon: 'fa-hard-hat', color: '#FF9800', layer: 'wazeOutros' }
+        };
+
+        // Contadores por tipo
+        var contadores = {
+            acidentes: 0,
+            buracos: 0,
+            perigos: 0,
+            carroParado: 0,
+            policia: 0,
+            outros: 0
+        };
+
+        alertas.forEach(function(alerta) {
+            if (!alerta.lat || !alerta.lon) return;
+
+            // Determinar tipo e camada
+            var tipo = alerta.type || '';
+            var subtipo = alerta.subtype || '';
+            var layerName = 'wazeOutros';
+            var config = { icon: 'fa-info-circle', color: '#808080' };
+            var tipoTraduzido = 'Alerta';
+
+            // Classificar por tipo
+            if (tipo === 'ACCIDENT') {
+                layerName = 'wazeAcidentes';
+                config = { icon: 'fa-car-crash', color: '#FF0055' };
+                tipoTraduzido = 'Acidente';
+                contadores.acidentes++;
+            } else if (tipo === 'HAZARD') {
+                // Sub-classificar hazards
+                if (subtipo.includes('POT_HOLE') || subtipo.includes('POTHOLE')) {
+                    layerName = 'wazeBuracos';
+                    config = { icon: 'fa-circle-exclamation', color: '#8B4513' };
+                    tipoTraduzido = 'Buraco';
+                    contadores.buracos++;
+                } else if (subtipo.includes('CAR_STOPPED') || subtipo.includes('VEHICLE')) {
+                    layerName = 'wazeCarroParado';
+                    config = { icon: 'fa-car', color: '#888888' };
+                    tipoTraduzido = 'Carro Parado';
+                    contadores.carroParado++;
+                } else {
+                    layerName = 'wazePerigos';
+                    config = { icon: 'fa-exclamation-triangle', color: '#FFC107' };
+                    tipoTraduzido = 'Perigo';
+                    contadores.perigos++;
+                }
+            } else if (tipo === 'POLICE') {
+                layerName = 'wazePolicia';
+                config = { icon: 'fa-shield-halved', color: '#007bff' };
+                tipoTraduzido = 'Policia';
+                contadores.policia++;
+            } else {
+                contadores.outros++;
+            }
+
+            var marker = L.marker([alerta.lat, alerta.lon], {
+                icon: L.divIcon({
+                    className: 'waze-alert-marker',
+                    html: '<div style="background: ' + config.color + '; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"><i class="fas ' + config.icon + '" style="color: white; font-size: 12px;"></i></div>',
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                })
+            });
+
+            var popupContent = '<div style="font-family: Rajdhani, sans-serif;">' +
+                '<div style="font-weight: 600; color: ' + config.color + '; margin-bottom: 5px;">' +
+                '<i class="fas ' + config.icon + '"></i> ' + tipoTraduzido + '</div>' +
+                '<div><strong>Local:</strong> ' + (alerta.street || 'Nao identificado') + '</div>' +
+                (subtipo ? '<div><strong>Detalhe:</strong> ' + subtipo.replace(/_/g, ' ') + '</div>' : '') +
+                '<div><strong>Confiabilidade:</strong> ' + (alerta.reliability || 0) + '%</div>' +
+                '</div>';
+
+            marker.bindPopup(popupContent);
+            mapLayers[layerName].addLayer(marker);
+            mapLayers.waze.addLayer(marker);
+        });
+
+        // Atualizar contadores
+        var stats = data.estatisticas || {};
+        var totalAlertas = contadores.acidentes + contadores.buracos + contadores.perigos +
+                          contadores.carroParado + contadores.policia + contadores.outros;
+
+        updateElement('countWaze', (stats.total_congestionamentos || 0) + (stats.total_interdicoes || 0) +
+                                   (stats.total_eventos || 0) + totalAlertas);
+        updateElement('countWazeCongestionamentos', stats.total_congestionamentos || 0);
+        updateElement('countWazeInterdicoes', stats.total_interdicoes || 0);
+        updateElement('countWazeEventos', stats.total_eventos || 0);
+        updateElement('countWazeAcidentes', contadores.acidentes);
+        updateElement('countWazeBuracos', contadores.buracos);
+        updateElement('countWazePerigos', contadores.perigos);
+        updateElement('countWazeCarroParado', contadores.carroParado);
+        updateElement('countWazePolicia', contadores.policia);
+        updateElement('countWazeOutros', contadores.outros);
+
+        console.log('Waze renderizado - Cong: ' + (stats.total_congestionamentos || 0) +
+                    ', Inter: ' + (stats.total_interdicoes || 0) +
+                    ', Eventos: ' + (stats.total_eventos || 0) +
+                    ', Acidentes: ' + contadores.acidentes +
+                    ', Buracos: ' + contadores.buracos +
+                    ', Perigos: ' + contadores.perigos);
+    }
+
     // Toggle da sidebar de camadas
     function toggleLayersSidebar() {
         var sidebar = document.getElementById('layersSidebar');
@@ -1058,6 +1618,12 @@
     console.log('Base URL para APIs:', baseUrl);
 
     function loadLayerData(layerName) {
+        // Waze usa API e renderizacao especiais (via loadWazeCompleto)
+        if (layerName === 'waze') {
+            loadWazeCompleto();
+            return;
+        }
+
         var apiUrls = {
             escolas: baseUrl + 'integracity/api/escolas/',
             hospitais: baseUrl + 'integracity/api/hospitais/',
@@ -1066,7 +1632,6 @@
             cameras: baseUrl + 'integracity/api/cameras/',
             metro: baseUrl + 'integracity/api/metro/',
             brt: baseUrl + 'integracity/api/brt/',
-            waze: baseUrl + 'integracity/api/waze/',
             bolsoes: baseUrl + 'integracity/api/bolsoes/',
             ocorrencias: baseUrl + 'integracity/api/ocorrencias/mapa/'
         };
@@ -1245,6 +1810,68 @@
             '</div>';
     }
 
+    // Renderizar congestionamentos do Waze como polylines
+    function renderWazeJams(data) {
+        // Limpar camada existente
+        mapLayers.waze.clearLayers();
+
+        var jams = data.jams || data.data || data;
+        if (!Array.isArray(jams)) {
+            console.warn('Dados Waze invalidos:', data);
+            return;
+        }
+
+        console.log('Renderizando ' + jams.length + ' congestionamentos Waze');
+
+        // Cores por nivel de congestionamento
+        var jamColors = {
+            1: '#ffff00',  // Amarelo - leve
+            2: '#ffa500',  // Laranja - moderado
+            3: '#ff6600',  // Laranja escuro - medio
+            4: '#ff0000',  // Vermelho - severo
+            5: '#990000'   // Vermelho escuro - parado
+        };
+
+        jams.forEach(function(jam) {
+            if (!jam.coordinates || jam.coordinates.length < 2) {
+                return;
+            }
+
+            // Converter coordenadas de [x, y] para [lat, lng]
+            var latlngs = jam.coordinates.map(function(coord) {
+                return [coord[1], coord[0]]; // Waze usa [lon, lat], Leaflet usa [lat, lng]
+            });
+
+            var level = jam.level || 3;
+            var color = jamColors[level] || '#ff6600';
+            var weight = level >= 4 ? 6 : 4;
+
+            var polyline = L.polyline(latlngs, {
+                color: color,
+                weight: weight,
+                opacity: 0.8,
+                lineCap: 'round',
+                lineJoin: 'round'
+            });
+
+            // Popup com informacoes do congestionamento
+            var popupContent = '<div style="font-family: Rajdhani, sans-serif; min-width: 200px;">' +
+                '<h4 style="margin: 0 0 8px 0; color: ' + color + '; font-family: Orbitron, monospace;">' +
+                '<i class="fab fa-waze"></i> Congestionamento</h4>' +
+                '<p><strong>Via:</strong> ' + (jam.street || 'Via nao identificada') + '</p>' +
+                '<p><strong>Nivel:</strong> ' + level + '/5</p>' +
+                '<p><strong>Velocidade:</strong> ' + (jam.speed ? jam.speed.toFixed(1) + ' km/h' : '--') + '</p>' +
+                '<p><strong>Extensao:</strong> ' + (jam.length ? (jam.length/1000).toFixed(1) + ' km' : '--') + '</p>' +
+                '<p><strong>Atraso:</strong> ' + (jam.delay ? Math.round(jam.delay/60) + ' min' : '--') + '</p>' +
+                '</div>';
+
+            polyline.bindPopup(popupContent);
+            mapLayers.waze.addLayer(polyline);
+        });
+
+        console.log('Waze: ' + mapLayers.waze.getLayers().length + ' polylines renderizadas');
+    }
+
     // Renderizar marcadores de ocorrencias com cores por prioridade
     function renderOcorrenciasMarkers(data) {
         // Limpar camada existente
@@ -1329,7 +1956,7 @@
             count = data.total;
         } else {
             // Tentar contar de diferentes estruturas
-            var lists = ['data', 'results', 'features', 'alerts', 'escolas', 'hospitais',
+            var lists = ['data', 'results', 'features', 'alerts', 'jams', 'escolas', 'hospitais',
                          'sirenes', 'cameras', 'estacoes', 'linhas'];
             for (var i = 0; i < lists.length; i++) {
                 if (data[lists[i]] && Array.isArray(data[lists[i]])) {
