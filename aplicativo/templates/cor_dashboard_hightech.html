@@ -94,18 +94,18 @@
 <div class="compact-card" onclick="toggleCard(this)">
     <div class="card-header">
         <div class="card-header-left">
-            <div class="card-icon cyan">
+            <div class="card-icon green">
                 <i class="fas fa-cloud-sun"></i>
             </div>
             <div class="card-main-info">
-                <div class="card-value cyan">{{ meteo_nivel|default:"N0" }}</div>
+                <div class="card-value green">E{{ meteo_nivel|default:"1" }}</div>
                 <div class="card-label">Meteorologia</div>
             </div>
         </div>
         <div class="card-header-right">
-            <div class="status-badge stable">
+            <div class="status-badge normal">
                 <div class="status-dot"></div>
-                {{ meteo_status|default:"ESTAVEL" }}
+                {{ meteo_status|default:"NORMAL" }}
             </div>
             <i class="fas fa-chevron-down expand-icon"></i>
         </div>
@@ -184,18 +184,18 @@
 <div class="compact-card" onclick="toggleCard(this)">
     <div class="card-header">
         <div class="card-header-left">
-            <div class="card-icon purple">
+            <div class="card-icon green">
                 <i class="fas fa-video"></i>
             </div>
             <div class="card-main-info">
-                <div class="card-value cyan">{{ cameras_online|default:"0" }}</div>
+                <div class="card-value green">{{ cameras_total|default:"0" }}</div>
                 <div class="card-label">Cameras<br>Ativas</div>
             </div>
         </div>
         <div class="card-header-right">
             <div class="status-badge normal">
                 <div class="status-dot"></div>
-                ONLINE
+                ATIVAS
             </div>
             <i class="fas fa-chevron-down expand-icon"></i>
         </div>
@@ -203,20 +203,20 @@
     <div class="card-body">
         <div class="card-content">
             <div class="card-detail-row">
-                <span class="detail-label">Online</span>
-                <span class="detail-value" style="color: var(--green-neon);">{{ cameras_online|default:"0" }}</span>
+                <span class="detail-label">Fixas</span>
+                <span class="detail-value" style="color: var(--cyan);">{{ cameras_fixas|default:"0" }}</span>
             </div>
             <div class="card-detail-row">
-                <span class="detail-label">Offline</span>
-                <span class="detail-value" style="color: var(--red-alert);">{{ cameras_offline|default:"0" }}</span>
+                <span class="detail-label">Moveis</span>
+                <span class="detail-value" style="color: var(--green-neon);">{{ cameras_moveis|default:"0" }}</span>
             </div>
             <div class="card-detail-row">
                 <span class="detail-label">Total</span>
-                <span class="detail-value">{{ cameras_total|default:"0" }}</span>
+                <span class="detail-value" style="color: var(--purple-neon);">{{ cameras_total|default:"0" }}</span>
             </div>
             <div class="live-indicator">
                 <div class="live-dot"></div>
-                Streaming ativo
+                Fonte: TIXXI
             </div>
         </div>
     </div>
@@ -226,16 +226,16 @@
 <div class="compact-card" onclick="toggleCard(this)">
     <div class="card-header">
         <div class="card-header-left">
-            <div class="card-icon cyan">
+            <div class="card-icon green">
                 <i class="fas fa-calendar-alt"></i>
             </div>
             <div class="card-main-info">
-                <div class="card-value cyan">{{ eventos_count|default:"0" }}</div>
+                <div class="card-value green">{{ eventos_count|default:"0" }}</div>
                 <div class="card-label">Eventos<br>Hoje</div>
             </div>
         </div>
         <div class="card-header-right">
-            <div class="status-badge stable">
+            <div class="status-badge normal">
                 <div class="status-dot"></div>
                 HOJE
             </div>

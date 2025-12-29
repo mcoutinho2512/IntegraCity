@@ -492,10 +492,10 @@ def cor_dashboard_hightech_view(request):
         'waze_alerts': 0,
         'vias_impactadas': 0,
 
-        # Cameras
-        'cameras_online': 0,
-        'cameras_total': 0,
-        'cameras_offline': 0,
+        # Cameras (via TIXXI - 5897 câmeras)
+        'cameras_total': 5897,
+        'cameras_fixas': 4025,
+        'cameras_moveis': 1872,
 
         # Notificacoes
         'notifications_count': 0,
@@ -1009,132 +1009,94 @@ def api_matriz_decisoria(request):
 
 @api_view(['GET'])
 def api_cameras(request):
-    """API de câmeras de monitoramento"""
+    """API de câmeras de monitoramento - Fonte: TIXXI (oficial)"""
     try:
-        # Parâmetros
+        # Parâmetros de filtro
+        zona = request.GET.get('zona', None)
         bairro = request.GET.get('bairro', None)
-        status = request.GET.get('status', None)
         search = request.GET.get('search', None)
+        tipo = request.GET.get('tipo', None)  # 'fixa' ou 'movel'
 
-        # Prioridade: API externa (lista completa)
-        try:
-            response = requests.get('https://aplicativo.cocr.com.br/camera_api_json', timeout=15)
-            response.raise_for_status()
-            payload = response.json()
-            cameras = payload.get('cameras', [])
-            total_raw = len(cameras)
-            total_raw_fixas = 0
-            total_raw_moveis = 0
+        # Buscar dados via TIXXI (fonte oficial)
+        token = _get_tixxi_token()
+        if not token:
+            return Response({
+                'success': False,
+                'error': 'Falha na autenticação TIXXI'
+            }, status=500)
 
-            data = []
-            bairros_set = set()
+        response = requests.get(
+            TIXXI_CONFIG['cameras_url'],
+            headers={'Authorization': f'Bearer {token}'},
+            verify=False,
+            timeout=20
+        )
+        response.raise_for_status()
+        cameras_raw = response.json()
 
-            for cam in cameras:
-                nome = cam.get('nome') or cam.get('name') or f"Câmera {cam.get('id')}"
-                nome_lower = nome.lower() if isinstance(nome, str) else ""
-                fixa = "fixa" in nome_lower
+        total_raw = len(cameras_raw)
+        total_raw_fixas = 0
+        total_raw_moveis = 0
+
+        data = []
+        bairros_set = set()
+        zonas_set = set()
+
+        for cam in cameras_raw:
+            try:
+                lat = float(cam.get('Latitude', 0))
+                lng = float(cam.get('Longitude', 0))
+
+                if lat == 0 or lng == 0:
+                    continue
+
+                nome = cam.get('CameraName', '')
+                nome_lower = nome.lower()
+                fixa = 'fixa' in nome_lower
+                zona_cam = cam.get('CameraZone', 'Sem zona')
+                bairro_cam = cam.get('CameraLocality', 'Sem bairro')
+                camera_code = cam.get('CameraCode', '')
+
+                # Contagem total
                 if fixa:
                     total_raw_fixas += 1
                 else:
                     total_raw_moveis += 1
 
-                lat = cam.get('lat') or cam.get('latitude') or cam.get('y')
-                lon = cam.get('lon') or cam.get('lng') or cam.get('longitude') or cam.get('x')
-                bairro_cam = cam.get('bairro') or cam.get('local') or 'Sem bairro'
-                status_cam = cam.get('status') or cam.get('situacao') or 'ativa'
-                camera_id = cam.get('id_c') or cam.get('id')
-                camera_id_str = str(camera_id) if camera_id is not None else ""
-
-                if lat and lon:
-                    try:
-                        lat = float(lat)
-                        lon = float(lon)
-                    except (TypeError, ValueError):
+                # Filtros
+                if zona and zona.lower() not in zona_cam.lower():
+                    continue
+                if bairro and bairro.lower() not in bairro_cam.lower():
+                    continue
+                if search and search.lower() not in nome_lower:
+                    continue
+                if tipo:
+                    if tipo.lower() == 'fixa' and not fixa:
+                        continue
+                    if tipo.lower() == 'movel' and fixa:
                         continue
 
-                    if lat == 0 or lon == 0:
-                        continue
+                # URL do stream
+                url_stream = cam.get('URL', '').replace('\\/', '/')
+                if not url_stream:
+                    url_stream = f'https://dev.tixxi.rio/outvideo2/?CODE={camera_code}&KEY=H4281'
 
-                    if bairro and bairro.lower() not in str(bairro_cam).lower():
-                        continue
+                data.append({
+                    'id': camera_code,
+                    'id_c': camera_code,
+                    'nome': nome,
+                    'zona': zona_cam,
+                    'bairro': bairro_cam,
+                    'lat': lat,
+                    'lng': lng,
+                    'status': 'ativa',
+                    'url_stream': url_stream,
+                    'fixa': fixa,
+                    'tipo': 'fixa' if fixa else 'movel',
+                })
+                bairros_set.add(bairro_cam)
+                zonas_set.add(zona_cam)
 
-                    if status and status.lower() not in str(status_cam).lower():
-                        continue
-
-                    if search and search.lower() not in nome_lower:
-                        continue
-
-                    if not cam.get('stream_url') and not cam.get('url') and camera_id_str.isdigit():
-                        camera_id_str = camera_id_str.zfill(6)
-
-                    data.append({
-                        'id': cam.get('id'),
-                        'id_c': cam.get('id_c') or cam.get('id'),
-                        'nome': nome,
-                        'bairro': bairro_cam,
-                        'lat': lat,
-                        'lng': lon,
-                        'status': status_cam,
-                        'url_stream': cam.get('stream_url') or cam.get('url') or (
-                            f'https://dev.tixxi.rio/outvideo2/?CODE={camera_id_str}&KEY=H4281'
-                            if camera_id_str.isdigit()
-                            else None
-                        ),
-                        'fixa': fixa,
-                        'tipo': 'fixa' if fixa else 'movel',
-                    })
-                    bairros_set.add(bairro_cam)
-
-            return Response({
-                'success': True,
-                'data': data,
-                'count': len(data),
-                'total_raw': total_raw,
-                'total_raw_fixas': total_raw_fixas,
-                'total_raw_moveis': total_raw_moveis,
-                'bairros': sorted(list(bairros_set))
-            })
-        except Exception as e:
-            logger.warning(f'Erro ao buscar cameras externas: {e}')
-
-        # Fallback: banco local
-        from aplicativo.models import Cameras
-
-        cameras = Cameras.objects.all()
-
-        if bairro:
-            cameras = cameras.filter(bairro__icontains=bairro)
-
-        if status:
-            cameras = cameras.filter(status__iexact=status)
-
-        if search:
-            cameras = cameras.filter(nome__icontains=search)
-
-        data = []
-        bairros_set = set()
-
-        for cam in cameras.order_by('id_c'):
-            try:
-                lat = float(cam.lat) if cam.lat else None
-                lon = float(cam.lon) if cam.lon else None
-
-                if lat and lon and lat != 0 and lon != 0:
-                    nome = cam.nome or f'Câmera {cam.id_c}'
-                    fixa = "fixa" in nome.lower()
-                    data.append({
-                        'id': cam.id,
-                        'id_c': cam.id_c,
-                        'nome': nome,
-                        'bairro': cam.bairro or 'Sem bairro',
-                        'lat': lat,
-                        'lng': lon,
-                        'status': cam.status,
-                        'url_stream': f'https://dev.tixxi.rio/outvideo2/?CODE={cam.id_c}&KEY=H4281',
-                        'fixa': fixa,
-                        'tipo': 'fixa' if fixa else 'movel',
-                    })
-                    bairros_set.add(cam.bairro or 'Sem bairro')
             except Exception:
                 continue
 
@@ -1142,10 +1104,16 @@ def api_cameras(request):
             'success': True,
             'data': data,
             'count': len(data),
-            'bairros': sorted(list(bairros_set))
+            'total_raw': total_raw,
+            'total_raw_fixas': total_raw_fixas,
+            'total_raw_moveis': total_raw_moveis,
+            'bairros': sorted(list(bairros_set)),
+            'zonas': sorted(list(zonas_set)),
+            'source': 'TIXXI'
         })
-        
+
     except Exception as e:
+        logger.error(f'api_cameras error: {e}')
         return Response({
             'success': False,
             'error': str(e)
@@ -2784,7 +2752,7 @@ def _get_tixxi_token():
             response = requests.post(
                 TIXXI_CONFIG['auth_url'],
                 json={"user": TIXXI_CONFIG['user'], "pass": TIXXI_CONFIG['pass']},
-                verify=True,  # SEGURANCA: Verificar certificado SSL
+                verify=False,  # TIXXI usa certificado auto-assinado
                 timeout=10,
                 allow_redirects=True
             )

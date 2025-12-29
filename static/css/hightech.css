@@ -96,6 +96,7 @@ h1, h2, h3, h4, h5, h6,
     gap: 15px;
     flex: 1;
     min-width: 0;
+    overflow: hidden;
 }
 
 .logo-container {
@@ -197,6 +198,8 @@ h1, h2, h3, h4, h5, h6,
     align-items: center;
     gap: 20px;
     flex-shrink: 0;
+    position: relative;
+    z-index: 10;
 }
 
 .header-stat {
@@ -1159,19 +1162,174 @@ h1, h2, h3, h4, h5, h6,
 /* ============================================
    15. RESPONSIVE
    ============================================ */
+
+/* Monitores médios (1400px - 1600px) */
+@media (max-width: 1600px) {
+    :root {
+        --sidebar-width: 340px;
+    }
+}
+
+/* Notebooks e monitores menores (1366px) */
+@media (max-width: 1400px) {
+    :root {
+        --sidebar-width: 300px;
+    }
+
+    .header-nav {
+        gap: 2px;
+    }
+
+    .header-nav .nav-link {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
+
+    .header-stat {
+        padding: 0 6px;
+    }
+
+    .stat-value {
+        font-size: 0.9rem;
+    }
+
+    .stat-label {
+        font-size: 0.55rem;
+    }
+}
+
+/* Notebooks HD (1366x768) */
+@media (max-width: 1366px) {
+    :root {
+        --sidebar-width: 280px;
+        --header-height: 50px;
+    }
+
+    .header-left {
+        flex: 0 1 auto;
+        max-width: 50%;
+    }
+
+    .header-logo-full {
+        height: 48px;
+        max-width: 280px;
+    }
+
+    .header-nav {
+        gap: 1px;
+    }
+
+    .header-nav .nav-link span {
+        display: none;
+    }
+
+    .header-nav .nav-link {
+        padding: 4px 6px;
+        font-size: 0.85rem;
+    }
+
+    /* Data e Hora empilhados verticalmente */
+    .header-center {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1px;
+        margin: 0 8px;
+        padding: 2px 6px;
+        background: rgba(0, 212, 255, 0.08);
+        border-radius: 4px;
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        min-width: auto;
+    }
+
+    .header-stat {
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
+        padding: 0;
+        border-left: none;
+        width: 100%;
+    }
+
+    .stat-label {
+        font-size: 0.45rem;
+        letter-spacing: 0;
+        min-width: 22px;
+        color: var(--cyan);
+        text-transform: uppercase;
+    }
+
+    .stat-value {
+        font-size: 0.6rem;
+        white-space: nowrap;
+        color: var(--text-primary);
+    }
+
+    .system-status {
+        display: none;
+    }
+
+    /* Esconder EVENTOS em 1366px */
+    .header-stat:nth-child(3) {
+        display: none;
+    }
+
+    .sidebar-header {
+        padding: 15px;
+    }
+
+    .sidebar-title {
+        font-size: 0.9rem;
+    }
+
+    .metric-card {
+        padding: 12px;
+    }
+
+    .metric-value {
+        font-size: 1.3rem;
+    }
+
+    .header-right {
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .header-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+
+    .user-info {
+        display: none;
+    }
+}
+
 @media (max-width: 1200px) {
     :root {
-        --sidebar-width: 320px;
+        --sidebar-width: 260px;
+    }
+
+    .stat-value {
+        font-size: 0.7rem;
+    }
+
+    .header-logo-full {
+        max-width: 240px;
     }
 }
 
 @media (max-width: 992px) {
     :root {
-        --sidebar-width: 300px;
+        --sidebar-width: 250px;
     }
 
     .header-center {
         display: none;
+    }
+
+    .header-nav .nav-link {
+        padding: 5px 6px;
     }
 }
 
