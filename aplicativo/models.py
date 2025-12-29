@@ -6409,3 +6409,410 @@ class DadosMeteorologicos(models.Model):
                     'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO']
         idx = int((float(self.vento_direcao) + 11.25) / 22.5) % 16
         return direcoes[idx]
+
+
+# =============================================================================
+# MOBILIDADE - DADOS WAZE
+# =============================================================================
+
+class DadosMobilidade(models.Model):
+    """
+    Cache de dados de mobilidade do Waze Public Traffic Feeds
+
+    Armazena estatísticas agregadas de:
+    - JAMs (congestionamentos)
+    - ALERTs (acidentes, perigos)
+    - IRREGULARities (interdições, obras)
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name='dados_mobilidade'
+    )
+
+    # Timestamp dos dados
+    data_hora = models.DateTimeField(db_index=True)
+
+    # ========================================
+    # JAMs (Congestionamentos)
+    # ========================================
+    total_jams = models.IntegerField(default=0, help_text='Total de congestionamentos')
+    jams_severos = models.IntegerField(default=0, help_text='Level >= 4 (muito lento/parado)')
+    jams_moderados = models.IntegerField(default=0, help_text='Level 2-3 (lento/moderado)')
+    jams_leves = models.IntegerField(default=0, help_text='Level 0-1 (livre/lento)')
+
+    # ========================================
+    # ALERTs (Alertas)
+    # ========================================
+    total_alerts = models.IntegerField(default=0, help_text='Total de alertas')
+    acidentes_maiores = models.IntegerField(default=0, help_text='ACCIDENT_MAJOR')
+    acidentes_menores = models.IntegerField(default=0, help_text='ACCIDENT_MINOR')
+    perigos = models.IntegerField(default=0, help_text='HAZARD_*')
+
+    # ========================================
+    # IRREGULARities (Irregularidades)
+    # ========================================
+    total_irregularidades = models.IntegerField(default=0, help_text='Total de irregularidades')
+    vias_interditadas = models.IntegerField(default=0, help_text='ROAD_CLOSED')
+    obras = models.IntegerField(default=0, help_text='CONSTRUCTION')
+
+    # ========================================
+    # Métricas Calculadas
+    # ========================================
+    velocidade_media_kmh = models.DecimalField(
+        max_digits=6, decimal_places=2,
+        null=True, blank=True,
+        help_text='Velocidade média das vias monitoradas'
+    )
+    atraso_medio_segundos = models.IntegerField(
+        null=True, blank=True,
+        help_text='Atraso médio vs fluxo livre'
+    )
+    extensao_total_congestionamentos_m = models.IntegerField(
+        null=True, blank=True,
+        help_text='Soma dos comprimentos de todos os congestionamentos'
+    )
+
+    # ========================================
+    # Dados brutos (para debug/análise)
+    # ========================================
+    dados_raw = models.JSONField(default=dict, blank=True)
+
+    # Timestamp de coleta
+    coletado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'dados_mobilidade'
+        verbose_name = 'Dado de Mobilidade'
+        verbose_name_plural = 'Dados de Mobilidade'
+        ordering = ['-data_hora']
+        indexes = [
+            models.Index(fields=['cliente', '-data_hora']),
+            models.Index(fields=['-data_hora']),
+        ]
+
+    def __str__(self):
+        return f"{self.cliente.nome} - {self.data_hora.strftime('%d/%m %H:%M')} - {self.total_jams} jams"
+
+    @property
+    def idade_minutos(self):
+        """Retorna a idade do dado em minutos"""
+        from django.utils import timezone
+        delta = timezone.now() - self.data_hora
+        return int(delta.total_seconds() / 60)
+
+    @property
+    def extensao_total_km(self):
+        """Retorna extensão total em km"""
+        if self.extensao_total_congestionamentos_m:
+            return round(self.extensao_total_congestionamentos_m / 1000, 1)
+        return 0
+
+
+# =============================================================================
+# LOGRADOUROS - VIAS OFICIAIS DO RIO DE JANEIRO
+# =============================================================================
+
+class Logradouro(models.Model):
+    """
+    Vias oficiais do Rio de Janeiro
+    Fonte: Data.Rio - Logradouros.csv (132.339 registros)
+
+    Usado para vincular dados do Waze com informações oficiais das vias:
+    - Hierarquia viária (arterial, coletora, local)
+    - Velocidade regulamentada
+    - Bairro/região
+    - Tipo de trecho (túnel, normal)
+    """
+
+    # Identificação única
+    cod_trecho = models.IntegerField(
+        primary_key=True,
+        help_text='Código único do trecho de via'
+    )
+    cod_logradouro = models.CharField(
+        max_length=10,
+        db_index=True,
+        help_text='CL - Código do logradouro'
+    )
+
+    # Tipo de via
+    tipo_abreviado = models.CharField(
+        max_length=10,
+        help_text='R, Av, Etr, Trv, Pç, etc'
+    )
+    tipo_extenso = models.CharField(
+        max_length=50,
+        help_text='Rua, Avenida, Estrada, Travessa, Praça, etc'
+    )
+
+    # Nome da via
+    nome_parcial = models.CharField(
+        max_length=200,
+        db_index=True,
+        help_text='Ex: Visconde de Albuquerque'
+    )
+    nome_completo = models.CharField(
+        max_length=300,
+        db_index=True,
+        help_text='Ex: Av. Visconde de Albuquerque'
+    )
+    nome_mapa = models.CharField(
+        max_length=300,
+        help_text='Nome para exibição em mapas'
+    )
+
+    # Localização
+    bairro = models.CharField(
+        max_length=100,
+        db_index=True,
+        null=True,
+        blank=True
+    )
+    cod_bairro = models.IntegerField(null=True, blank=True)
+
+    # Características viárias
+    hierarquia = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text='Local, Coletora, Arterial primária, Arterial secundária'
+    )
+    sentido_unico = models.CharField(
+        max_length=5,
+        null=True,
+        blank=True,
+        help_text='B=bidirecional, outros=unidirecional'
+    )
+    velocidade_regulamentada = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text='Velocidade máxima permitida em km/h'
+    )
+    tipo_trecho = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        help_text='Normal, Túnel, Viaduto, etc'
+    )
+
+    # Numeração predial
+    num_par_inicio = models.IntegerField(null=True, blank=True)
+    num_par_fim = models.IntegerField(null=True, blank=True)
+    num_impar_inicio = models.IntegerField(null=True, blank=True)
+    num_impar_fim = models.IntegerField(null=True, blank=True)
+
+    # Metadados originais
+    objectid = models.IntegerField(null=True, blank=True)
+    ultima_edicao = models.DateTimeField(null=True, blank=True)
+
+    # Controle interno
+    importado_em = models.DateTimeField(auto_now_add=True)
+    ativa = models.BooleanField(default=True, help_text='Via ativa no sistema')
+
+    class Meta:
+        db_table = 'logradouros'
+        verbose_name = 'Logradouro'
+        verbose_name_plural = 'Logradouros'
+        ordering = ['nome_completo']
+        indexes = [
+            models.Index(fields=['nome_completo']),
+            models.Index(fields=['nome_parcial']),
+            models.Index(fields=['bairro', 'hierarquia']),
+            models.Index(fields=['cod_logradouro']),
+            models.Index(fields=['hierarquia']),
+        ]
+
+    def __str__(self):
+        return self.nome_completo or f"Via {self.cod_trecho}"
+
+    @property
+    def nome_normalizado(self):
+        """Remove acentos e caracteres especiais para matching"""
+        import unicodedata
+        if not self.nome_completo:
+            return ""
+        texto = self.nome_completo.lower()
+        texto = unicodedata.normalize('NFKD', texto)
+        texto = texto.encode('ASCII', 'ignore').decode('ASCII')
+        return texto
+
+    @property
+    def is_arterial(self):
+        """Retorna True se for via arterial (primária ou secundária)"""
+        return self.hierarquia in ['Arterial primária', 'Arterial secundária']
+
+    @property
+    def is_importante(self):
+        """Retorna True se for via de alta importância (arterial ou coletora)"""
+        return self.hierarquia in ['Arterial primária', 'Arterial secundária', 'Coletora']
+
+
+# =============================================================================
+# CONGESTIONAMENTO POR VIA - DADOS DETALHADOS
+# =============================================================================
+
+class CongestionamentoVia(models.Model):
+    """
+    Registro detalhado de congestionamento por via
+
+    Vincula dados do Waze com logradouros oficiais para análise:
+    - Velocidade atual vs regulamentada
+    - Criticidade do congestionamento
+    - Histórico por via
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # Referências
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name='congestionamentos_via'
+    )
+    dados_mobilidade = models.ForeignKey(
+        DadosMobilidade,
+        on_delete=models.CASCADE,
+        related_name='congestionamentos',
+        null=True,
+        blank=True,
+        help_text='Coleta de onde veio este dado'
+    )
+    logradouro = models.ForeignKey(
+        'Logradouro',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='congestionamentos',
+        help_text='Via oficial vinculada (se encontrada)'
+    )
+
+    # Timestamp
+    data_hora = models.DateTimeField(db_index=True)
+
+    # Dados do Waze
+    via_nome_waze = models.CharField(
+        max_length=300,
+        help_text='Nome original retornado pelo Waze'
+    )
+    jam_level = models.IntegerField(
+        default=0,
+        help_text='Nível 0-5 (0=livre, 5=parado)'
+    )
+    velocidade_atual = models.DecimalField(
+        max_digits=6, decimal_places=2,
+        null=True, blank=True,
+        help_text='Velocidade atual em km/h (Waze)'
+    )
+    atraso_segundos = models.IntegerField(
+        null=True, blank=True,
+        help_text='Atraso em relação ao tempo normal'
+    )
+    extensao_metros = models.IntegerField(
+        null=True, blank=True,
+        help_text='Extensão do congestionamento em metros'
+    )
+
+    # Coordenadas (início do segmento)
+    latitude = models.DecimalField(
+        max_digits=10, decimal_places=7,
+        null=True, blank=True
+    )
+    longitude = models.DecimalField(
+        max_digits=10, decimal_places=7,
+        null=True, blank=True
+    )
+
+    # Matching com logradouro
+    match_score = models.FloatField(
+        null=True, blank=True,
+        help_text='Score do fuzzy match (0-100)'
+    )
+    match_metodo = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text='exato, fuzzy, parcial, nao_encontrado'
+    )
+
+    # Análise de criticidade
+    CRITICIDADE_CHOICES = [
+        ('normal', 'Normal'),
+        ('leve', 'Leve'),
+        ('moderada', 'Moderada'),
+        ('severa', 'Severa'),
+        ('critica', 'Crítica'),
+    ]
+    criticidade = models.CharField(
+        max_length=20,
+        choices=CRITICIDADE_CHOICES,
+        default='normal',
+        db_index=True
+    )
+    percentual_abaixo_regulamentada = models.FloatField(
+        null=True, blank=True,
+        help_text='% abaixo da velocidade regulamentada'
+    )
+
+    # Controle
+    coletado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'congestionamentos_via'
+        verbose_name = 'Congestionamento por Via'
+        verbose_name_plural = 'Congestionamentos por Via'
+        ordering = ['-data_hora', '-criticidade']
+        indexes = [
+            models.Index(fields=['cliente', '-data_hora']),
+            models.Index(fields=['logradouro', '-data_hora']),
+            models.Index(fields=['-data_hora', 'criticidade']),
+            models.Index(fields=['via_nome_waze']),
+        ]
+
+    def __str__(self):
+        via = self.logradouro.nome_completo if self.logradouro else self.via_nome_waze
+        return f"{via} - Level {self.jam_level} ({self.criticidade})"
+
+    def calcular_criticidade(self):
+        """
+        Calcula criticidade baseado na velocidade vs regulamentada
+
+        Returns:
+            tuple: (criticidade, percentual_deficit)
+        """
+        if not self.logradouro or not self.logradouro.velocidade_regulamentada:
+            # Sem dados de referência, usar apenas jam_level
+            if self.jam_level >= 4:
+                return 'severa', None
+            elif self.jam_level >= 3:
+                return 'moderada', None
+            elif self.jam_level >= 2:
+                return 'leve', None
+            return 'normal', None
+
+        vel_reg = self.logradouro.velocidade_regulamentada
+        vel_atual = float(self.velocidade_atual) if self.velocidade_atual else 0
+
+        if vel_reg > 0:
+            deficit = ((vel_reg - vel_atual) / vel_reg) * 100
+            deficit = max(0, deficit)  # Não pode ser negativo
+
+            if deficit >= 80:
+                return 'critica', deficit
+            elif deficit >= 60:
+                return 'severa', deficit
+            elif deficit >= 40:
+                return 'moderada', deficit
+            elif deficit >= 20:
+                return 'leve', deficit
+            return 'normal', deficit
+
+        return 'normal', None
+
+    def save(self, *args, **kwargs):
+        # Calcular criticidade automaticamente
+        self.criticidade, self.percentual_abaixo_regulamentada = self.calcular_criticidade()
+        super().save(*args, **kwargs)

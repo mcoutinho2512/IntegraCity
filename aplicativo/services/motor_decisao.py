@@ -162,7 +162,7 @@ class MotorDecisao:
     def calcular_nivel_cidade(
         self,
         nivel_meteo: int = None,
-        nivel_mob: int = 0,
+        nivel_mob: int = None,
         nivel_eventos: int = 0,
         usuario=None,
         dados_extras: Optional[Dict] = None
@@ -175,7 +175,7 @@ class MotorDecisao:
 
         Args:
             nivel_meteo: Nível do Grupo 1 (Meteorologia) - None = calcular automático via INMET
-            nivel_mob: Nível do Grupo 3 (Mobilidade) - padrão 0
+            nivel_mob: Nível do Grupo 3 (Mobilidade) - None = calcular automático via Waze
             nivel_eventos: Nível do Grupo 4 (Eventos) - padrão 0
             usuario: Usuário que solicitou o cálculo
             dados_extras: Dados adicionais para registro
@@ -184,6 +184,9 @@ class MotorDecisao:
             EstagioOperacional: Objeto com resultado do cálculo
         """
         from ..models import EstagioOperacional, AcaoRecomendada, Cliente
+
+        # Buscar cliente ativo (usado para meteorologia e mobilidade)
+        cliente = Cliente.objects.filter(ativo=True).first()
 
         # Calcular nível de incidentes automaticamente
         nivel_incidentes, detalhes_incidentes = self.calcular_nivel_incidentes()
@@ -197,9 +200,6 @@ class MotorDecisao:
             # Calcular automaticamente via INMET
             try:
                 from .integrador_inmet import IntegradorINMET
-
-                # Buscar cliente ativo (primeiro encontrado)
-                cliente = Cliente.objects.filter(ativo=True).first()
 
                 if cliente:
                     integrador = IntegradorINMET(cliente)
@@ -243,9 +243,61 @@ class MotorDecisao:
                 'observacao': 'Entrada manual pelo operador',
             }
 
+        # ========================================
+        # GRUPO 3 - MOBILIDADE (AUTOMÁTICO VIA WAZE)
+        # ========================================
+        detalhes_mobilidade = {}
+
+        if nivel_mob is None or nivel_mob == 0:
+            # Calcular automaticamente via Waze
+            try:
+                from .integrador_waze import IntegradorWaze
+
+                if cliente:
+                    integrador_waze = IntegradorWaze(cliente)
+                    nivel_mob, detalhes_mobilidade = integrador_waze.calcular_nivel_mobilidade()
+                    detalhes_mobilidade['fonte'] = 'Waze'
+                    detalhes_mobilidade['automatico'] = True
+                    logger.info(f"Mobilidade via Waze: E{nivel_mob}")
+                else:
+                    nivel_mob = 1
+                    detalhes_mobilidade = {
+                        'nivel': 1,
+                        'fonte': 'default',
+                        'erro': 'Nenhum cliente configurado',
+                        'razao': 'Configure um cliente para ativar integração Waze',
+                    }
+                    logger.warning("Mobilidade: Nenhum cliente configurado")
+
+            except ImportError as e:
+                nivel_mob = 1
+                detalhes_mobilidade = {
+                    'nivel': 1,
+                    'fonte': 'default',
+                    'erro': f'Módulo não disponível: {e}',
+                }
+                logger.error(f"Erro ao importar IntegradorWaze: {e}")
+
+            except Exception as e:
+                nivel_mob = 1
+                detalhes_mobilidade = {
+                    'nivel': 1,
+                    'fonte': 'default',
+                    'erro': str(e),
+                    'razao': 'Erro ao calcular mobilidade - verifique coleta Waze',
+                }
+                logger.error(f"Erro ao calcular mobilidade: {e}")
+        else:
+            # Nível fornecido manualmente
+            detalhes_mobilidade = {
+                'nivel': nivel_mob,
+                'fonte': 'manual',
+                'observacao': 'Entrada manual pelo operador',
+            }
+
         # Validar níveis de entrada (1-5 padrão COR Rio)
         nivel_meteo = max(1, min(5, nivel_meteo)) if nivel_meteo and nivel_meteo > 0 else 1
-        nivel_mob = max(1, min(5, nivel_mob)) if nivel_mob > 0 else 1
+        nivel_mob = max(1, min(5, nivel_mob)) if nivel_mob and nivel_mob > 0 else 1
         nivel_eventos = max(1, min(5, nivel_eventos)) if nivel_eventos > 0 else 1
 
         # Aplicar pesos
@@ -269,6 +321,12 @@ class MotorDecisao:
             proximidade = 0  # Já no nível máximo (Crise)
 
         # Gerar justificativa detalhada
+        mob_razao = detalhes_mobilidade.get('razao', 'Dados não disponíveis')
+        mob_fonte = detalhes_mobilidade.get('fonte', 'N/A')
+        mob_jams = detalhes_mobilidade.get('jams_severos', 0)
+        mob_acidentes = detalhes_mobilidade.get('acidentes_maiores', 0)
+        mob_interdicoes = detalhes_mobilidade.get('vias_interditadas', 0)
+
         justificativa_parts = [
             "═══════════════════════════════════════════",
             "         CÁLCULO DO ESTÁGIO OPERACIONAL",
@@ -276,6 +334,7 @@ class MotorDecisao:
             "",
             "▶ GRUPO 1 - METEOROLOGIA",
             f"  Nível: {nivel_meteo} × Peso: {self.matriz.peso_meteorologia} = {nivel_meteo * float(self.matriz.peso_meteorologia):.2f}",
+            f"  Fonte: {detalhes_meteorologia.get('fonte', 'N/A')}",
             "",
             "▶ GRUPO 2 - INCIDENTES/OCORRÊNCIAS",
             f"  Nível: {nivel_incidentes} × Peso: {self.matriz.peso_incidentes} = {nivel_incidentes * float(self.matriz.peso_incidentes):.2f}",
@@ -284,6 +343,9 @@ class MotorDecisao:
             "",
             "▶ GRUPO 3 - MOBILIDADE",
             f"  Nível: {nivel_mob} × Peso: {self.matriz.peso_mobilidade} = {nivel_mob * float(self.matriz.peso_mobilidade):.2f}",
+            f"  Fonte: {mob_fonte}",
+            f"  Detalhes: {mob_razao}",
+            f"  (Jams Severos: {mob_jams} | Acidentes: {mob_acidentes} | Interdições: {mob_interdicoes})",
             "",
             "▶ GRUPO 4 - EVENTOS",
             f"  Nível: {nivel_eventos} × Peso: {self.matriz.peso_eventos} = {nivel_eventos * float(self.matriz.peso_eventos):.2f}",
@@ -351,11 +413,7 @@ class MotorDecisao:
             },
             detalhes_meteorologia=detalhes_meteorologia,
             detalhes_incidentes=detalhes_incidentes,
-            detalhes_mobilidade={
-                'nivel': nivel_mob,
-                'fonte': 'manual',
-                'observacao': 'Entrada manual - integração com WAZE/CIMU pendente',
-            },
+            detalhes_mobilidade=detalhes_mobilidade,
             detalhes_eventos={
                 'nivel': nivel_eventos,
                 'fonte': 'manual',
