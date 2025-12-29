@@ -856,7 +856,8 @@ h1, h2, h3, h4, h5, h6,
 .layer-selector {
     position: absolute;
     bottom: 20px;
-    right: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -2195,6 +2196,306 @@ h1, h2, h3, h4, h5, h6,
     overflow-y: auto;
     border-color: rgba(0, 212, 255, 0.15);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(0, 212, 255, 0.1);
+}
+
+/* ====================================
+   BUSCA DE ESCOLAS - AUTOCOMPLETE
+   ==================================== */
+
+.escola-search-container {
+    padding: 8px 10px;
+    background: rgba(0, 20, 30, 0.6);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.escola-search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.escola-search-icon {
+    position: absolute;
+    left: 12px;
+    color: #4CAF50;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.escola-search-input {
+    width: 100%;
+    padding: 10px 35px 10px 38px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.escola-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.escola-search-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.escola-search-clear {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 12px;
+    transition: color 0.2s;
+}
+
+.escola-search-clear:hover {
+    color: #ff6b6b;
+}
+
+.escola-autocomplete-list {
+    max-height: 250px;
+    overflow-y: auto;
+    margin-top: 8px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    display: none;
+}
+
+.escola-autocomplete-list.active {
+    display: block;
+}
+
+.escola-autocomplete-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(76, 175, 80, 0.1);
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.escola-autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.escola-autocomplete-item:hover,
+.escola-autocomplete-item.selected {
+    background: rgba(76, 175, 80, 0.15);
+}
+
+.escola-autocomplete-item .escola-nome {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.escola-autocomplete-item .escola-nome mark {
+    background: rgba(76, 175, 80, 0.4);
+    color: #4CAF50;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.escola-autocomplete-item .escola-tipo {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+}
+
+.escola-autocomplete-item .escola-tipo i {
+    margin-right: 4px;
+    color: #4CAF50;
+}
+
+.escola-no-results {
+    padding: 12px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+}
+
+/* Scrollbar estilizada para lista de escolas */
+.escola-autocomplete-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.escola-autocomplete-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
+}
+
+.escola-autocomplete-list::-webkit-scrollbar-thumb {
+    background: rgba(76, 175, 80, 0.4);
+    border-radius: 3px;
+}
+
+.escola-autocomplete-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(76, 175, 80, 0.6);
+}
+
+/* ====================================
+   BUSCA DE CÂMERAS - AUTOCOMPLETE
+   ==================================== */
+
+.camera-search-container {
+    padding: 8px 10px;
+    background: rgba(20, 0, 30, 0.6);
+    border-radius: 8px;
+    margin: 6px;
+    border: 1px solid rgba(156, 39, 176, 0.2);
+}
+
+.camera-search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.camera-search-icon {
+    position: absolute;
+    left: 12px;
+    color: #9C27B0;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.camera-search-input {
+    width: 100%;
+    padding: 10px 35px 10px 38px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(156, 39, 176, 0.3);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.camera-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.camera-search-input:focus {
+    outline: none;
+    border-color: #9C27B0;
+    box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.2);
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.camera-search-clear {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 12px;
+    transition: color 0.2s;
+}
+
+.camera-search-clear:hover {
+    color: #ff6b6b;
+}
+
+.camera-autocomplete-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 8px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(156, 39, 176, 0.2);
+    display: none;
+}
+
+.camera-autocomplete-list.active {
+    display: block;
+}
+
+.camera-autocomplete-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(156, 39, 176, 0.1);
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.camera-autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.camera-autocomplete-item:hover,
+.camera-autocomplete-item.selected {
+    background: rgba(156, 39, 176, 0.15);
+}
+
+.camera-autocomplete-item .camera-nome {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.camera-autocomplete-item .camera-nome mark {
+    background: rgba(156, 39, 176, 0.4);
+    color: #CE93D8;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.camera-autocomplete-item .camera-tipo {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+}
+
+.camera-autocomplete-item .camera-tipo i {
+    margin-right: 4px;
+    color: #9C27B0;
+}
+
+.camera-autocomplete-item .camera-tipo .tipo-fixa {
+    color: var(--cyan);
+}
+
+.camera-autocomplete-item .camera-tipo .tipo-movel {
+    color: var(--green-neon);
+}
+
+.camera-no-results {
+    padding: 12px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+}
+
+/* Scrollbar estilizada para lista de câmeras */
+.camera-autocomplete-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.camera-autocomplete-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
+}
+
+.camera-autocomplete-list::-webkit-scrollbar-thumb {
+    background: rgba(156, 39, 176, 0.4);
+    border-radius: 3px;
+}
+
+.camera-autocomplete-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 39, 176, 0.6);
 }
 
 /* Submenu Items */

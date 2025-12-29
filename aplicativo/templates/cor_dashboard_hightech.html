@@ -381,8 +381,8 @@
             </div>
             <div class="layers-list">
                 <!-- Escolas -->
-                <div class="layer-item">
-                    <label class="layer-checkbox">
+                <div class="layer-item" onclick="toggleLayerByClick('escolas', event)">
+                    <label class="layer-checkbox" onclick="event.stopPropagation()">
                         <input type="checkbox" id="layerEscolas" onchange="toggleMapLayer('escolas')">
                         <span class="checkmark"></span>
                     </label>
@@ -394,10 +394,25 @@
                         <span class="layer-count" id="countEscolas">--</span>
                     </div>
                 </div>
+                <!-- Campo de busca de escolas -->
+                <div class="escola-search-container" id="escolaSearchContainer" style="display: none;">
+                    <div class="escola-search-wrapper">
+                        <i class="fas fa-search escola-search-icon"></i>
+                        <input type="text"
+                               id="escolaSearchInput"
+                               class="escola-search-input"
+                               placeholder="Buscar escola por nome..."
+                               autocomplete="off">
+                        <button class="escola-search-clear" id="escolaSearchClear" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="escola-autocomplete-list" id="escolaAutocompleteList"></div>
+                </div>
 
                 <!-- Hospitais -->
-                <div class="layer-item">
-                    <label class="layer-checkbox">
+                <div class="layer-item" onclick="toggleLayerByClick('hospitais', event)">
+                    <label class="layer-checkbox" onclick="event.stopPropagation()">
                         <input type="checkbox" id="layerHospitais" onchange="toggleMapLayer('hospitais')">
                         <span class="checkmark"></span>
                     </label>
@@ -411,8 +426,8 @@
                 </div>
 
                 <!-- Pluviometros -->
-                <div class="layer-item">
-                    <label class="layer-checkbox">
+                <div class="layer-item" onclick="toggleLayerByClick('pluviometros', event)">
+                    <label class="layer-checkbox" onclick="event.stopPropagation()">
                         <input type="checkbox" id="layerPluviometros" onchange="toggleMapLayer('pluviometros')">
                         <span class="checkmark"></span>
                     </label>
@@ -426,8 +441,8 @@
                 </div>
 
                 <!-- Sirenes -->
-                <div class="layer-item">
-                    <label class="layer-checkbox">
+                <div class="layer-item" onclick="toggleLayerByClick('sirenes', event)">
+                    <label class="layer-checkbox" onclick="event.stopPropagation()">
                         <input type="checkbox" id="layerSirenes" onchange="toggleMapLayer('sirenes')">
                         <span class="checkmark"></span>
                     </label>
@@ -498,12 +513,32 @@
                             <span class="submenu-label">Mosaico de Cameras</span>
                             <i class="fas fa-external-link-alt submenu-arrow-icon"></i>
                         </div>
+
+                        <!-- Separador -->
+                        <div class="submenu-divider"></div>
+
+                        <!-- Campo de busca de câmeras -->
+                        <div class="camera-search-container" id="cameraSearchContainer">
+                            <div class="camera-search-wrapper">
+                                <i class="fas fa-search camera-search-icon"></i>
+                                <input type="text"
+                                       id="cameraSearchInput"
+                                       class="camera-search-input"
+                                       placeholder="Buscar camera por nome..."
+                                       autocomplete="off"
+                                       onclick="event.stopPropagation()">
+                                <button class="camera-search-clear" id="cameraSearchClear" style="display: none;" onclick="event.stopPropagation()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="camera-autocomplete-list" id="cameraAutocompleteList"></div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Metro -->
-                <div class="layer-item">
-                    <label class="layer-checkbox">
+                <div class="layer-item" onclick="toggleLayerByClick('metro', event)">
+                    <label class="layer-checkbox" onclick="event.stopPropagation()">
                         <input type="checkbox" id="layerMetro" onchange="toggleMapLayer('metro')">
                         <span class="checkmark"></span>
                     </label>
@@ -517,8 +552,8 @@
                 </div>
 
                 <!-- BRT -->
-                <div class="layer-item">
-                    <label class="layer-checkbox">
+                <div class="layer-item" onclick="toggleLayerByClick('brt', event)">
+                    <label class="layer-checkbox" onclick="event.stopPropagation()">
                         <input type="checkbox" id="layerBRT" onchange="toggleMapLayer('brt')">
                         <span class="checkmark"></span>
                     </label>
@@ -672,8 +707,8 @@
                 </div>
 
                 <!-- Bolsoes de Alagamento -->
-                <div class="layer-item">
-                    <label class="layer-checkbox">
+                <div class="layer-item" onclick="toggleLayerByClick('bolsoes', event)">
+                    <label class="layer-checkbox" onclick="event.stopPropagation()">
                         <input type="checkbox" id="layerBolsoes" onchange="toggleMapLayer('bolsoes')">
                         <span class="checkmark"></span>
                     </label>
@@ -687,8 +722,8 @@
                 </div>
 
                 <!-- Ocorrencias -->
-                <div class="layer-item">
-                    <label class="layer-checkbox">
+                <div class="layer-item" onclick="toggleLayerByClick('ocorrencias', event)">
+                    <label class="layer-checkbox" onclick="event.stopPropagation()">
                         <input type="checkbox" id="layerOcorrencias" onchange="toggleMapLayer('ocorrencias')" checked>
                         <span class="checkmark"></span>
                     </label>
@@ -953,8 +988,18 @@
         var submenu = document.getElementById('cameraSubmenu');
 
         if (layerItem && submenu) {
+            var isExpanding = !submenu.classList.contains('expanded');
             layerItem.classList.toggle('expanded');
             submenu.classList.toggle('expanded');
+
+            // Se estiver abrindo o submenu e as cameras nao estao ativas, ativar
+            if (isExpanding) {
+                var mainCheckbox = document.getElementById('layerCameras');
+                if (mainCheckbox && !mainCheckbox.checked) {
+                    mainCheckbox.checked = true;
+                    toggleAllCameras();
+                }
+            }
         }
     }
 
@@ -1165,8 +1210,18 @@
         });
 
         if (wazeLayerItem && submenu) {
+            var isExpanding = !submenu.classList.contains('expanded');
             wazeLayerItem.classList.toggle('expanded');
             submenu.classList.toggle('expanded');
+
+            // Se estiver abrindo o submenu e o Waze nao esta ativo, ativar
+            if (isExpanding) {
+                var mainCheckbox = document.getElementById('layerWaze');
+                if (mainCheckbox && !mainCheckbox.checked) {
+                    mainCheckbox.checked = true;
+                    toggleAllWaze();
+                }
+            }
         }
     }
 
@@ -1582,6 +1637,22 @@
         });
     }
 
+    // Toggle de camada ao clicar na linha (nao apenas no checkbox)
+    function toggleLayerByClick(layerName, event) {
+        if (event) event.stopPropagation();
+
+        // Encontrar o checkbox correspondente
+        var checkboxId = 'layer' + layerName.charAt(0).toUpperCase() + layerName.slice(1);
+        var checkbox = document.getElementById(checkboxId);
+
+        if (checkbox) {
+            // Inverter o estado do checkbox
+            checkbox.checked = !checkbox.checked;
+            // Disparar o evento onchange para ativar a logica da camada
+            toggleMapLayer(layerName);
+        }
+    }
+
     // Toggle de camada individual
     function toggleMapLayer(layerName) {
         var checkbox = document.getElementById('layer' + layerName.charAt(0).toUpperCase() + layerName.slice(1));
@@ -1600,6 +1671,14 @@
                 loadLayerData(layerName);
             }
 
+            // Mostrar campo de busca para escolas
+            if (layerName === 'escolas') {
+                var searchContainer = document.getElementById('escolaSearchContainer');
+                if (searchContainer) {
+                    searchContainer.style.display = 'block';
+                }
+            }
+
             showToast('Camada ' + layerName + ' ativada', 'success');
         } else {
             // Remover camada do mapa
@@ -1607,6 +1686,22 @@
                 map.removeLayer(mapLayers[layerName]);
             }
             if (layerItem) layerItem.classList.remove('active');
+
+            // Esconder campo de busca para escolas
+            if (layerName === 'escolas') {
+                var searchContainer = document.getElementById('escolaSearchContainer');
+                if (searchContainer) {
+                    searchContainer.style.display = 'none';
+                    // Limpar busca
+                    var input = document.getElementById('escolaSearchInput');
+                    if (input) input.value = '';
+                    var list = document.getElementById('escolaAutocompleteList');
+                    if (list) {
+                        list.innerHTML = '';
+                        list.classList.remove('active');
+                    }
+                }
+            }
 
             showToast('Camada ' + layerName + ' desativada', 'info');
         }
@@ -2541,6 +2636,419 @@
             loadLayerData('ocorrencias');
         }
     }, 120000);
+
+    // ===== BUSCA DE ESCOLAS COM AUTOCOMPLETE =====
+    (function() {
+        var escolaSearchInput = document.getElementById('escolaSearchInput');
+        var escolaAutocompleteList = document.getElementById('escolaAutocompleteList');
+        var escolaSearchClear = document.getElementById('escolaSearchClear');
+        var escolasData = [];
+        var selectedIndex = -1;
+        var debounceTimer = null;
+
+        // Carregar dados das escolas quando a camada for ativada
+        function loadEscolasData() {
+            if (escolasData.length > 0) return Promise.resolve(escolasData);
+
+            return fetch(window.location.origin + '/integracity/api/escolas/')
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.success && data.data) {
+                        escolasData = data.data;
+                        console.log('Escolas carregadas para busca:', escolasData.length);
+                    }
+                    return escolasData;
+                })
+                .catch(function(err) {
+                    console.error('Erro ao carregar escolas:', err);
+                    return [];
+                });
+        }
+
+        // Destacar texto encontrado
+        function highlightMatch(text, query) {
+            if (!query || !text) return text;
+            var regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        }
+
+        // Filtrar escolas pelo nome
+        function filterEscolas(query) {
+            if (!query || query.length < 2) return [];
+
+            var queryLower = query.toLowerCase();
+            return escolasData.filter(function(escola) {
+                return escola.nome && escola.nome.toLowerCase().includes(queryLower);
+            }).slice(0, 15); // Limitar a 15 resultados
+        }
+
+        // Renderizar lista de autocomplete
+        function renderAutocomplete(results, query) {
+            selectedIndex = -1;
+            escolaAutocompleteList.innerHTML = '';
+
+            if (results.length === 0) {
+                escolaAutocompleteList.innerHTML = '<div class="escola-no-results"><i class="fas fa-search"></i> Nenhuma escola encontrada</div>';
+                escolaAutocompleteList.classList.add('active');
+                return;
+            }
+
+            results.forEach(function(escola, index) {
+                var item = document.createElement('div');
+                item.className = 'escola-autocomplete-item';
+                item.setAttribute('data-index', index);
+                item.innerHTML =
+                    '<div class="escola-nome">' + highlightMatch(escola.nome, query) + '</div>' +
+                    '<div class="escola-tipo"><i class="fas fa-map-marker-alt"></i> ' + (escola.tipo || 'Escola Municipal') + ' - CRE ' + (escola.cre || 'N/A') + '</div>';
+
+                item.addEventListener('click', function() {
+                    selectEscola(escola);
+                });
+
+                item.addEventListener('mouseenter', function() {
+                    selectedIndex = index;
+                    updateSelectedItem();
+                });
+
+                escolaAutocompleteList.appendChild(item);
+            });
+
+            escolaAutocompleteList.classList.add('active');
+        }
+
+        // Atualizar item selecionado (navegação por teclado)
+        function updateSelectedItem() {
+            var items = escolaAutocompleteList.querySelectorAll('.escola-autocomplete-item');
+            items.forEach(function(item, i) {
+                if (i === selectedIndex) {
+                    item.classList.add('selected');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        // Selecionar escola e georreferenciar no mapa
+        function selectEscola(escola) {
+            console.log('Escola selecionada:', escola.nome, escola.lat, escola.lng);
+
+            // Limpar busca
+            escolaSearchInput.value = escola.nome;
+            escolaAutocompleteList.innerHTML = '';
+            escolaAutocompleteList.classList.remove('active');
+            escolaSearchClear.style.display = 'flex';
+
+            // Centralizar mapa na escola com zoom alto
+            if (escola.lat && escola.lng) {
+                map.flyTo([escola.lat, escola.lng], 18, {
+                    duration: 1.5
+                });
+
+                // Encontrar e abrir popup do marcador
+                mapLayers.escolas.eachLayer(function(layer) {
+                    var latLng = layer.getLatLng();
+                    if (Math.abs(latLng.lat - escola.lat) < 0.0001 &&
+                        Math.abs(latLng.lng - escola.lng) < 0.0001) {
+                        setTimeout(function() {
+                            layer.openPopup();
+                        }, 1600);
+                    }
+                });
+
+                showToast('Escola localizada: ' + escola.nome, 'success');
+            }
+        }
+
+        // Event listeners
+        if (escolaSearchInput) {
+            // Input com debounce
+            escolaSearchInput.addEventListener('input', function(e) {
+                var query = e.target.value.trim();
+
+                // Mostrar/esconder botão de limpar
+                escolaSearchClear.style.display = query ? 'flex' : 'none';
+
+                // Debounce para não fazer muitas buscas
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function() {
+                    if (query.length >= 2) {
+                        loadEscolasData().then(function() {
+                            var results = filterEscolas(query);
+                            renderAutocomplete(results, query);
+                        });
+                    } else {
+                        escolaAutocompleteList.innerHTML = '';
+                        escolaAutocompleteList.classList.remove('active');
+                    }
+                }, 200);
+            });
+
+            // Navegação por teclado
+            escolaSearchInput.addEventListener('keydown', function(e) {
+                var items = escolaAutocompleteList.querySelectorAll('.escola-autocomplete-item');
+                if (items.length === 0) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                    updateSelectedItem();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, 0);
+                    updateSelectedItem();
+                } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    var query = escolaSearchInput.value.trim();
+                    var results = filterEscolas(query);
+                    if (results[selectedIndex]) {
+                        selectEscola(results[selectedIndex]);
+                    }
+                } else if (e.key === 'Escape') {
+                    escolaAutocompleteList.innerHTML = '';
+                    escolaAutocompleteList.classList.remove('active');
+                    escolaSearchInput.blur();
+                }
+            });
+
+            // Fechar ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.escola-search-container')) {
+                    escolaAutocompleteList.innerHTML = '';
+                    escolaAutocompleteList.classList.remove('active');
+                }
+            });
+        }
+
+        // Botão de limpar
+        if (escolaSearchClear) {
+            escolaSearchClear.addEventListener('click', function() {
+                escolaSearchInput.value = '';
+                escolaAutocompleteList.innerHTML = '';
+                escolaAutocompleteList.classList.remove('active');
+                escolaSearchClear.style.display = 'none';
+                escolaSearchInput.focus();
+            });
+        }
+
+        console.log('Sistema de busca de escolas inicializado');
+    })();
+
+    // ===== BUSCA DE CÂMERAS COM AUTOCOMPLETE =====
+    (function() {
+        var cameraSearchInput = document.getElementById('cameraSearchInput');
+        var cameraAutocompleteList = document.getElementById('cameraAutocompleteList');
+        var cameraSearchClear = document.getElementById('cameraSearchClear');
+        var camerasData = [];
+        var selectedIndex = -1;
+        var debounceTimer = null;
+
+        // Carregar dados das câmeras
+        function loadCamerasData() {
+            if (camerasData.length > 0) return Promise.resolve(camerasData);
+
+            return fetch(window.location.origin + '/integracity/api/cameras/')
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.data && Array.isArray(data.data)) {
+                        camerasData = data.data;
+                    } else if (Array.isArray(data)) {
+                        camerasData = data;
+                    }
+                    console.log('Câmeras carregadas para busca:', camerasData.length);
+                    return camerasData;
+                })
+                .catch(function(err) {
+                    console.error('Erro ao carregar câmeras:', err);
+                    return [];
+                });
+        }
+
+        // Destacar texto encontrado
+        function highlightMatch(text, query) {
+            if (!query || !text) return text;
+            var regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        }
+
+        // Filtrar câmeras pelo nome
+        function filterCameras(query) {
+            if (!query || query.length < 2) return [];
+
+            var queryLower = query.toLowerCase();
+            return camerasData.filter(function(camera) {
+                var nome = camera.nome || camera.name || camera.denominacao || '';
+                return nome.toLowerCase().includes(queryLower);
+            }).slice(0, 15); // Limitar a 15 resultados
+        }
+
+        // Renderizar lista de autocomplete
+        function renderAutocomplete(results, query) {
+            selectedIndex = -1;
+            cameraAutocompleteList.innerHTML = '';
+
+            if (results.length === 0) {
+                cameraAutocompleteList.innerHTML = '<div class="camera-no-results"><i class="fas fa-search"></i> Nenhuma camera encontrada</div>';
+                cameraAutocompleteList.classList.add('active');
+                return;
+            }
+
+            results.forEach(function(camera, index) {
+                var nome = camera.nome || camera.name || camera.denominacao || 'Sem nome';
+                var tipo = camera.tipo || camera.type || 'N/A';
+                var isMovel = tipo.toLowerCase().includes('movel') || tipo.toLowerCase().includes('móvel');
+
+                var item = document.createElement('div');
+                item.className = 'camera-autocomplete-item';
+                item.setAttribute('data-index', index);
+                item.innerHTML =
+                    '<div class="camera-nome">' + highlightMatch(nome, query) + '</div>' +
+                    '<div class="camera-tipo"><i class="fas fa-video"></i> <span class="' + (isMovel ? 'tipo-movel' : 'tipo-fixa') + '">' + tipo + '</span></div>';
+
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    selectCamera(camera);
+                });
+
+                item.addEventListener('mouseenter', function() {
+                    selectedIndex = index;
+                    updateSelectedItem();
+                });
+
+                cameraAutocompleteList.appendChild(item);
+            });
+
+            cameraAutocompleteList.classList.add('active');
+        }
+
+        // Atualizar item selecionado (navegação por teclado)
+        function updateSelectedItem() {
+            var items = cameraAutocompleteList.querySelectorAll('.camera-autocomplete-item');
+            items.forEach(function(item, i) {
+                if (i === selectedIndex) {
+                    item.classList.add('selected');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        // Selecionar câmera e georreferenciar no mapa
+        function selectCamera(camera) {
+            var nome = camera.nome || camera.name || camera.denominacao || 'Sem nome';
+            var lat = camera.lat || camera.latitude;
+            var lng = camera.lng || camera.longitude;
+
+            console.log('Câmera selecionada:', nome, lat, lng);
+
+            // Limpar busca
+            cameraSearchInput.value = nome;
+            cameraAutocompleteList.innerHTML = '';
+            cameraAutocompleteList.classList.remove('active');
+            cameraSearchClear.style.display = 'flex';
+
+            // Centralizar mapa na câmera com zoom alto
+            if (lat && lng) {
+                map.flyTo([lat, lng], 18, {
+                    duration: 1.5
+                });
+
+                // Encontrar e abrir popup do marcador (verificar nas duas camadas)
+                var found = false;
+                ['camerasFixas', 'camerasMoveis'].forEach(function(layerName) {
+                    if (found || !mapLayers[layerName]) return;
+                    mapLayers[layerName].eachLayer(function(layer) {
+                        if (found) return;
+                        var latLng = layer.getLatLng();
+                        if (Math.abs(latLng.lat - lat) < 0.0001 &&
+                            Math.abs(latLng.lng - lng) < 0.0001) {
+                            found = true;
+                            setTimeout(function() {
+                                layer.openPopup();
+                            }, 1600);
+                        }
+                    });
+                });
+
+                showToast('Câmera localizada: ' + nome, 'success');
+            }
+        }
+
+        // Event listeners
+        if (cameraSearchInput) {
+            // Input com debounce
+            cameraSearchInput.addEventListener('input', function(e) {
+                var query = e.target.value.trim();
+
+                // Mostrar/esconder botão de limpar
+                cameraSearchClear.style.display = query ? 'flex' : 'none';
+
+                // Debounce para não fazer muitas buscas
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function() {
+                    if (query.length >= 2) {
+                        loadCamerasData().then(function() {
+                            var results = filterCameras(query);
+                            renderAutocomplete(results, query);
+                        });
+                    } else {
+                        cameraAutocompleteList.innerHTML = '';
+                        cameraAutocompleteList.classList.remove('active');
+                    }
+                }, 200);
+            });
+
+            // Navegação por teclado
+            cameraSearchInput.addEventListener('keydown', function(e) {
+                var items = cameraAutocompleteList.querySelectorAll('.camera-autocomplete-item');
+                if (items.length === 0) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                    updateSelectedItem();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, 0);
+                    updateSelectedItem();
+                } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    var query = cameraSearchInput.value.trim();
+                    var results = filterCameras(query);
+                    if (results[selectedIndex]) {
+                        selectCamera(results[selectedIndex]);
+                    }
+                } else if (e.key === 'Escape') {
+                    cameraAutocompleteList.innerHTML = '';
+                    cameraAutocompleteList.classList.remove('active');
+                    cameraSearchInput.blur();
+                }
+            });
+
+            // Fechar ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.camera-search-container')) {
+                    cameraAutocompleteList.innerHTML = '';
+                    cameraAutocompleteList.classList.remove('active');
+                }
+            });
+        }
+
+        // Botão de limpar
+        if (cameraSearchClear) {
+            cameraSearchClear.addEventListener('click', function(e) {
+                e.stopPropagation();
+                cameraSearchInput.value = '';
+                cameraAutocompleteList.innerHTML = '';
+                cameraAutocompleteList.classList.remove('active');
+                cameraSearchClear.style.display = 'none';
+                cameraSearchInput.focus();
+            });
+        }
+
+        console.log('Sistema de busca de câmeras inicializado');
+    })();
 
 </script>
 

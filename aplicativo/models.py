@@ -4378,7 +4378,10 @@ class EscolasMunicipais(models.Model):
     data_inauguracao = models.CharField(max_length=10, null=True, blank=True)
     nome_abrev = models.CharField(max_length=255, null=True, blank=True)
     cod_microarea = models.CharField(max_length=20, null=True, blank=True)
-    
+    latitude = models.CharField(max_length=30, null=True, blank=True)
+    longitude = models.CharField(max_length=30, null=True, blank=True)
+    tipo = models.CharField(max_length=100, null=True, blank=True)
+
 
 class FeirasCidade(models.Model):
     x = models.CharField(max_length=20, null=True, blank=True)

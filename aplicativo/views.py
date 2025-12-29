@@ -278,8 +278,25 @@ def api_eventos(request):
 # ============================================
 
 def api_escolas(request):
-    """API de escolas (placeholder)"""
-    return JsonResponse({'success': True, 'count': 0, 'data': []})
+    """API de escolas municipais"""
+    try:
+        from aplicativo.models import EscolasMunicipais
+        escolas = EscolasMunicipais.objects.all()
+        data = []
+        for e in escolas:
+            if e.latitude and e.longitude:
+                data.append({
+                    'id': e.id,
+                    'nome': e.nome or '',
+                    'tipo': e.tipo or '',
+                    'cre': e.cre or '',
+                    'designacao': e.designacao or '',
+                    'latitude': float(e.latitude) if e.latitude else None,
+                    'longitude': float(e.longitude) if e.longitude else None,
+                })
+        return JsonResponse({'success': True, 'count': len(data), 'data': data})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 def api_hospitais(request):
     """API de hospitais (placeholder)"""
@@ -598,25 +615,27 @@ def estacoes_vento_view(request):
 @api_view(['GET'])
 def escolas_view(request):
     """API de Escolas Municipais"""
-    print('DEBUG: escolas_view foi chamada!')
     escolas_list = list(EscolasMunicipais.objects.all())
-    print(f'DEBUG: Encontradas {len(escolas_list)} escolas')
 
     data = []
     for escola in escolas_list:
-        print(f'DEBUG: Processando {escola.nome} - x={escola.x}, y={escola.y}')
-        data.append({
-            'id': escola.id,
-            'nome': escola.nome,
-            'lat': float(escola.y),
-            'lng': float(escola.x),
-            'endereco': str(escola.endereco or 'N/A'),
-            'bairro': str(escola.bairro or 'N/A'),
-            'telefone': str(escola.telefone or 'N/A'),
-            'tipo': 'escola_municipal'
-        })
+        # Usar latitude/longitude do CSV (não x/y que são UTM)
+        if escola.latitude and escola.longitude:
+            try:
+                data.append({
+                    'id': escola.id,
+                    'nome': escola.nome or '',
+                    'lat': float(escola.latitude),
+                    'lng': float(escola.longitude),
+                    'endereco': str(escola.endereco or 'N/A'),
+                    'bairro': str(escola.bairro or 'N/A'),
+                    'telefone': str(escola.telefone or 'N/A'),
+                    'cre': escola.cre or '',
+                    'tipo': escola.tipo or 'Escola Municipal'
+                })
+            except (ValueError, TypeError):
+                continue
 
-    print(f'DEBUG: Retornando {len(data)} escolas')
     return Response({'success': True, 'data': data, 'count': len(data)})
 
 
