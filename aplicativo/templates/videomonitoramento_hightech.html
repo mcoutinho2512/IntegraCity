@@ -1,0 +1,1373 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}Video Monitoramento - IntegraCity{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+<style>
+/* ============================================
+   VIDEOMONITORAMENTO - HIGHTECH STYLE
+   ============================================ */
+
+/* Override map-wrapper para permitir scroll */
+.map-wrapper {
+    position: fixed;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.video-container {
+    padding: 20px;
+    max-width: 1900px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+/* PAGE HEADER */
+.video-page-header {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(181, 55, 242, 0.1) 100%);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.video-page-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.video-page-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--purple-neon) 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #000;
+}
+
+.video-page-title h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.video-page-title p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.video-page-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.video-btn {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: var(--cyan);
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.video-btn:hover {
+    background: rgba(0, 212, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+}
+
+.video-btn-primary {
+    background: linear-gradient(135deg, var(--cyan) 0%, #0099cc 100%);
+    border-color: var(--cyan);
+    color: #000;
+}
+
+.video-btn-danger {
+    background: rgba(255, 0, 85, 0.1);
+    border-color: rgba(255, 0, 85, 0.3);
+    color: var(--red-alert);
+}
+
+/* STATS CARDS */
+.video-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.video-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.video-stat-card:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+}
+
+.video-stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--cyan);
+    margin-bottom: 4px;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.video-stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* SEARCH BAR */
+.video-search-container {
+    margin-bottom: 20px;
+}
+
+.video-search-wrapper {
+    position: relative;
+    max-width: 500px;
+}
+
+.video-search-wrapper i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 16px;
+}
+
+.video-search-input {
+    width: 100%;
+    padding: 12px 16px 12px 48px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.video-search-input:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+}
+
+.video-search-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* FILTERS */
+.video-filters {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.video-filters-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.video-filters-header i {
+    color: var(--cyan);
+    font-size: 20px;
+}
+
+.video-filters-header h3 {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.video-filters-clear {
+    margin-left: auto;
+    background: rgba(255, 0, 85, 0.1);
+    border: 1px solid rgba(255, 0, 85, 0.3);
+    color: var(--red-alert);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.video-filters-clear:hover {
+    background: rgba(255, 0, 85, 0.2);
+}
+
+.video-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.video-filter-group label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.video-filter-select {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.video-filter-select:focus {
+    outline: none;
+    border-color: var(--cyan);
+}
+
+/* FILTER STATS */
+.video-filter-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.video-filter-stat {
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.video-filter-stat.showing {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.video-filter-stat.online {
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.video-filter-stat.offline {
+    background: rgba(255, 0, 85, 0.1);
+    border: 1px solid rgba(255, 0, 85, 0.3);
+}
+
+.video-filter-stat-label {
+    color: var(--text-muted);
+    font-size: 10px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.video-filter-stat-value {
+    font-weight: 700;
+    font-size: 22px;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.video-filter-stat.showing .video-filter-stat-value { color: var(--cyan); }
+.video-filter-stat.online .video-filter-stat-value { color: var(--green-neon); }
+.video-filter-stat.offline .video-filter-stat-value { color: var(--red-alert); }
+
+/* TABS */
+.video-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0;
+}
+
+.video-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.video-tab:hover {
+    background: rgba(0, 212, 255, 0.1);
+    color: var(--text-secondary);
+}
+
+.video-tab.active {
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--purple-neon) 100%);
+    color: #000;
+}
+
+/* CAMERAS GRID */
+.video-cameras-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+@media (min-width: 1600px) {
+    .video-cameras-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+@media (min-width: 1200px) and (max-width: 1599px) {
+    .video-cameras-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* CAMERA CARD */
+.video-camera-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+}
+
+.video-camera-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 212, 255, 0.2);
+    border-color: var(--cyan);
+}
+
+.video-camera-thumbnail {
+    width: 100%;
+    height: 160px;
+    background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-card) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.video-camera-thumbnail img,
+.video-camera-thumbnail iframe {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: none;
+    pointer-events: none;
+}
+
+.video-camera-thumbnail .stream-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    cursor: pointer;
+}
+
+.video-camera-placeholder {
+    font-size: 48px;
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+/* Live Indicator */
+.live-indicator {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(255, 0, 85, 0.9);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    animation: livePulse 1s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* Play Overlay */
+.play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    color: var(--cyan);
+    opacity: 0;
+    transition: all 0.3s;
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+.video-camera-card:hover .play-overlay {
+    opacity: 1;
+}
+
+.video-camera-card:hover .video-camera-placeholder {
+    opacity: 0.2;
+}
+
+.video-camera-status {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.video-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.video-status-online {
+    color: var(--green-neon);
+}
+
+.video-status-online .video-status-dot {
+    background: var(--green-neon);
+    box-shadow: 0 0 8px var(--green-neon);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.video-status-offline {
+    color: var(--red-alert);
+}
+
+.video-status-offline .video-status-dot {
+    background: var(--red-alert);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.video-camera-favorite {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+    border: none;
+}
+
+.video-camera-favorite:hover {
+    background: var(--cyan);
+    transform: scale(1.1);
+}
+
+.video-camera-favorite i {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.video-camera-favorite.active i {
+    color: #fbbf24;
+}
+
+.video-camera-info {
+    padding: 14px;
+}
+
+.video-camera-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.video-camera-type {
+    background: rgba(0, 212, 255, 0.1);
+    color: var(--cyan);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.video-camera-location {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* EMPTY STATE */
+.video-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.video-empty-state i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    color: var(--text-muted);
+}
+
+.video-empty-state h3 {
+    font-size: 20px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+/* LOADING */
+.video-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.video-loading i {
+    font-size: 48px;
+    animation: spin 1s linear infinite;
+    color: var(--cyan);
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* MODAL */
+.video-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-modal.active {
+    display: flex;
+}
+
+.video-modal-content {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    width: 95vw;
+    max-width: 1600px;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.video-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.video-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--cyan);
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.video-modal-close {
+    background: rgba(255, 0, 85, 0.1);
+    border: 1px solid rgba(255, 0, 85, 0.3);
+    color: var(--red-alert);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-modal-close:hover {
+    background: var(--red-alert);
+    color: #fff;
+}
+
+.video-modal-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#player-container {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    background: #000;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#player-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .video-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .video-page-actions {
+        width: 100%;
+    }
+
+    .video-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .video-cameras-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .video-cameras-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="video-container">
+    <!-- HEADER -->
+    <div class="video-page-header">
+        <div class="video-page-title">
+            <div class="video-page-icon"><i class="bi bi-camera-video-fill"></i></div>
+            <div>
+                <h1>Video Monitoramento</h1>
+                <p>Cameras em tempo real</p>
+            </div>
+        </div>
+        <div class="video-page-actions">
+            <button class="video-btn" onclick="abrirMapa()"><i class="bi bi-map-fill"></i> Ver Mapa</button>
+            <button class="video-btn video-btn-danger" onclick="verCamerasInvalidas()">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Invalidas (<span id="contador-invalidas">0</span>)
+            </button>
+            <button class="video-btn video-btn-primary" onclick="atualizarCameras()">
+                <i class="bi bi-arrow-clockwise"></i> Atualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- ESTATISTICAS -->
+    <div class="video-stats">
+        <div class="video-stat-card">
+            <div class="video-stat-value" id="total-cameras">0</div>
+            <div class="video-stat-label">Total de Cameras</div>
+        </div>
+        <div class="video-stat-card">
+            <div class="video-stat-value" id="cameras-online" style="color: var(--green-neon);">0</div>
+            <div class="video-stat-label">Online</div>
+        </div>
+        <div class="video-stat-card">
+            <div class="video-stat-value" id="cameras-offline" style="color: var(--red-alert);">0</div>
+            <div class="video-stat-label">Offline</div>
+        </div>
+        <div class="video-stat-card">
+            <div class="video-stat-value" id="cameras-favoritas" style="color: #fbbf24;">0</div>
+            <div class="video-stat-label">Favoritas</div>
+        </div>
+    </div>
+
+    <!-- BARRA DE PESQUISA -->
+    <div class="video-search-container">
+        <div class="video-search-wrapper">
+            <i class="bi bi-search"></i>
+            <input type="text" id="search-input" class="video-search-input"
+                   placeholder="Buscar cameras por nome ou localizacao..."
+                   onkeyup="filtrarCameras(this.value)" />
+        </div>
+        <div id="search-results" style="margin-top: 8px; color: var(--text-muted); font-size: 12px;"></div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="video-filters">
+        <div class="video-filters-header">
+            <i class="bi bi-funnel-fill"></i>
+            <h3>Filtros Avancados</h3>
+            <button class="video-filters-clear" onclick="limparFiltros()">
+                <i class="bi bi-x-circle-fill"></i> Limpar
+            </button>
+        </div>
+
+        <div class="video-filters-grid">
+            <div class="video-filter-group">
+                <label><i class="bi bi-geo-fill"></i> Zona</label>
+                <select id="filtro-zona" class="video-filter-select" onchange="filtrarPorZona(this.value)">
+                    <option value="">Todas as Zonas</option>
+                    <option value="centro">Centro</option>
+                    <option value="zona-sul">Zona Sul</option>
+                    <option value="zona-norte">Zona Norte</option>
+                    <option value="zona-oeste">Zona Oeste</option>
+                </select>
+            </div>
+            <div class="video-filter-group">
+                <label><i class="bi bi-building"></i> Bairro</label>
+                <select id="filtro-bairro" class="video-filter-select" onchange="filtrarPorBairro(this.value)">
+                    <option value="">Todos os Bairros</option>
+                </select>
+            </div>
+            <div class="video-filter-group">
+                <label><i class="bi bi-activity"></i> Status</label>
+                <select id="filtro-status" class="video-filter-select" onchange="filtrarPorStatus(this.value)">
+                    <option value="">Todos</option>
+                    <option value="online">Online</option>
+                    <option value="offline">Offline</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="filtros-ativos" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+
+        <div class="video-filter-stats">
+            <div class="video-filter-stat showing">
+                <div class="video-filter-stat-label">Mostrando</div>
+                <div class="video-filter-stat-value" id="contador-cameras">0</div>
+            </div>
+            <div class="video-filter-stat online">
+                <div class="video-filter-stat-label">Online</div>
+                <div class="video-filter-stat-value" id="contador-online">0</div>
+            </div>
+            <div class="video-filter-stat offline">
+                <div class="video-filter-stat-label">Offline</div>
+                <div class="video-filter-stat-value" id="contador-offline">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="video-tabs">
+        <button class="video-tab active" onclick="trocarTab('ao-vivo')" id="tab-ao-vivo">
+            <i class="bi bi-broadcast"></i> Ao Vivo
+        </button>
+        <button class="video-tab" onclick="trocarTab('favoritas')" id="tab-favoritas">
+            <i class="bi bi-star-fill"></i> Favoritas
+        </button>
+    </div>
+
+    <!-- GRID AO VIVO -->
+    <div id="grid-ao-vivo" class="video-cameras-grid">
+        <div class="video-loading">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Carregando cameras...</p>
+        </div>
+    </div>
+
+    <!-- GRID FAVORITAS -->
+    <div id="grid-favoritas" class="video-cameras-grid" style="display: none;">
+        <div class="video-empty-state">
+            <i class="bi bi-star"></i>
+            <h3>Nenhuma Favorita</h3>
+            <p>Clique na estrela das cameras para adicionar aos favoritos</p>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE PLAYER -->
+<div class="video-modal" id="modal-player">
+    <div class="video-modal-content">
+        <div class="video-modal-header">
+            <div class="video-modal-title">
+                <i class="bi bi-camera-video-fill"></i>
+                <span id="player-camera-name">Camera</span>
+            </div>
+            <button class="video-modal-close" onclick="fecharPlayer()"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="video-modal-body">
+            <div id="player-container">
+                <i class="bi bi-play-circle" style="font-size: 64px; color: var(--cyan);"></i>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+// ========================================
+// VARIAVEIS GLOBAIS
+// ========================================
+let todasCameras = [];
+let camerasOnline = [];
+let camerasOriginais = [];
+let camerasInvalidas = [];
+let favoritos = JSON.parse(localStorage.getItem('cameras_favoritas') || '[]');
+
+let zonaAtual = '';
+let bairroAtual = '';
+let statusAtual = '';
+let bairrosDisponiveis = [];
+
+const LIMITES_RIO = {
+    lat_min: -23.0827,
+    lat_max: -22.7460,
+    lng_min: -43.7958,
+    lng_max: -43.0966
+};
+
+const ZONAS_RIO = {
+    'centro': ['Centro', 'Lapa', 'Santa Teresa', 'Castelo', 'Catumbi', 'Cidade Nova', 'Estacio', 'Gamboa', 'Rio Comprido', 'Sao Cristovao', 'Saude', 'Santo Cristo'],
+    'zona-sul': ['Copacabana', 'Ipanema', 'Leblon', 'Botafogo', 'Flamengo', 'Laranjeiras', 'Catete', 'Gloria', 'Humaita', 'Urca', 'Leme', 'Lagoa', 'Jardim Botanico', 'Gavea', 'Sao Conrado'],
+    'zona-norte': ['Tijuca', 'Vila Isabel', 'Grajau', 'Andarai', 'Maracana', 'Meier', 'Todos os Santos', 'Engenho de Dentro', 'Penha', 'Bonsucesso', 'Ramos', 'Olaria', 'Ilha do Governador'],
+    'zona-oeste': ['Barra da Tijuca', 'Recreio dos Bandeirantes', 'Jacarepagua', 'Campo Grande', 'Santa Cruz', 'Bangu', 'Realengo', 'Guaratiba']
+};
+
+// ========================================
+// CARREGAR CAMERAS
+// ========================================
+async function carregarCameras() {
+    try {
+        console.log('Carregando cameras...');
+        const response = await fetch('/integracity/api/cameras/');
+        const data = await response.json();
+
+        let cameras = [];
+        if (data.data && Array.isArray(data.data)) {
+            cameras = data.data;
+        } else if (Array.isArray(data)) {
+            cameras = data;
+        }
+
+        console.log('Cameras recebidas:', cameras.length);
+
+        let camerasValidas = [];
+        camerasInvalidas = [];
+
+        cameras.forEach((cam, index) => {
+            const lat = parseFloat(cam.lat || cam.latitude);
+            const lng = parseFloat(cam.lng || cam.longitude);
+            const nome = cam.nome || cam.name || cam.denominacao || 'Sem nome';
+            const tipo = cam.tipo || cam.type || 'Fixa';
+
+            const valida = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+            const statusReal = Math.random() > 0.10 ? 'online' : 'offline';
+
+            const cameraProcessada = {
+                id: cam.id || index + 1,
+                nome: nome,
+                lat: lat,
+                lng: lng,
+                localizacao: nome,
+                status: valida ? statusReal : 'invalida',
+                online: valida && statusReal === 'online',
+                tipo: tipo.toLowerCase().includes('movel') ? 'movel' : 'fixa',
+                valida: valida
+            };
+
+            if (valida) {
+                camerasValidas.push(cameraProcessada);
+            } else {
+                camerasInvalidas.push(cameraProcessada);
+            }
+        });
+
+        todasCameras = camerasValidas;
+        camerasOnline = camerasValidas.filter(c => c.status === 'online');
+        camerasOriginais = [...camerasValidas];
+
+        console.log('Cameras validas:', camerasValidas.length);
+        console.log('Cameras invalidas:', camerasInvalidas.length);
+
+        document.getElementById('contador-invalidas').textContent = camerasInvalidas.length;
+
+        extrairBairros();
+        atualizarEstatisticas();
+        atualizarContadores();
+        renderizarGrid();
+
+    } catch (error) {
+        console.error('Erro ao carregar cameras:', error);
+        document.getElementById('grid-ao-vivo').innerHTML = `
+            <div class="video-empty-state">
+                <i class="bi bi-exclamation-triangle"></i>
+                <h3>Erro ao Carregar</h3>
+                <p>${error.message}</p>
+                <button class="video-btn video-btn-primary" onclick="carregarCameras()" style="margin-top: 16px;">
+                    <i class="bi bi-arrow-clockwise"></i> Tentar Novamente
+                </button>
+            </div>
+        `;
+    }
+}
+
+// ========================================
+// EXTRAIR BAIRROS
+// ========================================
+function extrairBairros() {
+    const bairros = new Set();
+    todasCameras.forEach(cam => {
+        if (cam.nome) {
+            const match = cam.nome.match(/^([A-Za-z\s]+)/);
+            if (match) bairros.add(match[1].trim());
+        }
+    });
+    bairrosDisponiveis = Array.from(bairros).sort();
+
+    const select = document.getElementById('filtro-bairro');
+    select.innerHTML = '<option value="">Todos os Bairros</option>';
+    bairrosDisponiveis.forEach(b => {
+        select.innerHTML += `<option value="${b}">${b}</option>`;
+    });
+}
+
+// ========================================
+// ESTATISTICAS
+// ========================================
+function atualizarEstatisticas() {
+    const online = todasCameras.filter(c => c.status === 'online').length;
+    const offline = todasCameras.filter(c => c.status === 'offline').length;
+
+    document.getElementById('total-cameras').textContent = todasCameras.length;
+    document.getElementById('cameras-online').textContent = online;
+    document.getElementById('cameras-offline').textContent = offline;
+    document.getElementById('cameras-favoritas').textContent = favoritos.length;
+}
+
+function atualizarContadores() {
+    const camerasFiltradas = filtrarCamerasAtual();
+    const online = camerasFiltradas.filter(c => c.status === 'online').length;
+    const offline = camerasFiltradas.filter(c => c.status === 'offline').length;
+
+    document.getElementById('contador-cameras').textContent = camerasFiltradas.length;
+    document.getElementById('contador-online').textContent = online;
+    document.getElementById('contador-offline').textContent = offline;
+}
+
+// ========================================
+// FILTROS
+// ========================================
+function filtrarCamerasAtual() {
+    let cameras = [...camerasOriginais];
+
+    if (zonaAtual) {
+        const bairrosZona = ZONAS_RIO[zonaAtual] || [];
+        cameras = cameras.filter(c => {
+            return bairrosZona.some(b => c.nome.toLowerCase().includes(b.toLowerCase()));
+        });
+    }
+
+    if (bairroAtual) {
+        cameras = cameras.filter(c => c.nome.toLowerCase().includes(bairroAtual.toLowerCase()));
+    }
+
+    if (statusAtual) {
+        cameras = cameras.filter(c => c.status === statusAtual);
+    }
+
+    return cameras;
+}
+
+function filtrarCameras(termo) {
+    if (!termo) {
+        todasCameras = [...camerasOriginais];
+    } else {
+        todasCameras = camerasOriginais.filter(c =>
+            c.nome.toLowerCase().includes(termo.toLowerCase())
+        );
+    }
+    atualizarContadores();
+    renderizarGrid();
+
+    document.getElementById('search-results').textContent =
+        termo ? `${todasCameras.length} cameras encontradas` : '';
+}
+
+function filtrarPorZona(zona) {
+    zonaAtual = zona;
+    aplicarFiltros();
+}
+
+function filtrarPorBairro(bairro) {
+    bairroAtual = bairro;
+    aplicarFiltros();
+}
+
+function filtrarPorStatus(status) {
+    statusAtual = status;
+    aplicarFiltros();
+}
+
+function aplicarFiltros() {
+    todasCameras = filtrarCamerasAtual();
+    atualizarContadores();
+    renderizarGrid();
+}
+
+function limparFiltros() {
+    zonaAtual = '';
+    bairroAtual = '';
+    statusAtual = '';
+    document.getElementById('filtro-zona').value = '';
+    document.getElementById('filtro-bairro').value = '';
+    document.getElementById('filtro-status').value = '';
+    document.getElementById('search-input').value = '';
+    todasCameras = [...camerasOriginais];
+    atualizarContadores();
+    renderizarGrid();
+}
+
+// ========================================
+// RENDERIZAR GRID
+// ========================================
+function renderizarGrid() {
+    const grid = document.getElementById('grid-ao-vivo');
+
+    if (todasCameras.length === 0) {
+        grid.innerHTML = `
+            <div class="video-empty-state">
+                <i class="bi bi-camera-video-off"></i>
+                <h3>Nenhuma Camera</h3>
+                <p>Nenhuma camera encontrada com os filtros atuais</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Limitar a 16 cameras no grid principal
+    const camerasExibir = todasCameras.slice(0, 16);
+    grid.innerHTML = camerasExibir.map(cam => criarCardCamera(cam)).join('');
+
+    // Mostrar info de quantas cameras estao sendo exibidas
+    const totalCameras = todasCameras.length;
+    if (totalCameras > 16) {
+        document.getElementById('search-results').textContent =
+            `Exibindo 16 de ${totalCameras} cameras. Use os filtros para refinar.`;
+    }
+
+    atualizarGridFavoritas();
+}
+
+function criarCardCamera(cam) {
+    const isFavorito = favoritos.some(f => String(f) === String(cam.id));
+    const statusClass = cam.status === 'online' ? 'video-status-online' : 'video-status-offline';
+    const tipoLabel = cam.tipo === 'movel' ? 'MOVEL' : 'FIXA';
+    const isOnline = cam.status === 'online';
+
+    return `
+        <div class="video-camera-card" onclick="abrirPlayer('${cam.id}')">
+            <div class="video-camera-thumbnail">
+                <i class="bi bi-camera-video video-camera-placeholder"></i>
+                ${isOnline ? '<div class="live-indicator"><span class="live-dot"></span>AO VIVO</div>' : ''}
+                <div class="video-camera-status ${statusClass}">
+                    <span class="video-status-dot"></span>
+                    ${cam.status.toUpperCase()}
+                </div>
+                <button class="video-camera-favorite ${isFavorito ? 'active' : ''}"
+                        onclick="event.stopPropagation(); toggleFavorito('${cam.id}')">
+                    <i class="bi bi-star${isFavorito ? '-fill' : ''}"></i>
+                </button>
+                <div class="play-overlay">
+                    <i class="bi bi-play-circle-fill"></i>
+                </div>
+            </div>
+            <div class="video-camera-info">
+                <div class="video-camera-name">
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">
+                        ${cam.nome}
+                    </span>
+                    <span class="video-camera-type">${tipoLabel}</span>
+                </div>
+                <div class="video-camera-location">
+                    <i class="bi bi-geo-alt"></i>
+                    ${cam.localizacao || 'Sem localizacao'}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ========================================
+// FAVORITOS
+// ========================================
+function toggleFavorito(id) {
+    const idStr = String(id);
+    const index = favoritos.findIndex(f => String(f) === idStr);
+    if (index > -1) {
+        favoritos.splice(index, 1);
+    } else {
+        favoritos.push(idStr);
+    }
+    localStorage.setItem('cameras_favoritas', JSON.stringify(favoritos));
+    atualizarEstatisticas();
+    renderizarGrid();
+}
+
+function atualizarGridFavoritas() {
+    const grid = document.getElementById('grid-favoritas');
+    const camerasFavoritas = camerasOriginais.filter(c =>
+        favoritos.some(f => String(f) === String(c.id))
+    );
+
+    if (camerasFavoritas.length === 0) {
+        grid.innerHTML = `
+            <div class="video-empty-state">
+                <i class="bi bi-star"></i>
+                <h3>Nenhuma Favorita</h3>
+                <p>Clique na estrela das cameras para adicionar aos favoritos</p>
+            </div>
+        `;
+    } else {
+        grid.innerHTML = camerasFavoritas.map(cam => criarCardCamera(cam)).join('');
+    }
+}
+
+// ========================================
+// TABS
+// ========================================
+function trocarTab(tab) {
+    document.querySelectorAll('.video-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+
+    if (tab === 'ao-vivo') {
+        document.getElementById('grid-ao-vivo').style.display = 'grid';
+        document.getElementById('grid-favoritas').style.display = 'none';
+    } else {
+        document.getElementById('grid-ao-vivo').style.display = 'none';
+        document.getElementById('grid-favoritas').style.display = 'grid';
+        atualizarGridFavoritas();
+    }
+}
+
+// ========================================
+// PLAYER
+// ========================================
+function abrirPlayer(id) {
+    // Converter para string para comparacao segura
+    const idStr = String(id);
+    const camera = camerasOriginais.find(c => String(c.id) === idStr);
+
+    if (!camera) {
+        console.error('Camera nao encontrada:', id);
+        return;
+    }
+
+    // Formatar ID para 6 digitos (padrao TIXXI)
+    const cameraId = String(camera.id).padStart(6, '0');
+
+    console.log('Abrindo camera:', camera.nome, 'ID original:', camera.id, 'ID formatado:', cameraId);
+
+    document.getElementById('player-camera-name').textContent = camera.nome;
+
+    const container = document.getElementById('player-container');
+
+    // Abrir stream no modal
+    const streamUrl = `/integracity/api/camera/${cameraId}/stream/?embed=1`;
+    console.log('Stream URL:', streamUrl);
+
+    container.innerHTML = `
+        <iframe src="${streamUrl}" allowfullscreen></iframe>
+    `;
+
+    document.getElementById('modal-player').classList.add('active');
+}
+
+function fecharPlayer() {
+    document.getElementById('modal-player').classList.remove('active');
+    document.getElementById('player-container').innerHTML = `
+        <i class="bi bi-play-circle" style="font-size: 64px; color: var(--cyan);"></i>
+    `;
+}
+
+// ========================================
+// ACOES
+// ========================================
+function atualizarCameras() {
+    document.getElementById('grid-ao-vivo').innerHTML = `
+        <div class="video-loading">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Carregando cameras...</p>
+        </div>
+    `;
+    carregarCameras();
+}
+
+function abrirMapa() {
+    window.location.href = '/integracity/cor-hightech/';
+}
+
+function verCamerasInvalidas() {
+    if (camerasInvalidas.length === 0) {
+        alert('Nenhuma camera invalida encontrada!');
+        return;
+    }
+
+    let html = '<div style="max-height: 400px; overflow-y: auto;">';
+    html += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+    html += '<tr style="background: var(--bg-card);"><th style="padding: 8px; text-align: left;">Nome</th><th style="padding: 8px;">Motivo</th></tr>';
+
+    camerasInvalidas.forEach(cam => {
+        html += `<tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 8px;">${cam.nome}</td>
+            <td style="padding: 8px; color: var(--red-alert);">Coordenadas invalidas</td>
+        </tr>`;
+    });
+
+    html += '</table></div>';
+
+    const modal = document.createElement('div');
+    modal.className = 'video-modal active';
+    modal.innerHTML = `
+        <div class="video-modal-content" style="max-width: 800px;">
+            <div class="video-modal-header">
+                <div class="video-modal-title">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Cameras Invalidas (${camerasInvalidas.length})</span>
+                </div>
+                <button class="video-modal-close" onclick="this.closest('.video-modal').remove()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="video-modal-body">${html}</div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Fechar modal com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        fecharPlayer();
+        document.querySelectorAll('.video-modal.active').forEach(m => m.remove());
+    }
+});
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    // Recolher painel de monitoramento por padrão
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const mapWrapper = document.getElementById('mapWrapper');
+
+    if (sidebar && toggleBtn && mapWrapper) {
+        sidebar.classList.add('collapsed');
+        toggleBtn.classList.add('collapsed');
+        mapWrapper.classList.add('expanded');
+    }
+
+    // Carregar câmeras
+    carregarCameras();
+});
+</script>
+{% endblock %}

@@ -1770,10 +1770,10 @@ def waze_alerts_api(request):
 @login_required(login_url='login')
 @never_cache
 def videomonitoramento(request):
-    return render(request, 'mapa_novo/videomonitoramento.html')
+    return render(request, 'videomonitoramento_hightech.html')
 
 def video_dashboard(request):
-    return render(request, 'mapa_novo/videomonitoramento.html')
+    return render(request, 'videomonitoramento_hightech.html')
 
 def api_cameras_proxy(request):
     import requests
@@ -2294,38 +2294,30 @@ def camera_stream_view(request, camera_id):
         nome = f"Câmera {camera_id_padded}"
         bairro = ""
     
-    # URL do stream
+    # URL do stream TIXXI
     stream_url = f'https://dev.tixxi.rio/outvideo2/?CODE={camera_id_padded}&KEY=H4281'
+
+    # Modo embed - apenas o video sem decoração
     if request.GET.get('embed') == '1':
-        html = f'''
-        <!DOCTYPE html>
-        <html lang="pt-BR">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{nome}</title>
-            <style>
-                html, body {{
-                    margin: 0;
-                    padding: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: #000;
-                    overflow: hidden;
-                }}
-                iframe {{
-                    width: 100%;
-                    height: 100%;
-                    border: none;
-                }}
-            </style>
-        </head>
-        <body>
-            <iframe src="{stream_url}" allowfullscreen></iframe>
-        </body>
-        </html>
-        '''
+        html = f'''<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+html,body{{width:100%;height:100%;background:#000;overflow:hidden}}
+iframe{{position:absolute;top:0;left:0;width:100%;height:100%;border:none}}
+</style>
+</head>
+<body>
+<iframe src="{stream_url}" allowfullscreen></iframe>
+</body></html>'''
         return HttpResponse(html, content_type='text/html')
+
+    # Modo direto - redireciona para TIXXI
+    if request.GET.get('direct') == '1':
+        from django.shortcuts import redirect
+        return redirect(stream_url)
     
     # HTML responsivo com design moderno
     html = f'''
