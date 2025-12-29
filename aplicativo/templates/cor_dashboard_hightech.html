@@ -349,6 +349,9 @@
         <button class="map-control-btn" id="layersToggleBtn" onclick="toggleLayersSidebar()" title="Camadas do Mapa">
             <i class="fas fa-layer-group"></i>
         </button>
+        <button class="map-control-btn tour-btn" id="tourControlBtn" onclick="toggleTourOcorrencias()" title="Tour Automatico de Ocorrencias">
+            <i class="fas fa-route" id="tourIcon"></i>
+        </button>
         <button class="map-control-btn ocorrencias-btn" onclick="window.open('{% url 'ocorrencias_dashboard' %}', '_blank')" title="Gerenciar Ocorrencias">
             <i class="fas fa-clipboard-list"></i>
         </button>
@@ -1967,6 +1970,28 @@
         console.log('Waze: ' + mapLayers.waze.getLayers().length + ' polylines renderizadas');
     }
 
+    // Animação de pulso para ocorrências via JavaScript (funciona melhor com Leaflet)
+    var ocPulseInterval = null;
+    function startOcorrenciaPulse() {
+        if (ocPulseInterval) clearInterval(ocPulseInterval);
+        var pulseState = true;
+        ocPulseInterval = setInterval(function() {
+            var dots = document.querySelectorAll('.oc-marker-dot');
+            dots.forEach(function(dot) {
+                if (pulseState) {
+                    dot.style.boxShadow = '0 0 20px 8px ' + (dot.dataset.cor || '#00D4FF');
+                    dot.style.opacity = '1';
+                } else {
+                    dot.style.boxShadow = '0 0 5px 2px ' + (dot.dataset.cor || '#00D4FF');
+                    dot.style.opacity = '0.7';
+                }
+            });
+            pulseState = !pulseState;
+        }, 600);
+    }
+    // Iniciar pulso após um pequeno delay para garantir que os markers foram renderizados
+    setTimeout(startOcorrenciaPulse, 2000);
+
     // Renderizar marcadores de ocorrencias com cores por prioridade
     function renderOcorrenciasMarkers(data) {
         // Limpar camada existente
@@ -1989,7 +2014,7 @@
 
                 var icon = L.divIcon({
                     className: 'custom-marker ocorrencia-marker',
-                    html: '<div style="background: ' + cor + '; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 0 15px rgba(0,0,0,0.4), 0 0 20px ' + cor + '50;"><i class="fas ' + icone + '" style="color: white; font-size: 14px;"></i></div>',
+                    html: '<div class="oc-marker-dot" data-cor="' + cor + '" style="background: ' + cor + '; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; transition: box-shadow 0.3s, opacity 0.3s;"><i class="fas ' + icone + '" style="color: white; font-size: 14px;"></i></div>',
                     iconSize: [32, 32],
                     iconAnchor: [16, 16]
                 });
@@ -2035,7 +2060,184 @@
         if (countEl) {
             countEl.textContent = items.length;
         }
+
+        // Reiniciar animação de pulso
+        setTimeout(startOcorrenciaPulse, 500);
+
+        // Reiniciar tour automático se estiver ativo
+        if (tourAtivo && items.length > 0) {
+            setTimeout(function() {
+                ocorrenciasTour = items.filter(function(oc) {
+                    return oc.latitude && oc.longitude;
+                });
+                if (!tourEmExecucao) {
+                    iniciarTourOcorrencias();
+                }
+            }, 1000);
+        }
     }
+
+    // ========================================
+    // TOUR AUTOMÁTICO POR OCORRÊNCIAS
+    // ========================================
+    var tourAtivo = true; // Liga/desliga o tour automático
+    var tourEmExecucao = false;
+    var tourNavegando = false; // Flag para indicar que o tour está navegando (evita pausar por eventos do mapa)
+    var tourTimeoutId = null;
+    var ocorrenciasTour = [];
+    var posicaoOriginal = { lat: -22.92, lng: -43.45, zoom: 11 };
+    var TEMPO_EM_OCORRENCIA = 4000; // 4 segundos em cada ocorrência
+    var TEMPO_NA_POSICAO_ORIGINAL = 5000; // 5 segundos na posição original
+    var ZOOM_OCORRENCIA = 16; // Zoom aproximado para cada ocorrência
+
+    function iniciarTourOcorrencias() {
+        if (tourEmExecucao || ocorrenciasTour.length === 0) return;
+
+        tourEmExecucao = true;
+        console.log('🚀 Iniciando tour por ' + ocorrenciasTour.length + ' ocorrências');
+
+        // Atualizar visual do botão
+        var btn = document.getElementById('tourControlBtn');
+        var icon = document.getElementById('tourIcon');
+        if (btn && icon) {
+            btn.classList.add('active');
+            icon.className = 'fas fa-pause';
+        }
+
+        // Iniciar o ciclo do tour
+        executarCicloTour(0);
+    }
+
+    function executarCicloTour(indice) {
+        if (!tourAtivo) {
+            tourEmExecucao = false;
+            tourNavegando = false;
+            return;
+        }
+
+        // Se percorreu todas as ocorrências, voltar para posição original
+        if (indice >= ocorrenciasTour.length) {
+            console.log('📍 Voltando para posição original...');
+            tourNavegando = true; // Marcar que o tour está navegando
+            map.flyTo([posicaoOriginal.lat, posicaoOriginal.lng], posicaoOriginal.zoom, {
+                duration: 2
+            });
+
+            // Esperar 5 segundos na posição original e reiniciar o tour
+            tourTimeoutId = setTimeout(function() {
+                tourNavegando = false;
+                if (tourAtivo && ocorrenciasTour.length > 0) {
+                    console.log('🔄 Reiniciando tour...');
+                    executarCicloTour(0);
+                }
+            }, TEMPO_NA_POSICAO_ORIGINAL + 2000); // +2s da animação flyTo
+            return;
+        }
+
+        var oc = ocorrenciasTour[indice];
+        console.log('🎯 Voando para ocorrência ' + (indice + 1) + '/' + ocorrenciasTour.length + ': ' + (oc.protocolo || oc.titulo || 'Ocorrência'));
+
+        // Voar para a ocorrência
+        tourNavegando = true; // Marcar que o tour está navegando
+        map.flyTo([oc.latitude, oc.longitude], ZOOM_OCORRENCIA, {
+            duration: 1.5
+        });
+
+        // Aguardar tempo na ocorrência e ir para a próxima
+        tourTimeoutId = setTimeout(function() {
+            tourNavegando = false;
+            executarCicloTour(indice + 1);
+        }, TEMPO_EM_OCORRENCIA + 1500); // +1.5s da animação flyTo
+    }
+
+    function pararTour() {
+        tourAtivo = false;
+        tourEmExecucao = false;
+        tourNavegando = false;
+        if (tourTimeoutId) {
+            clearTimeout(tourTimeoutId);
+            tourTimeoutId = null;
+        }
+        console.log('⏹️ Tour parado');
+    }
+
+    function retomarTour() {
+        if (tourEmExecucao) return;
+        tourAtivo = true;
+
+        // Buscar ocorrências atuais do mapa
+        var markers = mapLayers.ocorrencias.getLayers();
+        if (markers.length === 0) {
+            console.log('Nenhuma ocorrência para fazer tour');
+            return;
+        }
+
+        // Reconstruir lista de ocorrências a partir dos markers
+        // Como não temos os dados originais, vamos usar as coordenadas dos markers
+        ocorrenciasTour = markers.map(function(marker) {
+            var latlng = marker.getLatLng();
+            return {
+                latitude: latlng.lat,
+                longitude: latlng.lng,
+                protocolo: 'Ocorrência'
+            };
+        });
+
+        console.log('▶️ Retomando tour com ' + ocorrenciasTour.length + ' ocorrências');
+        iniciarTourOcorrencias();
+    }
+
+    // Pausar tour quando usuário interage com o mapa (mas não quando o tour está navegando)
+    map.on('dragstart', function() {
+        if (tourEmExecucao && !tourNavegando) {
+            pararTour();
+            atualizarBotaoTour();
+            showToast('Tour pausado - Clique no botão de rota para retomar', 'info');
+        }
+    });
+
+    map.on('zoomstart', function() {
+        if (tourEmExecucao && !tourNavegando) {
+            pararTour();
+            atualizarBotaoTour();
+            showToast('Tour pausado - Clique no botão de rota para retomar', 'info');
+        }
+    });
+
+    // Toggle do tour (botão na interface)
+    function toggleTourOcorrencias() {
+        var btn = document.getElementById('tourControlBtn');
+        var icon = document.getElementById('tourIcon');
+
+        if (tourEmExecucao) {
+            // Parar tour
+            pararTour();
+            btn.classList.remove('active');
+            icon.className = 'fas fa-route';
+            showToast('Tour automático desativado', 'info');
+        } else {
+            // Iniciar tour
+            retomarTour();
+            btn.classList.add('active');
+            icon.className = 'fas fa-pause';
+            showToast('Tour automático ativado - Voando por ' + ocorrenciasTour.length + ' ocorrências', 'success');
+        }
+    }
+
+    // Atualizar visual do botão quando tour é pausado por interação
+    function atualizarBotaoTour() {
+        var btn = document.getElementById('tourControlBtn');
+        var icon = document.getElementById('tourIcon');
+        if (!tourEmExecucao) {
+            btn.classList.remove('active');
+            icon.className = 'fas fa-route';
+        }
+    }
+
+    // Expor funções globalmente
+    window.pararTour = pararTour;
+    window.retomarTour = retomarTour;
+    window.toggleTourOcorrencias = toggleTourOcorrencias;
 
     // Atualizar contador de itens da camada
     function updateLayerCount(layerName, data) {

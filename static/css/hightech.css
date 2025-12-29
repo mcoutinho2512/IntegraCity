@@ -3887,3 +3887,175 @@ h1, h2, h3, h4, h5, h6,
         justify-content: center;
     }
 }
+
+/* ============================================
+   OCORRENCIAS - ANIMACAO PULSANTE
+   ============================================ */
+.ocorrencia-marker .ocorrencia-pulse {
+    position: relative;
+}
+
+.ocorrencia-marker .ocorrencia-pulse::before,
+.ocorrencia-marker .ocorrencia-pulse::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    animation: ocorrenciaPulse 2s ease-out infinite;
+}
+
+.ocorrencia-marker .ocorrencia-pulse::before {
+    width: 100%;
+    height: 100%;
+    animation-delay: 0s;
+}
+
+.ocorrencia-marker .ocorrencia-pulse::after {
+    width: 100%;
+    height: 100%;
+    animation-delay: 1s;
+}
+
+@keyframes ocorrenciaPulse {
+    0% {
+        box-shadow: 0 0 0 0 currentColor;
+        opacity: 0.7;
+    }
+    70% {
+        box-shadow: 0 0 0 20px currentColor;
+        opacity: 0;
+    }
+    100% {
+        box-shadow: 0 0 0 0 currentColor;
+        opacity: 0;
+    }
+}
+
+/* Marker pulsante direto - usando box-shadow animado */
+.ocorrencia-marker-pulse {
+    animation: ocorrenciaPulsar 1.5s ease-in-out infinite !important;
+}
+
+@keyframes ocorrenciaPulsar {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7), 0 0 15px rgba(0,0,0,0.4);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 15px rgba(255, 0, 85, 0), 0 0 25px rgba(0,0,0,0.4);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 0, 85, 0), 0 0 15px rgba(0,0,0,0.4);
+    }
+}
+
+/* Cores específicas por prioridade */
+.ocorrencia-pulse-baixa {
+    animation: pulseBaixa 1.5s ease-in-out infinite !important;
+}
+
+.ocorrencia-pulse-media {
+    animation: pulseMedia 1.5s ease-in-out infinite !important;
+}
+
+.ocorrencia-pulse-alta {
+    animation: pulseAlta 1.5s ease-in-out infinite !important;
+}
+
+.ocorrencia-pulse-critica {
+    animation: pulseCritica 1.5s ease-in-out infinite !important;
+}
+
+@keyframes pulseBaixa {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7), 0 0 15px rgba(0,0,0,0.4);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 15px rgba(76, 175, 80, 0), 0 0 25px rgba(0,0,0,0.4);
+    }
+}
+
+@keyframes pulseMedia {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.7), 0 0 15px rgba(0,0,0,0.4);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 15px rgba(0, 212, 255, 0), 0 0 25px rgba(0,0,0,0.4);
+    }
+}
+
+@keyframes pulseAlta {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 184, 0, 0.7), 0 0 15px rgba(0,0,0,0.4);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 15px rgba(255, 184, 0, 0), 0 0 25px rgba(0,0,0,0.4);
+    }
+}
+
+@keyframes pulseCritica {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7), 0 0 15px rgba(0,0,0,0.4);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 15px rgba(255, 0, 85, 0), 0 0 25px rgba(0,0,0,0.4);
+    }
+}
+
+/* ============================================
+   TOUR AUTOMÁTICO - BOTÃO DE CONTROLE
+   ============================================ */
+.map-control-btn.tour-btn {
+    position: relative;
+}
+
+.map-control-btn.tour-btn.active {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.3) 0%, rgba(181, 55, 242, 0.3) 100%);
+    border-color: var(--cyan);
+    color: var(--cyan);
+    animation: tourBtnPulse 2s ease-in-out infinite;
+}
+
+.map-control-btn.tour-btn.active::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    z-index: -1;
+    opacity: 0.5;
+    animation: tourBorderRotate 3s linear infinite;
+}
+
+@keyframes tourBtnPulse {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.6), 0 0 30px rgba(181, 55, 242, 0.4);
+    }
+}
+
+@keyframes tourBorderRotate {
+    0% {
+        filter: hue-rotate(0deg);
+    }
+    100% {
+        filter: hue-rotate(360deg);
+    }
+}
