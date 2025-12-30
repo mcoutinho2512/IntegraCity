@@ -3,6 +3,8 @@
    Funcionalidades do Command Center
    ============================================ */
 
+console.log('🚀 hightech.js carregando...');
+
 // ============================================
 // 1. SISTEMA DE TOASTS (NOTIFICAÇÕES)
 // ============================================
@@ -205,11 +207,327 @@ function showNotifications() {
 }
 
 // ============================================
-// 9. SHOW SETTINGS
+// 9. SETTINGS MANAGEMENT
 // ============================================
+
+// Default settings
+const defaultSettings = {
+    // Map settings
+    mapLat: -22.92,
+    mapLng: -43.45,
+    mapZoom: 11,
+    layerOcorrencias: true,
+    layerWaze: true,
+    layerCameras: false,
+    layerEscolas: false,
+    layerSirenes: false,
+
+    // Tour settings
+    tourAutoStart: true,
+    tourTimeOcorrencia: 6,
+    tourTimeOriginal: 6,
+    tourZoom: 16,
+
+    // Notification settings
+    soundEnabled: false,
+    notifyOcorrencias: true,
+    notifyWaze: true,
+    notifyMeteo: false,
+    notifyStatus: true,
+    browserNotify: false,
+
+    // Interface settings
+    theme: 'dark',
+    fontSize: 100,
+    sidebarExpanded: false,
+    animations: true
+};
+
+// Current settings
+let appSettings = { ...defaultSettings };
+
+// Load settings from localStorage
+function loadSettings() {
+    try {
+        const saved = localStorage.getItem('integracity_settings');
+        if (saved) {
+            appSettings = { ...defaultSettings, ...JSON.parse(saved) };
+        }
+    } catch (e) {
+        console.error('Error loading settings:', e);
+        appSettings = { ...defaultSettings };
+    }
+    return appSettings;
+}
+
+// Save settings to localStorage
+function saveSettingsToStorage() {
+    try {
+        localStorage.setItem('integracity_settings', JSON.stringify(appSettings));
+    } catch (e) {
+        console.error('Error saving settings:', e);
+    }
+}
+
+// Open settings modal
 function showSettings() {
-    showToast('Configurações do sistema', 'info');
-    // Implementar abertura das configurações
+    console.log('⚙️ showSettings() chamado');
+    const modal = document.getElementById('settingsModal');
+    console.log('⚙️ Modal encontrado:', modal);
+    if (modal) {
+        loadSettings();
+        populateSettingsForm();
+        modal.classList.add('active');
+        console.log('⚙️ Modal ativado');
+    } else {
+        console.error('❌ Modal de configurações não encontrado!');
+    }
+}
+
+// Close settings modal
+function closeSettings() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+// Switch settings tab
+function switchSettingsTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabName);
+    });
+
+    // Update tab content
+    document.querySelectorAll('.settings-tab-content').forEach(content => {
+        content.classList.toggle('active', content.id === `tab-${tabName}`);
+    });
+}
+
+// Populate form with current settings
+function populateSettingsForm() {
+    // Map settings
+    setInputValue('settingMapLat', appSettings.mapLat);
+    setInputValue('settingMapLng', appSettings.mapLng);
+    setInputValue('settingMapZoom', appSettings.mapZoom);
+    setCheckbox('settingLayerOcorrencias', appSettings.layerOcorrencias);
+    setCheckbox('settingLayerWaze', appSettings.layerWaze);
+    setCheckbox('settingLayerCameras', appSettings.layerCameras);
+    setCheckbox('settingLayerEscolas', appSettings.layerEscolas);
+    setCheckbox('settingLayerSirenes', appSettings.layerSirenes);
+
+    // Tour settings
+    setCheckbox('settingTourAutoStart', appSettings.tourAutoStart);
+    setSlider('settingTourTimeOcorrencia', appSettings.tourTimeOcorrencia, 'tourTimeOcorrenciaValue');
+    setSlider('settingTourTimeOriginal', appSettings.tourTimeOriginal, 'tourTimeOriginalValue');
+    setSlider('settingTourZoom', appSettings.tourZoom, 'tourZoomValue');
+
+    // Notification settings
+    setCheckbox('settingSoundEnabled', appSettings.soundEnabled);
+    setCheckbox('settingNotifyOcorrencias', appSettings.notifyOcorrencias);
+    setCheckbox('settingNotifyWaze', appSettings.notifyWaze);
+    setCheckbox('settingNotifyMeteo', appSettings.notifyMeteo);
+    setCheckbox('settingNotifyStatus', appSettings.notifyStatus);
+    setCheckbox('settingBrowserNotify', appSettings.browserNotify);
+
+    // Interface settings
+    setRadio('theme', appSettings.theme);
+    setSlider('settingFontSize', appSettings.fontSize, 'fontSizeValue');
+    setCheckbox('settingSidebarExpanded', appSettings.sidebarExpanded);
+    setCheckbox('settingAnimations', appSettings.animations);
+}
+
+// Helper functions
+function setInputValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+}
+
+function setCheckbox(id, checked) {
+    const el = document.getElementById(id);
+    if (el) el.checked = checked;
+}
+
+function setRadio(name, value) {
+    const el = document.querySelector(`input[name="${name}"][value="${value}"]`);
+    if (el) el.checked = true;
+}
+
+function setSlider(id, value, displayId) {
+    const el = document.getElementById(id);
+    const display = document.getElementById(displayId);
+    if (el) {
+        el.value = value;
+        if (display) display.textContent = value;
+    }
+}
+
+// Collect settings from form
+function collectSettings() {
+    return {
+        // Map settings
+        mapLat: parseFloat(document.getElementById('settingMapLat')?.value) || defaultSettings.mapLat,
+        mapLng: parseFloat(document.getElementById('settingMapLng')?.value) || defaultSettings.mapLng,
+        mapZoom: parseInt(document.getElementById('settingMapZoom')?.value) || defaultSettings.mapZoom,
+        layerOcorrencias: document.getElementById('settingLayerOcorrencias')?.checked ?? true,
+        layerWaze: document.getElementById('settingLayerWaze')?.checked ?? true,
+        layerCameras: document.getElementById('settingLayerCameras')?.checked ?? false,
+        layerEscolas: document.getElementById('settingLayerEscolas')?.checked ?? false,
+        layerSirenes: document.getElementById('settingLayerSirenes')?.checked ?? false,
+
+        // Tour settings
+        tourAutoStart: document.getElementById('settingTourAutoStart')?.checked ?? true,
+        tourTimeOcorrencia: parseInt(document.getElementById('settingTourTimeOcorrencia')?.value) || 6,
+        tourTimeOriginal: parseInt(document.getElementById('settingTourTimeOriginal')?.value) || 6,
+        tourZoom: parseInt(document.getElementById('settingTourZoom')?.value) || 16,
+
+        // Notification settings
+        soundEnabled: document.getElementById('settingSoundEnabled')?.checked ?? false,
+        notifyOcorrencias: document.getElementById('settingNotifyOcorrencias')?.checked ?? true,
+        notifyWaze: document.getElementById('settingNotifyWaze')?.checked ?? true,
+        notifyMeteo: document.getElementById('settingNotifyMeteo')?.checked ?? false,
+        notifyStatus: document.getElementById('settingNotifyStatus')?.checked ?? true,
+        browserNotify: document.getElementById('settingBrowserNotify')?.checked ?? false,
+
+        // Interface settings
+        theme: document.querySelector('input[name="theme"]:checked')?.value || 'dark',
+        fontSize: parseInt(document.getElementById('settingFontSize')?.value) || 100,
+        sidebarExpanded: document.getElementById('settingSidebarExpanded')?.checked ?? false,
+        animations: document.getElementById('settingAnimations')?.checked ?? true
+    };
+}
+
+// Save settings
+function saveSettings() {
+    appSettings = collectSettings();
+    saveSettingsToStorage();
+    applySettings();
+    closeSettings();
+    showToast('Configuracoes salvas com sucesso!', 'success');
+}
+
+// Reset settings to default
+function resetSettings() {
+    if (confirm('Tem certeza que deseja restaurar as configuracoes padrao?')) {
+        appSettings = { ...defaultSettings };
+        populateSettingsForm();
+        showToast('Configuracoes restauradas', 'info');
+    }
+}
+
+// Apply settings to the interface
+function applySettings() {
+    // Apply font size
+    document.documentElement.style.fontSize = `${appSettings.fontSize}%`;
+
+    // Apply theme
+    document.body.classList.toggle('light-theme', appSettings.theme === 'light');
+
+    // Apply animations
+    document.body.classList.toggle('no-animations', !appSettings.animations);
+
+    // Update tour settings if available
+    if (typeof window.TEMPO_EM_OCORRENCIA !== 'undefined') {
+        window.TEMPO_EM_OCORRENCIA = appSettings.tourTimeOcorrencia * 1000;
+    }
+    if (typeof window.TEMPO_NA_POSICAO_ORIGINAL !== 'undefined') {
+        window.TEMPO_NA_POSICAO_ORIGINAL = appSettings.tourTimeOriginal * 1000;
+    }
+    if (typeof window.ZOOM_OCORRENCIA !== 'undefined') {
+        window.ZOOM_OCORRENCIA = appSettings.tourZoom;
+    }
+    if (typeof window.posicaoOriginal !== 'undefined') {
+        window.posicaoOriginal = {
+            lat: appSettings.mapLat,
+            lng: appSettings.mapLng,
+            zoom: appSettings.mapZoom
+        };
+    }
+
+    // Dispatch custom event for other modules
+    window.dispatchEvent(new CustomEvent('settingsChanged', { detail: appSettings }));
+}
+
+// Use current map position
+function useCurrentMapPosition() {
+    if (typeof map !== 'undefined') {
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        document.getElementById('settingMapLat').value = center.lat.toFixed(4);
+        document.getElementById('settingMapLng').value = center.lng.toFixed(4);
+        document.getElementById('settingMapZoom').value = zoom;
+        showToast('Posicao do mapa capturada', 'success');
+    } else {
+        showToast('Mapa nao disponivel', 'error');
+    }
+}
+
+// Request browser notification permission
+function requestNotificationPermission() {
+    if ('Notification' in window) {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                document.getElementById('settingBrowserNotify').checked = true;
+                showToast('Permissao de notificacoes concedida', 'success');
+            } else {
+                document.getElementById('settingBrowserNotify').checked = false;
+                showToast('Permissao de notificacoes negada', 'warning');
+            }
+        });
+    } else {
+        showToast('Navegador nao suporta notificacoes', 'error');
+    }
+}
+
+// Change password (placeholder - needs backend)
+function changePassword() {
+    const currentPass = document.getElementById('settingCurrentPassword')?.value;
+    const newPass = document.getElementById('settingNewPassword')?.value;
+    const confirmPass = document.getElementById('settingConfirmPassword')?.value;
+
+    if (!currentPass || !newPass || !confirmPass) {
+        showToast('Preencha todos os campos de senha', 'error');
+        return;
+    }
+
+    if (newPass !== confirmPass) {
+        showToast('As senhas nao coincidem', 'error');
+        return;
+    }
+
+    if (newPass.length < 6) {
+        showToast('A senha deve ter pelo menos 6 caracteres', 'error');
+        return;
+    }
+
+    // TODO: Implement backend call
+    showToast('Funcao de alteracao de senha em desenvolvimento', 'info');
+}
+
+// Initialize slider value display updates
+function initSettingsSliders() {
+    const sliders = [
+        { id: 'settingTourTimeOcorrencia', displayId: 'tourTimeOcorrenciaValue' },
+        { id: 'settingTourTimeOriginal', displayId: 'tourTimeOriginalValue' },
+        { id: 'settingTourZoom', displayId: 'tourZoomValue' },
+        { id: 'settingFontSize', displayId: 'fontSizeValue' }
+    ];
+
+    sliders.forEach(({ id, displayId }) => {
+        const slider = document.getElementById(id);
+        const display = document.getElementById(displayId);
+        if (slider && display) {
+            slider.addEventListener('input', () => {
+                display.textContent = slider.value;
+            });
+        }
+    });
+}
+
+// Get current settings (for other modules)
+function getSettings() {
+    return { ...appSettings };
 }
 
 // ============================================
@@ -311,6 +629,7 @@ function initKeyboardShortcuts() {
         // Escape - Fechar modais/overlays
         if (e.key === 'Escape') {
             hideLoading();
+            closeSettings();
         }
 
         // F - Fullscreen (quando não estiver em input)
@@ -319,10 +638,13 @@ function initKeyboardShortcuts() {
             toggleFullscreen();
         }
 
-        // S - Toggle Sidebar
+        // S - Toggle Sidebar (não quando settings está aberta)
         if (e.key === 's' && !e.target.matches('input, textarea')) {
-            e.preventDefault();
-            toggleSidebar();
+            const settingsModal = document.getElementById('settingsModal');
+            if (!settingsModal || !settingsModal.classList.contains('active')) {
+                e.preventDefault();
+                toggleSidebar();
+            }
         }
 
         // R - Refresh
@@ -363,6 +685,13 @@ function toggleMobileMenu() {
 // 18. INITIALIZE
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
+    // Carregar e aplicar configurações salvas
+    loadSettings();
+    applySettings();
+
+    // Inicializar sliders das configurações
+    initSettingsSliders();
+
     // Inicializar relógio
     updateClock();
     updateDate();
@@ -375,13 +704,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar handlers dos cards
     initCardHandlers();
 
+    // Fechar settings modal ao clicar fora
+    const settingsModal = document.getElementById('settingsModal');
+    if (settingsModal) {
+        settingsModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSettings();
+            }
+        });
+    }
+
     // Toast de inicialização
     setTimeout(() => {
         showToast('Sistema inicializado', 'success');
     }, 500);
 
     // Log de inicialização
-    console.log('SISCOR High-Tech Interface initialized');
+    console.log('IntegraCity High-Tech Interface initialized');
     console.log('Keyboard shortcuts: F=Fullscreen, S=Sidebar, R=Refresh, ESC=Close');
 });
 
@@ -471,6 +810,16 @@ window.IntegraCity = {
     refreshData,
     showNotifications,
     showSettings,
+    closeSettings,
+    switchSettingsTab,
+    saveSettings,
+    resetSettings,
+    getSettings,
+    loadSettings,
+    applySettings,
+    useCurrentMapPosition,
+    requestNotificationPermission,
+    changePassword,
     zoomIn,
     zoomOut,
     resetView,
@@ -479,6 +828,8 @@ window.IntegraCity = {
     initWebSocket,
     toggleCard,
 };
+
+console.log('✅ hightech.js carregado! showSettings disponível:', typeof showSettings);
 
 // ====================================
 // TOGGLE CARD RETRÁTIL

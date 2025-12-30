@@ -1,6 +1,10 @@
 {% extends 'base_hightech.html' %}
 {% load static %}
 
+{% block sidebar_class %}{% endblock %}
+{% block toggle_class %}{% endblock %}
+{% block wrapper_class %}{% endblock %}
+
 {% block title %}IntegraCity - Command Center Dashboard{% endblock %}
 
 {% block monitoring_cards %}
@@ -2080,15 +2084,41 @@
     // ========================================
     // TOUR AUTOMÁTICO POR OCORRÊNCIAS
     // ========================================
-    var tourAtivo = true; // Liga/desliga o tour automático
+
+    // Carregar configurações salvas
+    var savedSettings = {};
+    try {
+        var savedStr = localStorage.getItem('integracity_settings');
+        if (savedStr) savedSettings = JSON.parse(savedStr);
+    } catch (e) { console.log('Erro ao carregar settings:', e); }
+
+    var tourAtivo = savedSettings.tourAutoStart !== false; // Liga/desliga o tour automático
     var tourEmExecucao = false;
     var tourNavegando = false; // Flag para indicar que o tour está navegando (evita pausar por eventos do mapa)
     var tourTimeoutId = null;
     var ocorrenciasTour = [];
-    var posicaoOriginal = { lat: -22.92, lng: -43.45, zoom: 11 };
-    var TEMPO_EM_OCORRENCIA = 4000; // 4 segundos em cada ocorrência
-    var TEMPO_NA_POSICAO_ORIGINAL = 5000; // 5 segundos na posição original
-    var ZOOM_OCORRENCIA = 16; // Zoom aproximado para cada ocorrência
+    var posicaoOriginal = {
+        lat: savedSettings.mapLat || -22.92,
+        lng: savedSettings.mapLng || -43.45,
+        zoom: savedSettings.mapZoom || 11
+    };
+    var TEMPO_EM_OCORRENCIA = (savedSettings.tourTimeOcorrencia || 6) * 1000; // segundos em cada ocorrência
+    var TEMPO_NA_POSICAO_ORIGINAL = (savedSettings.tourTimeOriginal || 6) * 1000; // segundos na posição original
+    var ZOOM_OCORRENCIA = savedSettings.tourZoom || 16; // Zoom aproximado para cada ocorrência
+
+    // Listener para mudanças de configurações
+    window.addEventListener('settingsChanged', function(e) {
+        var s = e.detail;
+        TEMPO_EM_OCORRENCIA = (s.tourTimeOcorrencia || 6) * 1000;
+        TEMPO_NA_POSICAO_ORIGINAL = (s.tourTimeOriginal || 6) * 1000;
+        ZOOM_OCORRENCIA = s.tourZoom || 16;
+        posicaoOriginal = {
+            lat: s.mapLat || -22.92,
+            lng: s.mapLng || -43.45,
+            zoom: s.mapZoom || 11
+        };
+        console.log('⚙️ Configurações do tour atualizadas');
+    });
 
     function iniciarTourOcorrencias() {
         if (tourEmExecucao || ocorrenciasTour.length === 0) return;
@@ -2159,6 +2189,11 @@
             tourTimeoutId = null;
         }
         console.log('⏹️ Tour parado');
+
+        // Voltar para posição original ao pausar
+        map.flyTo([posicaoOriginal.lat, posicaoOriginal.lng], posicaoOriginal.zoom, {
+            duration: 1.5
+        });
     }
 
     function retomarTour() {
