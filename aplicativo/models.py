@@ -6819,3 +6819,337 @@ class CongestionamentoVia(models.Model):
         # Calcular criticidade automaticamente
         self.criticidade, self.percentual_abaixo_regulamentada = self.calcular_criticidade()
         super().save(*args, **kwargs)
+
+
+# ============================================
+# SISTEMA DE ÁREAS DE OBSERVAÇÃO
+# ============================================
+
+class AreaObservacao(models.Model):
+    """
+    Área de monitoramento desenhada no mapa
+    Permite desenhar polígonos e inventariar automaticamente
+    tudo que está dentro da área (ocorrências, waze, POIs, etc)
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name='areas_observacao'
+    )
+    criado_por = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='areas_criadas'
+    )
+
+    # Identificação
+    nome = models.CharField('Nome da Área', max_length=200)
+    descricao = models.TextField('Descrição', blank=True, null=True)
+    cor = models.CharField('Cor no Mapa', max_length=7, default='#00D4FF')
+
+    # Geometria (GeoJSON do polígono)
+    geojson = models.JSONField('Polígono GeoJSON')
+    tipo_desenho = models.CharField(max_length=20, choices=[
+        ('polygon', 'Polígono'),
+        ('rectangle', 'Retângulo'),
+    ], default='polygon')
+
+    # Status
+    ativa = models.BooleanField('Área Ativa', default=True)
+    alerta_habilitado = models.BooleanField('Alertas Habilitados', default=True)
+
+    # Evento (opcional)
+    evento_nome = models.CharField('Nome do Evento', max_length=200, blank=True, null=True)
+    evento_inicio = models.DateTimeField('Início do Evento', blank=True, null=True)
+    evento_fim = models.DateTimeField('Fim do Evento', blank=True, null=True)
+    plano_contingencia = models.TextField('Plano de Contingência', blank=True, null=True)
+
+    # Timestamps
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'areas_observacao'
+        verbose_name = 'Área de Observação'
+        verbose_name_plural = 'Áreas de Observação'
+        ordering = ['-criado_em']
+
+    def __str__(self):
+        return f"{self.nome} ({self.cliente.nome})"
+
+    @property
+    def esta_ativa_agora(self):
+        """Verifica se evento está acontecendo agora"""
+        if not self.evento_inicio or not self.evento_fim:
+            return self.ativa
+
+        agora = timezone.now()
+        return self.ativa and self.evento_inicio <= agora <= self.evento_fim
+
+    def _get_bounds(self):
+        """Retorna bounding box da área"""
+        try:
+            coords = self.geojson['geometry']['coordinates'][0]
+            lons = [c[0] for c in coords]
+            lats = [c[1] for c in coords]
+
+            return {
+                'north': max(lats),
+                'south': min(lats),
+                'east': max(lons),
+                'west': min(lons),
+            }
+        except (KeyError, IndexError, TypeError):
+            return None
+
+    def _ponto_dentro_poligono(self, lat, lon):
+        """Verifica se ponto está dentro do polígono (Ray Casting Algorithm)"""
+        try:
+            coords = self.geojson['geometry']['coordinates'][0]
+            x, y = float(lon), float(lat)
+            inside = False
+
+            j = len(coords) - 1
+            for i in range(len(coords)):
+                xi, yi = coords[i]
+                xj, yj = coords[j]
+
+                if ((yi > y) != (yj > y)) and (x < (xj - xi) * (y - yi) / (yj - yi) + xi):
+                    inside = not inside
+
+                j = i
+
+            return inside
+        except (KeyError, IndexError, TypeError):
+            return False
+
+    def inventariar(self):
+        """
+        Faz inventário completo de tudo dentro da área
+        Retorna dict com contadores
+        """
+        bounds = self._get_bounds()
+        if not bounds:
+            return {}
+
+        inventario = {}
+
+        # ---- OCORRÊNCIAS ----
+        try:
+            ocorrencias_qs = OcorrenciaGerenciada.objects.filter(
+                cliente=self.cliente,
+                status__in=['aberta', 'em_andamento', 'pendente'],
+                latitude__gte=bounds['south'],
+                latitude__lte=bounds['north'],
+                longitude__gte=bounds['west'],
+                longitude__lte=bounds['east'],
+            )
+
+            ocorrencias_dentro = []
+            for oc in ocorrencias_qs:
+                if self._ponto_dentro_poligono(oc.latitude, oc.longitude):
+                    ocorrencias_dentro.append(oc)
+
+            inventario['ocorrencias'] = {
+                'total': len(ocorrencias_dentro),
+                'graves': len([o for o in ocorrencias_dentro if o.prioridade in ['alta', 'urgente', 'critica']]),
+                'moderadas': len([o for o in ocorrencias_dentro if o.prioridade == 'media']),
+                'leves': len([o for o in ocorrencias_dentro if o.prioridade in ['baixa', 'normal']]),
+                'lista': [{'id': str(o.id), 'titulo': o.titulo, 'status': o.status} for o in ocorrencias_dentro[:10]]
+            }
+        except Exception as e:
+            inventario['ocorrencias'] = {'total': 0, 'erro': str(e)}
+
+        # ---- DADOS WAZE ----
+        try:
+            ultimo_waze = DadosMobilidade.objects.filter(
+                cliente=self.cliente
+            ).order_by('-data_hora').first()
+
+            if ultimo_waze and ultimo_waze.dados_raw:
+                jams_dentro = []
+                alerts_dentro = []
+
+                # Processar jams
+                for jam in ultimo_waze.dados_raw.get('jams', []):
+                    line = jam.get('line', [])
+                    for ponto in line[:5]:  # Checar primeiros pontos
+                        lat = ponto.get('y')
+                        lon = ponto.get('x')
+                        if lat and lon and self._ponto_dentro_poligono(lat, lon):
+                            jams_dentro.append(jam)
+                            break
+
+                # Processar alerts
+                for alert in ultimo_waze.dados_raw.get('alerts', []):
+                    location = alert.get('location', {})
+                    lat = location.get('y')
+                    lon = location.get('x')
+                    if lat and lon and self._ponto_dentro_poligono(lat, lon):
+                        alerts_dentro.append(alert)
+
+                inventario['waze'] = {
+                    'jams_total': len(jams_dentro),
+                    'jams_severos': len([j for j in jams_dentro if j.get('level', 0) >= 4]),
+                    'acidentes': len([a for a in alerts_dentro if 'ACCIDENT' in a.get('type', '').upper()]),
+                    'interdicoes': len([a for a in alerts_dentro if 'ROAD_CLOSED' in a.get('type', '').upper()]),
+                    'perigos': len([a for a in alerts_dentro if 'HAZARD' in a.get('type', '').upper()]),
+                }
+            else:
+                inventario['waze'] = {'jams_total': 0, 'jams_severos': 0, 'acidentes': 0, 'interdicoes': 0, 'perigos': 0}
+        except Exception as e:
+            inventario['waze'] = {'jams_total': 0, 'erro': str(e)}
+
+        # ---- ESCOLAS ----
+        try:
+            escolas = EscolasMunicipais.objects.filter(
+                latitude__gte=bounds['south'],
+                latitude__lte=bounds['north'],
+                longitude__gte=bounds['west'],
+                longitude__lte=bounds['east'],
+            )
+            count = sum(1 for e in escolas if self._ponto_dentro_poligono(e.latitude, e.longitude))
+            inventario['escolas'] = count
+        except Exception:
+            inventario['escolas'] = 0
+
+        # ---- SIRENES ----
+        try:
+            sirenes = Sirene.objects.filter(
+                latitude__gte=bounds['south'],
+                latitude__lte=bounds['north'],
+                longitude__gte=bounds['west'],
+                longitude__lte=bounds['east'],
+            )
+            sirenes_dentro = [s for s in sirenes if self._ponto_dentro_poligono(s.latitude, s.longitude)]
+            inventario['sirenes'] = {
+                'total': len(sirenes_dentro),
+                'acionadas': len([s for s in sirenes_dentro if getattr(s, 'acionada', False)])
+            }
+        except Exception:
+            inventario['sirenes'] = {'total': 0, 'acionadas': 0}
+
+        # ---- CÂMERAS ----
+        try:
+            cameras = Cameras.objects.filter(
+                latitude__gte=bounds['south'],
+                latitude__lte=bounds['north'],
+                longitude__gte=bounds['west'],
+                longitude__lte=bounds['east'],
+            )
+            count = sum(1 for c in cameras if self._ponto_dentro_poligono(c.latitude, c.longitude))
+            inventario['cameras'] = count
+        except Exception:
+            inventario['cameras'] = 0
+
+        return inventario
+
+    def calcular_nivel_operacional(self):
+        """
+        Calcula nível E1-E5 específico da área
+        Usa mesma lógica do Motor de Decisão mas só para área
+        """
+        inventario = self.inventariar()
+
+        nivel = 1  # E1 (Normal)
+
+        ocorrencias_graves = inventario.get('ocorrencias', {}).get('graves', 0)
+        jams_severos = inventario.get('waze', {}).get('jams_severos', 0)
+        acidentes = inventario.get('waze', {}).get('acidentes', 0)
+        sirenes_acionadas = inventario.get('sirenes', {}).get('acionadas', 0)
+
+        # Regras de escalação (baseadas no HEXAGON)
+        if sirenes_acionadas >= 1 or ocorrencias_graves >= 5:
+            nivel = 5  # E5 (Crise)
+        elif ocorrencias_graves >= 3 or (jams_severos >= 5 and acidentes >= 2):
+            nivel = 4  # E4 (Alerta)
+        elif ocorrencias_graves >= 1 or jams_severos >= 3 or acidentes >= 1:
+            nivel = 3  # E3 (Atenção)
+        elif jams_severos >= 1:
+            nivel = 2  # E2 (Mobilização)
+
+        return nivel
+
+
+class InventarioArea(models.Model):
+    """Snapshot do inventário de uma área em um momento específico"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    area = models.ForeignKey(
+        AreaObservacao,
+        on_delete=models.CASCADE,
+        related_name='inventarios'
+    )
+
+    # Timestamp
+    data_hora = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    # Dados do inventário (JSON)
+    dados = models.JSONField()
+
+    # Nível operacional calculado
+    nivel_operacional = models.IntegerField(choices=[
+        (1, 'E1 - Normal'),
+        (2, 'E2 - Mobilização'),
+        (3, 'E3 - Atenção'),
+        (4, 'E4 - Alerta'),
+        (5, 'E5 - Crise'),
+    ], default=1)
+
+    class Meta:
+        db_table = 'inventarios_area'
+        verbose_name = 'Inventário de Área'
+        verbose_name_plural = 'Inventários de Áreas'
+        ordering = ['-data_hora']
+
+    def __str__(self):
+        return f"{self.area.nome} - {self.data_hora.strftime('%d/%m %H:%M')}"
+
+
+class AlertaArea(models.Model):
+    """Alerta gerado automaticamente quando algo crítico acontece na área"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    area = models.ForeignKey(
+        AreaObservacao,
+        on_delete=models.CASCADE,
+        related_name='alertas'
+    )
+
+    # Tipo de alerta
+    TIPO_CHOICES = [
+        ('ocorrencia_grave', 'Ocorrência Grave'),
+        ('jam_severo', 'Congestionamento Severo'),
+        ('sirene_acionada', 'Sirene Acionada'),
+        ('chuva_forte', 'Chuva Forte'),
+        ('nivel_mudou', 'Nível Operacional Mudou'),
+    ]
+    tipo = models.CharField(max_length=50, choices=TIPO_CHOICES)
+
+    # Mensagem
+    titulo = models.CharField(max_length=200)
+    descricao = models.TextField()
+
+    # Gravidade
+    GRAVIDADE_CHOICES = [
+        ('info', 'Informação'),
+        ('atencao', 'Atenção'),
+        ('critico', 'Crítico'),
+    ]
+    gravidade = models.CharField(max_length=20, choices=GRAVIDADE_CHOICES, default='atencao')
+
+    # Status
+    lido = models.BooleanField(default=False)
+    data_hora = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'alertas_area'
+        verbose_name = 'Alerta de Área'
+        verbose_name_plural = 'Alertas de Áreas'
+        ordering = ['-data_hora']
+
+    def __str__(self):
+        return f"[{self.get_gravidade_display()}] {self.titulo}"

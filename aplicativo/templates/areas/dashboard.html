@@ -1,0 +1,689 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}Áreas de Observação - IntegraCity{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+<style>
+    .areas-container {
+        display: flex;
+        height: calc(100vh - 60px);
+    }
+    /* Garantir que os controles de desenho apareçam */
+    .leaflet-draw {
+        display: block !important;
+    }
+    .leaflet-draw-toolbar {
+        margin-top: 10px;
+    }
+    .leaflet-draw-section {
+        position: relative;
+    }
+    .leaflet-draw-toolbar a {
+        background-color: rgba(30, 30, 45, 0.9) !important;
+        border: 1px solid var(--border-color, #333) !important;
+    }
+    .leaflet-draw-toolbar a:hover {
+        background-color: rgba(0, 212, 255, 0.2) !important;
+    }
+    /* Esconder toolbar padrão do Leaflet.draw - usaremos botões customizados */
+    .leaflet-draw {
+        display: none !important;
+    }
+
+    /* Toolbar customizada */
+    .custom-draw-toolbar {
+        position: absolute;
+        top: 80px;
+        right: 15px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .draw-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        border: 2px solid var(--primary-color, #00D4FF);
+        background: rgba(30, 30, 45, 0.95);
+        color: var(--primary-color, #00D4FF);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .draw-btn:hover {
+        background: var(--primary-color, #00D4FF);
+        color: #000;
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    }
+
+    .draw-btn.active {
+        background: var(--primary-color, #00D4FF);
+        color: #000;
+        animation: pulse-glow 1.5s infinite;
+    }
+
+    .draw-btn.save-btn {
+        border-color: #00C853;
+        color: #00C853;
+    }
+
+    .draw-btn.save-btn:hover {
+        background: #00C853;
+        color: #000;
+        box-shadow: 0 0 20px rgba(0, 200, 83, 0.5);
+    }
+
+    .draw-btn.cancel-btn {
+        border-color: #FF5252;
+        color: #FF5252;
+    }
+
+    .draw-btn.cancel-btn:hover {
+        background: #FF5252;
+        color: #fff;
+        box-shadow: 0 0 20px rgba(255, 82, 82, 0.5);
+    }
+
+    .draw-btn.edit-btn {
+        border-color: #FFC107;
+        color: #FFC107;
+    }
+
+    .draw-btn.edit-btn:hover {
+        background: #FFC107;
+        color: #000;
+    }
+
+    .draw-btn.delete-btn {
+        border-color: #FF5252;
+        color: #FF5252;
+    }
+
+    .draw-btn.delete-btn:hover {
+        background: #FF5252;
+        color: #fff;
+    }
+
+    .draw-btn-label {
+        position: absolute;
+        right: 60px;
+        background: rgba(30, 30, 45, 0.95);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        opacity: 0;
+        transform: translateX(10px);
+        transition: all 0.2s;
+        pointer-events: none;
+        border: 1px solid var(--border-color, #333);
+    }
+
+    .draw-btn-wrapper:hover .draw-btn-label {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .draw-btn-wrapper {
+        position: relative;
+    }
+
+    .draw-separator {
+        height: 1px;
+        background: var(--border-color, #333);
+        margin: 5px 0;
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+        50% { box-shadow: 0 0 25px rgba(0, 212, 255, 0.8); }
+    }
+
+    /* Botões de ação durante desenho */
+    .drawing-actions {
+        display: none;
+        gap: 8px;
+    }
+
+    .drawing-actions.active {
+        display: flex;
+        flex-direction: column;
+    }
+    /* Tooltip do desenho */
+    .leaflet-draw-tooltip {
+        background: rgba(30, 30, 45, 0.9);
+        border: 1px solid var(--border-color, #333);
+        color: #fff;
+        font-size: 12px;
+    }
+    .leaflet-draw-tooltip-single {
+        margin-top: -20px;
+    }
+    /* Botões de ação */
+    .leaflet-draw-actions {
+        background: rgba(30, 30, 45, 0.95);
+        border-radius: 4px;
+    }
+    .leaflet-draw-actions a {
+        color: #fff !important;
+        background: rgba(0, 212, 255, 0.2);
+        border: none;
+    }
+    .leaflet-draw-actions a:hover {
+        background: rgba(0, 212, 255, 0.4);
+    }
+    .areas-sidebar {
+        width: 380px;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .areas-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .areas-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+    }
+    .area-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .area-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+    .area-card.active {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+    }
+    .area-color-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    .area-nivel {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+    .nivel-E1 { background: #00C853; color: #fff; }
+    .nivel-E2 { background: #00BCD4; color: #fff; }
+    .nivel-E3 { background: #FFC107; color: #000; }
+    .nivel-E4 { background: #FF5722; color: #fff; }
+    .nivel-E5 { background: #212121; color: #fff; }
+    .area-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+    }
+    .area-stat {
+        text-align: center;
+        padding: 8px;
+        background: var(--bg-secondary);
+        border-radius: 6px;
+    }
+    .area-stat-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    .area-stat-label {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+    }
+    .areas-map {
+        flex: 1;
+        position: relative;
+    }
+    #areasMap {
+        width: 100%;
+        height: 100%;
+    }
+    .draw-instructions {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(30, 30, 45, 0.9);
+        padding: 10px 20px;
+        border-radius: 20px;
+        z-index: 1000;
+        font-size: 0.85rem;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-secondary);
+    }
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+    .btn-new-area {
+        width: 100%;
+        padding: 12px;
+        font-weight: 600;
+    }
+    .alerts-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        min-width: 18px;
+        height: 18px;
+        border-radius: 9px;
+        background: #FF1744;
+        color: #fff;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .filter-bar {
+        display: flex;
+        gap: 10px;
+        padding: 10px 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .filter-bar .form-control,
+    .filter-bar .form-select {
+        background: var(--bg-primary);
+        border-color: var(--border-color);
+        color: var(--text-primary);
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="areas-container">
+    <!-- Sidebar com lista de áreas -->
+    <div class="areas-sidebar">
+        <div class="areas-header">
+            <h5 class="mb-0">
+                <i class="fas fa-draw-polygon me-2 text-primary"></i>
+                Áreas de Observação
+            </h5>
+            <p class="text-muted small mb-0 mt-1">
+                Desenhe e monitore regiões de interesse
+            </p>
+        </div>
+
+        <div class="filter-bar">
+            <input type="text" class="form-control" id="searchArea" placeholder="Buscar área...">
+            <select class="form-select" id="filterNivel" style="width: 100px;">
+                <option value="">Todos</option>
+                <option value="E1">E1</option>
+                <option value="E2">E2</option>
+                <option value="E3">E3</option>
+                <option value="E4">E4</option>
+                <option value="E5">E5</option>
+            </select>
+        </div>
+
+        <div class="areas-list" id="areasList">
+            {% if areas %}
+                {% for area in areas %}
+                <div class="area-card" data-area-id="{{ area.id }}" onclick="focalizarArea('{{ area.id }}')">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="area-color-indicator" style="background: {{ area.cor }}"></span>
+                            <strong>{{ area.nome }}</strong>
+                        </div>
+                        <span class="area-nivel nivel-{{ area.nivel_operacional }}">
+                            {{ area.nivel_operacional }}
+                        </span>
+                    </div>
+                    {% if area.descricao %}
+                    <p class="text-muted small mb-2">{{ area.descricao|truncatewords:15 }}</p>
+                    {% endif %}
+                    <div class="area-stats">
+                        <div class="area-stat">
+                            <div class="area-stat-value">{{ area.ultimo_inventario.ocorrencias|default:0 }}</div>
+                            <div class="area-stat-label">Ocorrências</div>
+                        </div>
+                        <div class="area-stat">
+                            <div class="area-stat-value">{{ area.ultimo_inventario.jams|default:0 }}</div>
+                            <div class="area-stat-label">Jams</div>
+                        </div>
+                        <div class="area-stat">
+                            <div class="area-stat-value">{{ area.ultimo_inventario.alertas_waze|default:0 }}</div>
+                            <div class="area-stat-label">Alertas</div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="{% url 'area_detalhe' area.id %}" target="_blank" class="btn btn-sm btn-outline-primary flex-grow-1">
+                            <i class="fas fa-eye"></i> Ver Detalhes
+                        </a>
+                        <button class="btn btn-sm btn-outline-info" onclick="event.stopPropagation(); inventariarArea('{{ area.id }}')">
+                            <i class="fas fa-sync"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-draw-polygon"></i>
+                    <h6>Nenhuma área criada</h6>
+                    <p class="small">Use as ferramentas de desenho no mapa para criar sua primeira área de observação.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="p-3 border-top" style="border-color: var(--border-color) !important;">
+            <button class="btn btn-primary btn-new-area" onclick="iniciarDesenho()">
+                <i class="fas fa-plus me-2"></i>Nova Área
+            </button>
+        </div>
+    </div>
+
+    <!-- Mapa -->
+    <div class="areas-map">
+        <div class="draw-instructions" id="drawInstructions" style="display: none;">
+            <i class="fas fa-info-circle me-2"></i>
+            <span id="instructionText">Clique no mapa para começar a desenhar</span>
+        </div>
+        <div id="areasMap"></div>
+
+        <!-- Toolbar Customizada -->
+        <div class="custom-draw-toolbar" id="customDrawToolbar">
+            <!-- Botões de desenho -->
+            <div class="draw-btn-wrapper" id="drawTools">
+                <button class="draw-btn" id="btnDrawPolygon" title="Desenhar Polígono">
+                    <i class="fas fa-draw-polygon"></i>
+                </button>
+                <span class="draw-btn-label">Desenhar Polígono</span>
+            </div>
+
+            <div class="draw-btn-wrapper">
+                <button class="draw-btn" id="btnDrawRectangle" title="Desenhar Retângulo">
+                    <i class="fas fa-vector-square"></i>
+                </button>
+                <span class="draw-btn-label">Desenhar Retângulo</span>
+            </div>
+
+            <div class="draw-separator"></div>
+
+            <div class="draw-btn-wrapper">
+                <button class="draw-btn edit-btn" id="btnEditAreas" title="Editar Áreas">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <span class="draw-btn-label">Editar Áreas</span>
+            </div>
+
+            <div class="draw-btn-wrapper">
+                <button class="draw-btn delete-btn" id="btnDeleteAreas" title="Excluir Áreas">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                <span class="draw-btn-label">Excluir Áreas</span>
+            </div>
+
+            <!-- Botões durante o desenho -->
+            <div class="drawing-actions" id="drawingActions">
+                <div class="draw-separator"></div>
+                <div class="draw-btn-wrapper">
+                    <button class="draw-btn save-btn" id="btnFinishDraw" title="Finalizar Desenho">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <span class="draw-btn-label">Finalizar e Salvar</span>
+                </div>
+                <div class="draw-btn-wrapper">
+                    <button class="draw-btn cancel-btn" id="btnCancelDraw" title="Cancelar">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <span class="draw-btn-label">Cancelar</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="{% static 'js/areas_observacao.js' %}?v={% now 'U' %}"></script>
+<script>
+    let map;
+    let areasManager;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Inicializando Áreas de Observação...');
+
+        // Verificar se Leaflet.draw está carregado
+        if (typeof L.Draw === 'undefined') {
+            console.error('Leaflet.draw não está carregado!');
+            return;
+        }
+        console.log('Leaflet.draw carregado com sucesso');
+
+        // Inicializar mapa - usar tema claro por padrão
+        const isLight = document.body.classList.contains('light-theme');
+        const tileUrl = isLight
+            ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+        map = L.map('areasMap').setView([-22.9068, -43.1729], 11);
+
+        L.tileLayer(tileUrl, {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        console.log('Mapa inicializado');
+
+        // Inicializar sistema de áreas
+        try {
+            areasManager = initAreasObservacao(map);
+            console.log('AreasObservacao inicializado:', areasManager);
+            console.log('DrawControl:', areasManager.drawControl);
+        } catch (e) {
+            console.error('Erro ao inicializar AreasObservacao:', e);
+        }
+
+        // Busca de áreas
+        document.getElementById('searchArea').addEventListener('input', function() {
+            filterAreas();
+        });
+
+        document.getElementById('filterNivel').addEventListener('change', function() {
+            filterAreas();
+        });
+
+        // Ocultar instruções quando terminar de desenhar
+        map.on(L.Draw.Event.CREATED, function() {
+            document.getElementById('drawInstructions').style.display = 'none';
+        });
+    });
+
+    function filterAreas() {
+        const search = document.getElementById('searchArea').value.toLowerCase();
+        const nivel = document.getElementById('filterNivel').value;
+
+        document.querySelectorAll('.area-card').forEach(card => {
+            const nome = card.querySelector('strong').textContent.toLowerCase();
+            const cardNivel = card.querySelector('.area-nivel').textContent.trim();
+
+            const matchSearch = nome.includes(search);
+            const matchNivel = !nivel || cardNivel === nivel;
+
+            card.style.display = matchSearch && matchNivel ? 'block' : 'none';
+        });
+    }
+
+    function focalizarArea(areaId) {
+        // Destacar card
+        document.querySelectorAll('.area-card').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[data-area-id="${areaId}"]`)?.classList.add('active');
+
+        // Focalizar no mapa
+        if (areasManager) {
+            areasManager.focalizarArea(areaId);
+        }
+    }
+
+    function inventariarArea(areaId) {
+        if (areasManager) {
+            areasManager.inventariarArea(areaId);
+        }
+    }
+
+    let currentDrawer = null;
+    let isDrawing = false;
+
+    function iniciarDesenho() {
+        startDrawPolygon();
+    }
+
+    function startDrawPolygon() {
+        if (!map || !areasManager) {
+            showToast('Sistema não inicializado', 'error');
+            return;
+        }
+
+        cancelCurrentDraw();
+
+        const options = areasManager.drawControl.options.draw.polygon;
+        currentDrawer = new L.Draw.Polygon(map, options);
+        currentDrawer.enable();
+
+        setDrawingMode(true, 'polygon');
+        document.getElementById('drawInstructions').style.display = 'block';
+        document.getElementById('instructionText').textContent = 'Clique no mapa para desenhar. Clique no primeiro ponto para fechar.';
+    }
+
+    function startDrawRectangle() {
+        if (!map || !areasManager) {
+            showToast('Sistema não inicializado', 'error');
+            return;
+        }
+
+        cancelCurrentDraw();
+
+        const options = areasManager.drawControl.options.draw.rectangle;
+        currentDrawer = new L.Draw.Rectangle(map, options);
+        currentDrawer.enable();
+
+        setDrawingMode(true, 'rectangle');
+        document.getElementById('drawInstructions').style.display = 'block';
+        document.getElementById('instructionText').textContent = 'Clique e arraste para criar o retângulo.';
+    }
+
+    function cancelCurrentDraw() {
+        if (currentDrawer) {
+            currentDrawer.disable();
+            currentDrawer = null;
+        }
+        setDrawingMode(false);
+        document.getElementById('drawInstructions').style.display = 'none';
+    }
+
+    function finishCurrentDraw() {
+        if (currentDrawer && currentDrawer._markers && currentDrawer._markers.length >= 3) {
+            currentDrawer.completeShape();
+        } else {
+            showToast('Desenhe pelo menos 3 pontos para criar uma área', 'warning');
+        }
+    }
+
+    function setDrawingMode(active, type = null) {
+        isDrawing = active;
+
+        // Atualizar botões
+        document.getElementById('btnDrawPolygon').classList.toggle('active', active && type === 'polygon');
+        document.getElementById('btnDrawRectangle').classList.toggle('active', active && type === 'rectangle');
+
+        // Mostrar/esconder botões de ação
+        document.getElementById('drawingActions').classList.toggle('active', active);
+    }
+
+    function startEditMode() {
+        if (!areasManager) return;
+
+        // Usar editHandler do Leaflet.draw
+        const editHandler = new L.EditToolbar.Edit(map, {
+            featureGroup: areasManager.areasLayer
+        });
+        editHandler.enable();
+
+        document.getElementById('btnEditAreas').classList.add('active');
+        showToast('Clique nas áreas para editar. Pressione ESC para sair.', 'info');
+
+        // ESC para sair
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                editHandler.disable();
+                editHandler.save();
+                document.getElementById('btnEditAreas').classList.remove('active');
+                document.removeEventListener('keydown', escHandler);
+                showToast('Edição salva', 'success');
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+
+    function startDeleteMode() {
+        if (!areasManager) return;
+
+        const deleteHandler = new L.EditToolbar.Delete(map, {
+            featureGroup: areasManager.areasLayer
+        });
+        deleteHandler.enable();
+
+        document.getElementById('btnDeleteAreas').classList.add('active');
+        showToast('Clique nas áreas para excluir. Pressione ESC para sair.', 'info');
+
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                deleteHandler.disable();
+                deleteHandler.save();
+                document.getElementById('btnDeleteAreas').classList.remove('active');
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+
+    // Conectar botões customizados
+    document.addEventListener('DOMContentLoaded', function() {
+        // Aguardar inicialização do mapa
+        setTimeout(() => {
+            document.getElementById('btnDrawPolygon').addEventListener('click', startDrawPolygon);
+            document.getElementById('btnDrawRectangle').addEventListener('click', startDrawRectangle);
+            document.getElementById('btnEditAreas').addEventListener('click', startEditMode);
+            document.getElementById('btnDeleteAreas').addEventListener('click', startDeleteMode);
+            document.getElementById('btnFinishDraw').addEventListener('click', finishCurrentDraw);
+            document.getElementById('btnCancelDraw').addEventListener('click', cancelCurrentDraw);
+
+            // Quando desenho é criado, esconder botões de ação
+            map.on(L.Draw.Event.CREATED, function() {
+                setDrawingMode(false);
+            });
+        }, 500);
+    });
+</script>
+{% endblock %}

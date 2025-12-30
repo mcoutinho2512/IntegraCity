@@ -1,0 +1,544 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}{{ area.nome }} - Área de Observação{% endblock %}
+
+{% block extra_css %}
+<style>
+    .area-detail-container {
+        display: flex;
+        height: calc(100vh - 60px);
+    }
+    .area-info-panel {
+        width: 450px;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .area-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .area-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+    .area-map-container {
+        flex: 1;
+        position: relative;
+    }
+    #areaDetailMap {
+        width: 100%;
+        height: 100%;
+    }
+    .nivel-badge {
+        font-size: 1.5rem;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 700;
+    }
+    .nivel-E1 { background: linear-gradient(135deg, #00C853, #00E676); }
+    .nivel-E2 { background: linear-gradient(135deg, #00BCD4, #00E5FF); }
+    .nivel-E3 { background: linear-gradient(135deg, #FFC107, #FFEB3B); color: #000; }
+    .nivel-E4 { background: linear-gradient(135deg, #FF5722, #FF7043); }
+    .nivel-E5 { background: linear-gradient(135deg, #212121, #424242); }
+    .stat-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+    }
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-top: 5px;
+    }
+    .section-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .item-list {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    .item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        background: var(--bg-primary);
+        border-radius: 6px;
+        margin-bottom: 6px;
+        font-size: 0.85rem;
+    }
+    .item-row:hover {
+        background: var(--bg-hover);
+    }
+    .alert-card {
+        background: rgba(255, 23, 68, 0.1);
+        border: 1px solid rgba(255, 23, 68, 0.3);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+    .alert-card.lido {
+        opacity: 0.6;
+        background: var(--bg-primary);
+        border-color: var(--border-color);
+    }
+    .export-btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+    .action-bar {
+        display: flex;
+        gap: 10px;
+        padding: 15px 20px;
+        border-top: 1px solid var(--border-color);
+        background: var(--bg-primary);
+    }
+    .color-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .tabs-custom .nav-link {
+        color: var(--text-secondary);
+        border: none;
+        padding: 10px 15px;
+        font-size: 0.85rem;
+    }
+    .tabs-custom .nav-link.active {
+        color: var(--primary-color);
+        background: transparent;
+        border-bottom: 2px solid var(--primary-color);
+    }
+    .inventario-time {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="area-detail-container">
+    <!-- Painel de Informações -->
+    <div class="area-info-panel">
+        <div class="area-header">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <a href="{% url 'areas_dashboard' %}" class="text-muted small mb-2 d-block">
+                        <i class="fas fa-arrow-left me-1"></i> Voltar para Áreas
+                    </a>
+                    <h4 class="mb-1">
+                        <span class="color-dot me-2" style="background: {{ area.cor }}"></span>
+                        {{ area.nome }}
+                    </h4>
+                </div>
+                <span class="nivel-badge nivel-{{ area.nivel_operacional }}">
+                    {{ area.nivel_operacional }}
+                </span>
+            </div>
+            {% if area.descricao %}
+            <p class="text-muted mb-0">{{ area.descricao }}</p>
+            {% endif %}
+            {% if area.evento %}
+            <div class="mt-2">
+                <span class="badge bg-info">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    Vinculado: {{ area.evento.nome }}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="area-content">
+            <!-- Estatísticas do Inventário -->
+            <div class="section-title">
+                <i class="fas fa-chart-pie me-2"></i>Inventário Atual
+                {% if ultimo_inventario %}
+                <span class="inventario-time float-end">
+                    Atualizado {{ ultimo_inventario.data_inventario|timesince }}
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="row g-2 mb-4">
+                <div class="col-4">
+                    <div class="stat-card">
+                        <div class="stat-value text-danger">{{ ultimo_inventario.ocorrencias|default:0 }}</div>
+                        <div class="stat-label">Ocorrências</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="stat-card">
+                        <div class="stat-value text-warning">{{ ultimo_inventario.jams|default:0 }}</div>
+                        <div class="stat-label">Jams</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="stat-card">
+                        <div class="stat-value text-info">{{ ultimo_inventario.alertas_waze|default:0 }}</div>
+                        <div class="stat-label">Alertas</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="stat-card">
+                        <div class="stat-value text-success">{{ ultimo_inventario.escolas|default:0 }}</div>
+                        <div class="stat-label">Escolas</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="stat-card">
+                        <div class="stat-value text-primary">{{ ultimo_inventario.sirenes|default:0 }}</div>
+                        <div class="stat-label">Sirenes</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: var(--text-primary)">{{ ultimo_inventario.cameras|default:0 }}</div>
+                        <div class="stat-label">Câmeras</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Abas de Conteúdo -->
+            <ul class="nav nav-tabs tabs-custom mb-3" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabAlertas">
+                        <i class="fas fa-bell me-1"></i>Alertas
+                        {% if alertas_nao_lidos %}
+                        <span class="badge bg-danger ms-1">{{ alertas_nao_lidos }}</span>
+                        {% endif %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabOcorrencias">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Ocorrências
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabHistorico">
+                        <i class="fas fa-history me-1"></i>Histórico
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- Tab Alertas -->
+                <div class="tab-pane fade show active" id="tabAlertas">
+                    {% if alertas %}
+                        {% for alerta in alertas %}
+                        <div class="alert-card {% if alerta.lido %}lido{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>
+                                        {% if alerta.tipo == 'ocorrencia_critica' %}
+                                            <i class="fas fa-exclamation-circle text-danger me-1"></i>
+                                        {% elif alerta.tipo == 'nivel_mudou' %}
+                                            <i class="fas fa-arrow-up text-warning me-1"></i>
+                                        {% else %}
+                                            <i class="fas fa-info-circle text-info me-1"></i>
+                                        {% endif %}
+                                        {{ alerta.get_tipo_display }}
+                                    </strong>
+                                    <p class="small mb-0 mt-1">{{ alerta.mensagem }}</p>
+                                    <span class="text-muted" style="font-size: 0.7rem">
+                                        {{ alerta.data_criacao|timesince }} atrás
+                                    </span>
+                                </div>
+                                {% if not alerta.lido %}
+                                <button class="btn btn-sm btn-outline-secondary" onclick="marcarLido('{{ alerta.id }}')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                            <p class="small">Nenhum alerta para esta área</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Tab Ocorrências -->
+                <div class="tab-pane fade" id="tabOcorrencias">
+                    <div class="item-list" id="listaOcorrencias">
+                        <div class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <span class="ms-2 small">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Histórico -->
+                <div class="tab-pane fade" id="tabHistorico">
+                    {% if historico_inventarios %}
+                        <div class="item-list">
+                        {% for inv in historico_inventarios %}
+                            <div class="item-row">
+                                <span>{{ inv.data_inventario|date:"d/m/Y H:i" }}</span>
+                                <span class="badge bg-secondary">{{ inv.ocorrencias }} ocor.</span>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <p class="small">Sem histórico de inventários</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Exportação -->
+            <div class="section-title mt-4">
+                <i class="fas fa-download me-2"></i>Exportar Área
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'api_exportar_geojson' area.id %}" class="btn btn-outline-secondary export-btn">
+                    <i class="fas fa-code me-1"></i>GeoJSON
+                </a>
+                <a href="{% url 'api_exportar_kml' area.id %}" class="btn btn-outline-secondary export-btn">
+                    <i class="fas fa-globe me-1"></i>KML
+                </a>
+                <a href="{% url 'api_exportar_pdf' area.id %}" class="btn btn-outline-secondary export-btn">
+                    <i class="fas fa-file-pdf me-1"></i>Relatório PDF
+                </a>
+            </div>
+        </div>
+
+        <!-- Barra de Ações -->
+        <div class="action-bar">
+            <button class="btn btn-primary flex-grow-1" onclick="atualizarInventario()">
+                <i class="fas fa-sync me-1"></i>Atualizar Inventário
+            </button>
+            <button class="btn btn-outline-danger" onclick="confirmarExclusao()">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mapa -->
+    <div class="area-map-container">
+        <div id="areaDetailMap"></div>
+    </div>
+</div>
+
+<!-- Modal Confirmação Exclusão -->
+<div class="modal fade" id="modalExcluir" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir a área <strong>{{ area.nome }}</strong>?</p>
+                <p class="text-muted small mb-0">Esta ação não pode ser desfeita. Todos os alertas e histórico de inventário serão perdidos.</p>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="excluirArea()">
+                    <i class="fas fa-trash me-1"></i>Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const areaId = '{{ area.id }}';
+    const areaGeojson = {{ area.geojson|safe }};
+    const areaCor = '{{ area.cor }}';
+    let map;
+    let areaLayer;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initMap();
+        carregarOcorrencias();
+    });
+
+    function initMap() {
+        const isDark = document.body.classList.contains('theme-dark');
+        const tileUrl = isDark
+            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
+        map = L.map('areaDetailMap').setView([-22.9068, -43.1729], 12);
+
+        L.tileLayer(tileUrl, {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Desenhar área
+        if (areaGeojson && areaGeojson.type === 'Polygon') {
+            const latlngs = areaGeojson.coordinates[0].map(coord => [coord[1], coord[0]]);
+            areaLayer = L.polygon(latlngs, {
+                color: areaCor,
+                fillColor: areaCor,
+                fillOpacity: 0.3,
+                weight: 3
+            }).addTo(map);
+
+            // Centralizar no polígono
+            map.fitBounds(areaLayer.getBounds(), { padding: [50, 50] });
+        }
+    }
+
+    async function carregarOcorrencias() {
+        try {
+            const response = await fetch(`/api/areas/${areaId}/inventariar/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                renderizarOcorrencias(data);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar ocorrências:', error);
+        }
+    }
+
+    function renderizarOcorrencias(data) {
+        const lista = document.getElementById('listaOcorrencias');
+
+        if (data.detalhes && data.detalhes.ocorrencias && data.detalhes.ocorrencias.length > 0) {
+            lista.innerHTML = data.detalhes.ocorrencias.map(oc => `
+                <div class="item-row">
+                    <div>
+                        <strong>${oc.tipo}</strong>
+                        <div class="text-muted small">${oc.endereco || 'Sem endereço'}</div>
+                    </div>
+                    <span class="badge bg-${oc.prioridade === 'critica' ? 'danger' : oc.prioridade === 'alta' ? 'warning' : 'secondary'}">
+                        ${oc.prioridade}
+                    </span>
+                </div>
+            `).join('');
+        } else {
+            lista.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                    <p class="small">Nenhuma ocorrência ativa nesta área</p>
+                </div>
+            `;
+        }
+
+        // Adicionar marcadores no mapa
+        if (data.detalhes && data.detalhes.ocorrencias) {
+            data.detalhes.ocorrencias.forEach(oc => {
+                if (oc.lat && oc.lon) {
+                    L.circleMarker([oc.lat, oc.lon], {
+                        radius: 8,
+                        fillColor: '#FF5722',
+                        color: '#fff',
+                        weight: 2,
+                        fillOpacity: 0.8
+                    }).addTo(map).bindPopup(`<strong>${oc.tipo}</strong><br>${oc.endereco || ''}`);
+                }
+            });
+        }
+    }
+
+    async function atualizarInventario() {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Atualizando...';
+
+        try {
+            const response = await fetch(`/api/areas/${areaId}/inventariar/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+
+            if (response.ok) {
+                location.reload();
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync me-1"></i>Atualizar Inventário';
+        }
+    }
+
+    function confirmarExclusao() {
+        new bootstrap.Modal(document.getElementById('modalExcluir')).show();
+    }
+
+    async function excluirArea() {
+        try {
+            const response = await fetch(`/api/areas/${areaId}/deletar/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+
+            if (response.ok) {
+                window.location.href = '{% url "areas_dashboard" %}';
+            } else {
+                alert('Erro ao excluir área');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro de conexão');
+        }
+    }
+
+    async function marcarLido(alertaId) {
+        try {
+            const response = await fetch(`/api/areas/alertas/${alertaId}/lido/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+
+            if (response.ok) {
+                location.reload();
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+        }
+    }
+
+    function getCSRFToken() {
+        return document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1] || '';
+    }
+</script>
+{% endblock %}

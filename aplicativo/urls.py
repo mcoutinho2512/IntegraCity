@@ -9,6 +9,7 @@ from aplicativo import views_ocorrencias
 from aplicativo import views_matriz
 from aplicativo import views_meteorologia
 from aplicativo import views_mobilidade
+from aplicativo import views_areas
 
 urlpatterns = [
     # LOGIN - PÁGINA PRINCIPAL
@@ -166,6 +167,26 @@ urlpatterns = [
     path('ocorrencias/<uuid:ocorrencia_id>/agencias/<uuid:acionamento_id>/', views_ocorrencias.ocorrencia_atualizar_agencia, name='ocorrencia_atualizar_agencia'),
     path('ocorrencias/<uuid:ocorrencia_id>/agencias/<uuid:acionamento_id>/remover/', views_ocorrencias.ocorrencia_remover_agencia, name='ocorrencia_remover_agencia'),
     path('api/ocorrencias/<uuid:ocorrencia_id>/agencias-disponiveis/', views_ocorrencias.api_agencias_disponiveis, name='api_agencias_disponiveis'),
+
+    # ============================================
+    # SISTEMA DE ÁREAS DE OBSERVAÇÃO
+    # ============================================
+    path('areas/', views_areas.areas_dashboard, name='areas_dashboard'),
+    path('areas/<uuid:area_id>/', views_areas.area_detalhe, name='area_detalhe'),
+
+    # APIs de Áreas de Observação
+    path('api/areas/listar/', views_areas.api_listar_areas, name='api_listar_areas'),
+    path('api/areas/criar/', views_areas.api_criar_area, name='api_criar_area'),
+    path('api/areas/<uuid:area_id>/atualizar/', views_areas.api_atualizar_area, name='api_atualizar_area'),
+    path('api/areas/<uuid:area_id>/deletar/', views_areas.api_deletar_area, name='api_deletar_area'),
+    path('api/areas/<uuid:area_id>/inventariar/', views_areas.api_inventariar_area, name='api_inventariar_area'),
+    path('api/areas/<uuid:area_id>/alertas/', views_areas.api_alertas_area, name='api_alertas_area'),
+    path('api/areas/alertas/<uuid:alerta_id>/lido/', views_areas.api_marcar_alerta_lido, name='api_marcar_alerta_lido'),
+
+    # Exportação de Áreas
+    path('api/areas/<uuid:area_id>/exportar/geojson/', views_areas.api_exportar_geojson, name='api_exportar_geojson'),
+    path('api/areas/<uuid:area_id>/exportar/kml/', views_areas.api_exportar_kml, name='api_exportar_kml'),
+    path('api/areas/<uuid:area_id>/exportar/pdf/', views_areas.api_exportar_relatorio_pdf, name='api_exportar_pdf'),
 ]
 
 # Servir arquivos estáticos em desenvolvimento

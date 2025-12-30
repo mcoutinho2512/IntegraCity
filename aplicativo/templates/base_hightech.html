@@ -32,11 +32,11 @@
                 <i class="fas fa-bars"></i>
             </button>
 
-            <div class="logo-container">
+            <a href="{% url 'cor_dashboard_hightech' %}" class="logo-container" title="Ir para Dashboard">
                 <img src="{% static 'LOGO-FU.png' %}"
                      alt="IntegraCity"
                      class="header-logo-full">
-            </div>
+            </a>
 
             <div class="system-status">
                 <span class="status-dot"></span>
@@ -56,6 +56,10 @@
                 <a href="{% url 'matriz_dashboard' %}" class="nav-link {% if 'matriz' in request.resolver_match.url_name %}active{% endif %}" title="Matriz Decisoria" target="_blank">
                     <i class="fas fa-brain"></i>
                     <span>Matriz</span>
+                </a>
+                <a href="{% url 'areas_dashboard' %}" class="nav-link {% if 'areas' in request.resolver_match.url_name %}active{% endif %}" title="Areas de Observacao">
+                    <i class="fas fa-draw-polygon"></i>
+                    <span>Areas</span>
                 </a>
                 <a href="{% url 'videomonitoramento' %}" class="nav-link {% if request.resolver_match.url_name == 'videomonitoramento' %}active{% endif %}" title="Cameras">
                     <i class="fas fa-video"></i>
