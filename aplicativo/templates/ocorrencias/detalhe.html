@@ -727,6 +727,270 @@
         font-size: 0.8rem;
         color: var(--text-muted);
     }
+
+    /* Search Input */
+    .agencia-search-container {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-surface);
+    }
+
+    .agencia-search-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .agencia-search-input-wrapper i {
+        position: absolute;
+        left: 14px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .agencia-search-input {
+        width: 100%;
+        padding: 12px 16px 12px 42px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        transition: all var(--transition-fast);
+    }
+
+    .agencia-search-input:focus {
+        outline: none;
+        border-color: var(--cyan);
+        box-shadow: 0 0 15px var(--cyan-glow);
+    }
+
+    .agencia-search-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .agencia-option.hidden {
+        display: none;
+    }
+
+    .no-results-msg {
+        text-align: center;
+        padding: 30px;
+        color: var(--text-muted);
+    }
+
+    .no-results-msg i {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: rgba(0, 212, 255, 0.3);
+    }
+
+    .highlight-match {
+        background: rgba(0, 212, 255, 0.3);
+        color: var(--cyan);
+        padding: 0 2px;
+        border-radius: 3px;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        margin-right: 15px;
+        padding-right: 15px;
+        border-right: 1px solid var(--border-color);
+    }
+
+    .btn-tech.action-btn {
+        padding: 8px 14px;
+        font-size: 0.75rem;
+    }
+
+    .btn-tech.action-btn.em_andamento {
+        border-color: var(--yellow-warn);
+        color: var(--yellow-warn);
+        background: rgba(255, 204, 0, 0.1);
+    }
+
+    .btn-tech.action-btn.em_andamento:hover {
+        background: var(--yellow-warn);
+        color: #000;
+    }
+
+    .btn-tech.action-btn.resolvida {
+        border-color: var(--green-neon);
+        color: var(--green-neon);
+        background: rgba(0, 255, 136, 0.1);
+    }
+
+    .btn-tech.action-btn.resolvida:hover {
+        background: var(--green-neon);
+        color: #000;
+    }
+
+    .btn-tech.action-btn.fechada {
+        border-color: var(--text-muted);
+        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-tech.action-btn.fechada:hover {
+        background: var(--text-muted);
+        color: #000;
+    }
+
+    /* Modal de Fechamento */
+    .fechamento-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .fechamento-modal.active {
+        display: flex;
+    }
+
+    .fechamento-modal-content {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        width: 90%;
+        max-width: 550px;
+        overflow: hidden;
+    }
+
+    .fechamento-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .fechamento-modal-header h3 {
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .fechamento-modal-body {
+        padding: 25px;
+    }
+
+    .fechamento-form-group {
+        margin-bottom: 20px;
+    }
+
+    .fechamento-form-group label {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
+
+    .fechamento-form-group textarea {
+        width: 100%;
+        padding: 14px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        min-height: 120px;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    .fechamento-form-group textarea:focus {
+        outline: none;
+        border-color: var(--cyan);
+        box-shadow: 0 0 15px var(--cyan-glow);
+    }
+
+    .fechamento-info {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid var(--cyan);
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 20px;
+        font-size: 0.85rem;
+        color: var(--cyan);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .fechamento-modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 20px;
+        border-top: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-fechamento-cancelar {
+        padding: 12px 20px;
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all var(--transition-fast);
+    }
+
+    .btn-fechamento-cancelar:hover {
+        border-color: var(--text-muted);
+        color: var(--text-primary);
+    }
+
+    .btn-fechamento-confirmar {
+        padding: 12px 24px;
+        background: var(--green-neon);
+        border: none;
+        border-radius: 8px;
+        color: #000;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all var(--transition-fast);
+    }
+
+    .btn-fechamento-confirmar:hover {
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+    }
+
+    @media (max-width: 768px) {
+        .action-buttons {
+            margin-right: 10px;
+            padding-right: 10px;
+        }
+
+        .btn-tech.action-btn {
+            padding: 6px 10px;
+            font-size: 0.7rem;
+        }
+
+        .btn-tech.action-btn span {
+            display: none;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -803,11 +1067,28 @@
             </div>
         </div>
         <div class="header-actions">
-            <a href="{% url 'ocorrencias_lista' %}" class="btn-tech">
-                <i class="fas fa-arrow-left"></i> Voltar
-            </a>
+            {% if ocorrencia.status not in 'fechada,cancelada' %}
+            <div class="action-buttons">
+                {% if ocorrencia.status != 'em_andamento' %}
+                <button class="btn-tech action-btn em_andamento" onclick="updateStatus('em_andamento')">
+                    <i class="fas fa-play"></i> Iniciar
+                </button>
+                {% endif %}
+                {% if ocorrencia.status != 'resolvida' %}
+                <button class="btn-tech action-btn resolvida" onclick="updateStatus('resolvida')">
+                    <i class="fas fa-check"></i> Resolver
+                </button>
+                {% endif %}
+                <button class="btn-tech action-btn fechada" onclick="openFechamentoModal()">
+                    <i class="fas fa-archive"></i> Fechar
+                </button>
+            </div>
+            {% endif %}
             <a href="{% url 'ocorrencia_editar' ocorrencia_id=ocorrencia.id %}" class="btn-tech warning">
                 <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{% url 'ocorrencias_lista' %}" class="btn-tech">
+                <i class="fas fa-arrow-left"></i> Voltar
             </a>
         </div>
     </div>
@@ -1253,6 +1534,12 @@ let agenciasDisponiveis = [];
 async function openAgenciaModal() {
     const modal = document.getElementById('agenciaModal');
     const container = document.getElementById('agenciasDisponivelContainer');
+    const searchInput = document.getElementById('agenciaSearchInput');
+
+    // Limpar busca anterior
+    if (searchInput) {
+        searchInput.value = '';
+    }
 
     modal.classList.add('active');
     container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyan);"></i><p style="margin-top: 10px; color: var(--text-muted);">Carregando agencias...</p></div>';
@@ -1262,7 +1549,7 @@ async function openAgenciaModal() {
         const data = await response.json();
 
         if (data.success) {
-            agenciasDisponiveis = data.agencias;
+            agenciasDisponiveis = data.data || [];
 
             if (agenciasDisponiveis.length === 0) {
                 container.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Todas as agencias ja foram acionadas</p></div>';
@@ -1279,6 +1566,11 @@ async function openAgenciaModal() {
                         <i class="fas fa-plus" style="color: var(--cyan);"></i>
                     </div>
                 `).join('');
+
+                // Focar no campo de busca
+                if (searchInput) {
+                    setTimeout(() => searchInput.focus(), 100);
+                }
             }
         } else {
             container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color: var(--red-alert);"></i><p>Erro ao carregar agencias</p></div>';
@@ -1290,6 +1582,45 @@ async function openAgenciaModal() {
 
 function closeAgenciaModal() {
     document.getElementById('agenciaModal').classList.remove('active');
+    // Limpar busca ao fechar
+    const searchInput = document.getElementById('agenciaSearchInput');
+    if (searchInput) searchInput.value = '';
+}
+
+function filterAgencias(searchTerm) {
+    const container = document.getElementById('agenciasDisponivelContainer');
+    const options = container.querySelectorAll('.agencia-option');
+    const normalizedSearch = searchTerm.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    let visibleCount = 0;
+
+    options.forEach(option => {
+        const nome = option.querySelector('.agencia-option-nome')?.textContent || '';
+        const sigla = option.querySelector('.agencia-option-sigla')?.textContent || '';
+
+        const normalizedNome = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const normalizedSigla = sigla.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        if (normalizedNome.includes(normalizedSearch) || normalizedSigla.includes(normalizedSearch)) {
+            option.classList.remove('hidden');
+            visibleCount++;
+        } else {
+            option.classList.add('hidden');
+        }
+    });
+
+    // Mostrar mensagem se nenhum resultado
+    let noResultsMsg = container.querySelector('.no-results-msg');
+    if (visibleCount === 0 && options.length > 0) {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.className = 'no-results-msg';
+            noResultsMsg.innerHTML = '<i class="fas fa-search"></i><p>Nenhuma agencia encontrada</p>';
+            container.appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
 }
 
 async function acionarAgencia(agenciaId) {
@@ -1405,6 +1736,73 @@ document.addEventListener('click', function(e) {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeAgenciaModal();
+        closeFechamentoModal();
+    }
+});
+
+// ==========================================
+// MODAL DE FECHAMENTO
+// ==========================================
+
+function openFechamentoModal() {
+    document.getElementById('fechamentoModal').classList.add('active');
+    document.getElementById('fechamentoResolucao').focus();
+}
+
+function closeFechamentoModal() {
+    document.getElementById('fechamentoModal').classList.remove('active');
+    document.getElementById('fechamentoResolucao').value = '';
+}
+
+async function confirmarFechamento() {
+    const resolucao = document.getElementById('fechamentoResolucao').value.trim();
+
+    if (!resolucao) {
+        showToast('Por favor, descreva a resolucao da ocorrencia', 'error');
+        document.getElementById('fechamentoResolucao').focus();
+        return;
+    }
+
+    try {
+        // Primeiro atualizar status para fechada
+        const response = await fetch('{% url "ocorrencia_atualizar_status" ocorrencia_id=ocorrencia.id %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ status: 'fechada' })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Adicionar comentario com a resolucao
+            await fetch('{% url "ocorrencia_adicionar_comentario" ocorrencia_id=ocorrencia.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ comentario: '**RESOLUÇÃO:** ' + resolucao })
+            });
+
+            showToast('Ocorrencia fechada com sucesso!', 'success');
+            closeFechamentoModal();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Erro ao fechar ocorrencia', 'error');
+        }
+    } catch (error) {
+        showToast('Erro de conexao', 'error');
+    }
+}
+
+// Fechar modal de fechamento ao clicar fora
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('fechamentoModal');
+    if (e.target === modal) {
+        closeFechamentoModal();
     }
 });
 </script>
@@ -1418,8 +1816,44 @@ document.addEventListener('keydown', function(e) {
                 <i class="fas fa-times"></i>
             </button>
         </div>
+        <div class="agencia-search-container">
+            <div class="agencia-search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="agenciaSearchInput" class="agencia-search-input" placeholder="Buscar agencia..." oninput="filterAgencias(this.value)">
+            </div>
+        </div>
         <div class="agencia-modal-body" id="agenciasDisponivelContainer">
             <!-- Conteudo carregado via JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Fechamento -->
+<div class="fechamento-modal" id="fechamentoModal">
+    <div class="fechamento-modal-content">
+        <div class="fechamento-modal-header">
+            <h3><i class="fas fa-archive"></i> Fechar Ocorrencia</h3>
+            <button class="agencia-modal-close" onclick="closeFechamentoModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="fechamento-modal-body">
+            <div class="fechamento-info">
+                <i class="fas fa-info-circle"></i>
+                <span>Descreva como a ocorrencia foi resolvida antes de fechar.</span>
+            </div>
+            <div class="fechamento-form-group">
+                <label for="fechamentoResolucao">Descricao da Resolucao *</label>
+                <textarea id="fechamentoResolucao" placeholder="Descreva as acoes tomadas e como a ocorrencia foi resolvida..."></textarea>
+            </div>
+        </div>
+        <div class="fechamento-modal-footer">
+            <button class="btn-fechamento-cancelar" onclick="closeFechamentoModal()">
+                Cancelar
+            </button>
+            <button class="btn-fechamento-confirmar" onclick="confirmarFechamento()">
+                <i class="fas fa-check"></i> Confirmar Fechamento
+            </button>
         </div>
     </div>
 </div>

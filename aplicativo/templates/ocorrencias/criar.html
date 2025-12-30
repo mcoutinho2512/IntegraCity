@@ -228,17 +228,52 @@
         margin-bottom: 15px;
     }
 
-    .cep-search {
-        display: flex;
-        gap: 10px;
+    /* Address Search with Autocomplete */
+    .address-search-container {
+        position: relative;
         margin-bottom: 15px;
     }
 
-    .cep-search input {
-        flex: 1;
+    .address-search-wrapper {
+        display: flex;
+        gap: 10px;
     }
 
-    .btn-cep {
+    .address-search-input-container {
+        flex: 1;
+        position: relative;
+    }
+
+    .address-search-input-container i.search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+
+    .address-search-input {
+        width: 100%;
+        padding: 12px 16px 12px 42px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        transition: all var(--transition-fast);
+    }
+
+    .address-search-input:focus {
+        outline: none;
+        border-color: var(--cyan);
+        box-shadow: 0 0 15px var(--cyan-glow);
+    }
+
+    .address-search-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .btn-search-address {
         padding: 12px 20px;
         background: var(--purple-neon);
         border: none;
@@ -246,10 +281,107 @@
         color: #fff;
         cursor: pointer;
         transition: all var(--transition-fast);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
     }
 
-    .btn-cep:hover {
+    .btn-search-address:hover {
         box-shadow: 0 0 15px var(--purple-glow);
+    }
+
+    .btn-search-address:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Autocomplete Dropdown */
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 100;
+        display: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .autocomplete-dropdown.active {
+        display: block;
+    }
+
+    .autocomplete-item {
+        padding: 12px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border-color);
+        transition: all var(--transition-fast);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+
+    .autocomplete-item:hover {
+        background: rgba(0, 212, 255, 0.1);
+    }
+
+    .autocomplete-item.selected {
+        background: rgba(0, 212, 255, 0.15);
+        border-left: 3px solid var(--cyan);
+    }
+
+    .autocomplete-item-icon {
+        color: var(--cyan);
+        font-size: 1rem;
+        margin-top: 2px;
+    }
+
+    .autocomplete-item-content {
+        flex: 1;
+    }
+
+    .autocomplete-item-main {
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        margin-bottom: 3px;
+    }
+
+    .autocomplete-item-sub {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+    }
+
+    .autocomplete-loading {
+        padding: 20px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+    .autocomplete-loading i {
+        color: var(--cyan);
+        margin-right: 8px;
+    }
+
+    .autocomplete-empty {
+        padding: 20px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+    .autocomplete-empty i {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+        color: rgba(0, 212, 255, 0.3);
     }
 
     /* Agencies */
@@ -482,7 +614,7 @@
         </p>
         <ul style="font-size: 0.8rem; color: var(--text-muted); list-style: none;">
             <li style="margin-bottom: 8px;"><i class="fas fa-map-marker-alt" style="color: var(--cyan); margin-right: 8px;"></i> Clique no mapa para definir a localizacao</li>
-            <li style="margin-bottom: 8px;"><i class="fas fa-search" style="color: var(--purple-neon); margin-right: 8px;"></i> Ou busque pelo CEP</li>
+            <li style="margin-bottom: 8px;"><i class="fas fa-search" style="color: var(--purple-neon); margin-right: 8px;"></i> Ou busque pelo endereco</li>
             <li style="margin-bottom: 8px;"><i class="fas fa-paperclip" style="color: var(--green-neon); margin-right: 8px;"></i> Arraste arquivos para anexar</li>
         </ul>
     </div>
@@ -609,16 +741,24 @@
                     </div>
                     <div class="panel-body">
                         <div class="map-instructions">
-                            Clique no mapa para definir a localizacao ou busque pelo CEP
+                            Clique no mapa para definir a localizacao ou busque pelo endereco
                         </div>
 
                         <div id="locationMap"></div>
 
-                        <div class="cep-search">
-                            <input type="text" id="cepInput" class="form-input" placeholder="Digite o CEP...">
-                            <button type="button" class="btn-cep" onclick="buscarCEP()">
-                                <i class="fas fa-search"></i> Buscar
-                            </button>
+                        <div class="address-search-container">
+                            <div class="address-search-wrapper">
+                                <div class="address-search-input-container">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" id="addressSearchInput" class="address-search-input"
+                                           placeholder="Buscar endereco... (ex: Av. Brasil 500, Centro)"
+                                           autocomplete="off">
+                                    <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+                                </div>
+                                <button type="button" class="btn-search-address" id="btnSearchAddress" onclick="searchAddress()">
+                                    <i class="fas fa-map-marker-alt"></i> Buscar
+                                </button>
+                            </div>
                         </div>
 
                         <input type="hidden" name="latitude" id="latitudeInput">
@@ -863,7 +1003,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 showToast(data.message, 'success');
                 setTimeout(() => {
-                    window.location.href = '/ocorrencias/' + data.id + '/';
+                    // Usar URL base do Django para redirecionamento correto
+                    window.location.href = '/integracity/ocorrencias/' + data.id + '/';
                 }, 1000);
             } else {
                 showToast(data.error || 'Erro ao registrar ocorrencia', 'error');
@@ -883,6 +1024,9 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.toggle('selected', checkbox.checked);
         });
     });
+
+    // Inicializar autocomplete de endereço
+    initAddressAutocomplete();
 });
 
 function setMarker(lat, lng, skipReverseGeocode = false) {
@@ -963,46 +1107,211 @@ function reverseGeocode(lat, lng) {
         });
 }
 
-function buscarCEP() {
-    const cep = document.getElementById('cepInput').value.replace(/\D/g, '');
+// ==========================================
+// BUSCA DE ENDEREÇO COM AUTOCOMPLETE
+// ==========================================
 
-    if (cep.length !== 8) {
-        showToast('CEP deve ter 8 digitos', 'error');
-        return;
+let autocompleteTimeout = null;
+let autocompleteResults = [];
+let selectedAutocompleteIndex = -1;
+
+// Inicializar autocomplete
+function initAddressAutocomplete() {
+    const input = document.getElementById('addressSearchInput');
+    const dropdown = document.getElementById('autocompleteDropdown');
+
+    // Evento de digitação
+    input.addEventListener('input', function() {
+        const query = this.value.trim();
+
+        // Limpar timeout anterior
+        if (autocompleteTimeout) {
+            clearTimeout(autocompleteTimeout);
+        }
+
+        // Esconder dropdown se query muito curta
+        if (query.length < 3) {
+            dropdown.classList.remove('active');
+            return;
+        }
+
+        // Debounce - esperar 300ms após parar de digitar
+        autocompleteTimeout = setTimeout(() => {
+            searchAddressAutocomplete(query);
+        }, 300);
+    });
+
+    // Navegação por teclado
+    input.addEventListener('keydown', function(e) {
+        const items = dropdown.querySelectorAll('.autocomplete-item');
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedAutocompleteIndex = Math.min(selectedAutocompleteIndex + 1, items.length - 1);
+            updateAutocompleteSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, 0);
+            updateAutocompleteSelection(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedAutocompleteIndex >= 0 && autocompleteResults[selectedAutocompleteIndex]) {
+                selectAutocompleteItem(autocompleteResults[selectedAutocompleteIndex]);
+            } else if (this.value.trim().length >= 3) {
+                searchAddress();
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.classList.remove('active');
+        }
+    });
+
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.address-search-container')) {
+            dropdown.classList.remove('active');
+        }
+    });
+}
+
+function updateAutocompleteSelection(items) {
+    items.forEach((item, index) => {
+        item.classList.toggle('selected', index === selectedAutocompleteIndex);
+    });
+
+    // Scroll para item selecionado
+    if (items[selectedAutocompleteIndex]) {
+        items[selectedAutocompleteIndex].scrollIntoView({ block: 'nearest' });
     }
+}
 
-    fetch('/api/cep/?cep=' + cep)
+function searchAddressAutocomplete(query) {
+    const dropdown = document.getElementById('autocompleteDropdown');
+
+    // Mostrar loading
+    dropdown.innerHTML = '<div class="autocomplete-loading"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
+    dropdown.classList.add('active');
+
+    // Buscar no Nominatim (limitado ao Rio de Janeiro)
+    const searchQuery = query + ', Rio de Janeiro, Brazil';
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=8&addressdetails=1&accept-language=pt-BR`)
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                document.getElementById('enderecoInput').value = data.endereco;
-                document.getElementById('bairroInput').value = data.bairro;
-                document.getElementById('cepField').value = data.cep;
-                showToast('Endereco encontrado!', 'success');
+            autocompleteResults = data;
+            selectedAutocompleteIndex = -1;
 
-                // Geocode para obter coordenadas
-                geocodeAddress(data.endereco + ', ' + data.bairro + ', Rio de Janeiro');
+            if (data.length === 0) {
+                dropdown.innerHTML = `
+                    <div class="autocomplete-empty">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <p>Nenhum endereco encontrado</p>
+                    </div>
+                `;
             } else {
-                showToast(data.error || 'CEP nao encontrado', 'error');
+                dropdown.innerHTML = data.map((item, index) => {
+                    const parts = item.display_name.split(',');
+                    const main = parts.slice(0, 2).join(',');
+                    const sub = parts.slice(2, 5).join(',');
+
+                    return `
+                        <div class="autocomplete-item" onclick="selectAutocompleteItem(autocompleteResults[${index}])">
+                            <div class="autocomplete-item-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="autocomplete-item-content">
+                                <div class="autocomplete-item-main">${main}</div>
+                                <div class="autocomplete-item-sub">${sub}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             }
         })
-        .catch(() => {
-            showToast('Erro ao buscar CEP', 'error');
+        .catch(error => {
+            console.error('Erro na busca:', error);
+            dropdown.innerHTML = `
+                <div class="autocomplete-empty">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Erro ao buscar endereco</p>
+                </div>
+            `;
         });
 }
 
-function geocodeAddress(address) {
-    // Usando Nominatim para geocoding
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+function selectAutocompleteItem(item) {
+    const dropdown = document.getElementById('autocompleteDropdown');
+    const input = document.getElementById('addressSearchInput');
+
+    // Fechar dropdown
+    dropdown.classList.remove('active');
+
+    // Atualizar input
+    input.value = item.display_name.split(',').slice(0, 3).join(',');
+
+    // Extrair dados do endereço
+    const lat = parseFloat(item.lat);
+    const lng = parseFloat(item.lon);
+    const addr = item.address || {};
+
+    // Preencher campos
+    let endereco = '';
+    if (addr.road) {
+        endereco = addr.road;
+        if (addr.house_number) {
+            endereco += ', ' + addr.house_number;
+        }
+    } else if (addr.pedestrian) {
+        endereco = addr.pedestrian;
+    } else {
+        endereco = item.display_name.split(',')[0];
+    }
+
+    document.getElementById('enderecoInput').value = endereco;
+
+    // Bairro
+    const bairro = addr.suburb || addr.neighbourhood || addr.district || addr.city_district || '';
+    document.getElementById('bairroInput').value = bairro;
+
+    // CEP
+    if (addr.postcode) {
+        document.getElementById('cepField').value = addr.postcode;
+    }
+
+    // Posicionar marcador no mapa
+    setMarker(lat, lng, true);
+    map.setView([lat, lng], 17);
+
+    showToast('Endereco selecionado!', 'success');
+}
+
+function searchAddress() {
+    const input = document.getElementById('addressSearchInput');
+    const query = input.value.trim();
+
+    if (query.length < 3) {
+        showToast('Digite pelo menos 3 caracteres', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btnSearchAddress');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+
+    const searchQuery = query + ', Rio de Janeiro, Brazil';
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1&accept-language=pt-BR`)
         .then(response => response.json())
         .then(data => {
             if (data.length > 0) {
-                const lat = parseFloat(data[0].lat);
-                const lng = parseFloat(data[0].lon);
-                // skipReverseGeocode=true porque já temos o endereço do CEP
-                setMarker(lat, lng, true);
-                map.setView([lat, lng], 16);
+                selectAutocompleteItem(data[0]);
+            } else {
+                showToast('Endereco nao encontrado', 'error');
             }
+        })
+        .catch(() => {
+            showToast('Erro ao buscar endereco', 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Buscar';
         });
 }
 
