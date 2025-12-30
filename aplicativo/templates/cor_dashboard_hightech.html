@@ -362,6 +362,9 @@
         <button class="map-control-btn nova-ocorrencia-btn" onclick="window.open('{% url 'ocorrencia_criar' %}', '_blank')" title="Nova Ocorrencia">
             <i class="fas fa-plus-circle"></i>
         </button>
+        <button class="map-control-btn areas-btn" id="btnCriarArea" onclick="iniciarDesenhoArea()" title="Criar Area de Observacao">
+            <i class="fas fa-draw-polygon"></i>
+        </button>
     </div>
 
     <!-- ============================================
@@ -742,6 +745,21 @@
                         <span class="layer-count" id="countOcorrencias">--</span>
                     </div>
                 </div>
+
+                <!-- Areas de Observacao -->
+                <div class="layer-item" onclick="toggleLayerByClick('areasObservacao', event)">
+                    <label class="layer-checkbox" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="layerAreasObservacao" onchange="toggleMapLayer('areasObservacao')" checked>
+                        <span class="checkmark"></span>
+                    </label>
+                    <div class="layer-icon" style="background: rgba(0, 212, 255, 0.2); color: #00D4FF;">
+                        <i class="fas fa-draw-polygon"></i>
+                    </div>
+                    <div class="layer-info">
+                        <span class="layer-name">Areas de Observacao</span>
+                        <span class="layer-count" id="countAreasObservacao">--</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Acoes rapidas -->
@@ -758,7 +776,60 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<!-- Leaflet.draw CSS para desenho de áreas -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+<style>
+    /* Estilo para botao de criar area */
+    .map-control-btn.areas-btn {
+        background: rgba(0, 212, 255, 0.2);
+        border-color: #00D4FF;
+        color: #00D4FF;
+    }
+    .map-control-btn.areas-btn:hover {
+        background: #00D4FF;
+        color: #000;
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    }
+    .map-control-btn.areas-btn.active {
+        background: #00D4FF;
+        color: #000;
+        animation: pulse-glow 1.5s infinite;
+    }
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+        50% { box-shadow: 0 0 25px rgba(0, 212, 255, 0.8); }
+    }
+    /* Esconder toolbar padrao do Leaflet.draw */
+    .leaflet-draw-toolbar {
+        display: none !important;
+    }
+    /* Popup de area */
+    .area-popup {
+        min-width: 200px;
+    }
+    .area-popup h6 {
+        margin: 0 0 8px 0;
+        font-family: 'Orbitron', monospace;
+    }
+    .area-popup .area-nivel {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .area-popup .btn-area-dashboard {
+        margin-top: 10px;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
+<!-- Leaflet.draw JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script>
     // ============================================
     // INICIALIZACAO DO MAPA LEAFLET
@@ -880,6 +951,12 @@
     {% endif %}
 
     // ============================================
+    // ÁREAS DE OBSERVAÇÃO
+    // ============================================
+    // NOTA: Áreas são carregadas via API no sistema de camadas (mapLayers.areasObservacao)
+    // Ver função initAreasDraw() e carregarAreasExistentes() no final do script
+
+    // ============================================
     // REFRESH DATA (API)
     // ============================================
     function refreshData() {
@@ -937,7 +1014,8 @@
         wazePolicia: L.layerGroup(),
         wazeOutros: L.layerGroup(),
         bolsoes: L.layerGroup(),
-        ocorrencias: L.layerGroup()
+        ocorrencias: L.layerGroup(),
+        areasObservacao: L.featureGroup()  // FeatureGroup para Leaflet.draw
     };
 
     // Cache dos dados carregados
@@ -951,7 +1029,8 @@
         brt: null,
         waze: null,
         bolsoes: null,
-        ocorrencias: null
+        ocorrencias: null,
+        areasObservacao: null
     };
 
     // Estado dos filtros de cameras
@@ -986,7 +1065,8 @@
         brt: { icon: 'fa-bus', color: '#009688' },
         waze: { icon: 'fa-car', color: '#00d4ff' },
         bolsoes: { icon: 'fa-water', color: '#06b6d4' },
-        ocorrencias: { icon: 'fa-exclamation-triangle', color: '#FF0055' }
+        ocorrencias: { icon: 'fa-exclamation-triangle', color: '#FF0055' },
+        areasObservacao: { icon: 'fa-draw-polygon', color: '#00D4FF' }
     };
 
     // Cores por prioridade de ocorrencia
@@ -3315,6 +3395,334 @@
         console.log('Sistema de busca de câmeras inicializado');
     })();
 
+    // ============================================
+    // SISTEMA DE ÁREAS DE OBSERVAÇÃO
+    // ============================================
+
+    var areaDrawer = null;
+    var isDrawingArea = false;
+    var drawControl = null;
+
+    // Inicializar Leaflet.draw
+    function initAreasDraw() {
+        console.log('=== Inicializando sistema de áreas v2 ===');
+        console.log('CODIGO ATUALIZADO - URLs absolutas');
+        console.log('Map disponível:', !!map);
+        console.log('mapLayers.areasObservacao:', !!mapLayers.areasObservacao);
+
+        // Adicionar layer de áreas ao mapa primeiro
+        mapLayers.areasObservacao.addTo(map);
+        console.log('Layer areasObservacao adicionado ao mapa');
+
+        // Carregar áreas existentes sempre (independente de L.Draw)
+        carregarAreasExistentes();
+
+        if (!L.Draw) {
+            console.warn('Leaflet.draw não carregado - modo de desenho desabilitado');
+            return;
+        }
+
+        // Configurar controle de desenho (oculto, usaremos nosso botão)
+        drawControl = new L.Control.Draw({
+            position: 'topright',
+            draw: {
+                polyline: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polygon: {
+                    allowIntersection: false,
+                    showArea: true,
+                    shapeOptions: {
+                        color: '#00D4FF',
+                        fillColor: '#00D4FF',
+                        fillOpacity: 0.2,
+                        weight: 2
+                    }
+                },
+                rectangle: {
+                    shapeOptions: {
+                        color: '#00D4FF',
+                        fillColor: '#00D4FF',
+                        fillOpacity: 0.2,
+                        weight: 2
+                    }
+                }
+            },
+            edit: {
+                featureGroup: mapLayers.areasObservacao,
+                remove: true
+            }
+        });
+
+        // Não adiciona ao mapa (usamos botão customizado)
+
+        // Evento quando desenho é criado
+        map.on(L.Draw.Event.CREATED, function(e) {
+            var layer = e.layer;
+            var type = e.layerType;
+
+            console.log('Área desenhada:', type);
+
+            // Adicionar ao layer temporariamente
+            mapLayers.areasObservacao.addLayer(layer);
+
+            // Abrir prompt para nomear
+            abrirModalNomearArea(layer, type);
+
+            // Desativar modo de desenho
+            setDrawingAreaMode(false);
+        });
+
+        console.log('Sistema de áreas de observação inicializado (com desenho)');
+    }
+
+    // Iniciar desenho de área
+    function iniciarDesenhoArea() {
+        if (!drawControl) {
+            initAreasDraw();
+        }
+
+        if (isDrawingArea) {
+            cancelarDesenhoArea();
+            return;
+        }
+
+        // Ativar modo polígono
+        areaDrawer = new L.Draw.Polygon(map, drawControl.options.draw.polygon);
+        areaDrawer.enable();
+
+        setDrawingAreaMode(true);
+        showToast('Clique no mapa para desenhar a área. Clique no primeiro ponto para fechar.', 'info');
+    }
+
+    // Cancelar desenho
+    function cancelarDesenhoArea() {
+        if (areaDrawer) {
+            areaDrawer.disable();
+            areaDrawer = null;
+        }
+        setDrawingAreaMode(false);
+        showToast('Desenho cancelado', 'info');
+    }
+
+    // Definir modo de desenho
+    function setDrawingAreaMode(active) {
+        isDrawingArea = active;
+        var btn = document.getElementById('btnCriarArea');
+        if (btn) {
+            btn.classList.toggle('active', active);
+        }
+    }
+
+    // Modal para nomear área
+    function abrirModalNomearArea(layer, type) {
+        var nome = prompt('Digite o nome da área de observação:', '');
+
+        if (!nome || nome.trim() === '') {
+            mapLayers.areasObservacao.removeLayer(layer);
+            showToast('Criação de área cancelada', 'warning');
+            return;
+        }
+
+        var descricao = prompt('Digite uma descrição (opcional):', '') || '';
+
+        // Salvar área
+        salvarArea(layer, nome.trim(), descricao.trim(), '#00D4FF', type);
+    }
+
+    // Salvar área no backend
+    async function salvarArea(layer, nome, descricao, cor, tipo) {
+        var geojson = layer.toGeoJSON();
+
+        var dados = {
+            nome: nome,
+            descricao: descricao,
+            cor: cor,
+            geojson: geojson.geometry,
+            tipo_desenho: tipo === 'rectangle' ? 'rectangle' : 'polygon'
+        };
+
+        try {
+            showToast('Salvando área...', 'info');
+
+            var response = await fetch('/integracity/api/areas/criar/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify(dados)
+            });
+
+            if (response.ok) {
+                var resultado = await response.json();
+                console.log('Área salva:', resultado);
+
+                // Atualizar layer com ID
+                layer.areaId = resultado.area_id;
+                layer.areaNome = nome;
+
+                // Adicionar popup
+                adicionarPopupArea(layer, {
+                    id: resultado.area_id,
+                    nome: nome,
+                    descricao: descricao,
+                    cor: cor,
+                    nivel_operacional: 'E1'
+                });
+
+                // Atualizar contagem
+                updateLayerCount('areasObservacao', mapLayers.areasObservacao.getLayers());
+
+                showToast('Área "' + nome + '" criada com sucesso!', 'success');
+
+            } else {
+                var erro = await response.json();
+                alert('Erro ao salvar: ' + (erro.error || 'Erro desconhecido'));
+                mapLayers.areasObservacao.removeLayer(layer);
+            }
+        } catch (error) {
+            console.error('Erro ao salvar área:', error);
+            alert('Erro de conexão ao salvar área');
+            mapLayers.areasObservacao.removeLayer(layer);
+        }
+    }
+
+    // Adicionar popup à área
+    function adicionarPopupArea(layer, area) {
+        var nivelCor = {
+            'E1': '#00C853',
+            'E2': '#00BCD4',
+            'E3': '#FFC107',
+            'E4': '#FF5722',
+            'E5': '#212121'
+        };
+
+        var html = '<div class="area-popup">' +
+            '<h6 style="color: ' + (area.cor || '#00D4FF') + ';">' +
+            '<i class="fas fa-draw-polygon"></i> ' + area.nome + '</h6>' +
+            '<p style="margin: 5px 0; color: #aaa; font-size: 0.85rem;">' + (area.descricao || 'Sem descrição') + '</p>' +
+            '<span class="area-nivel" style="background: ' + (nivelCor[area.nivel_operacional] || '#00C853') + '; color: #fff;">' +
+            area.nivel_operacional + '</span>' +
+            '<br><button class="btn btn-sm btn-primary btn-area-dashboard" ' +
+            'onclick="window.open(\'/integracity/areas/' + area.id + '/\', \'_blank\')">' +
+            '<i class="fas fa-external-link-alt"></i> Abrir Dashboard</button>' +
+            '</div>';
+
+        layer.bindPopup(html);
+    }
+
+    // Carregar áreas existentes do backend
+    async function carregarAreasExistentes() {
+        // Usar caminho absoluto para evitar problemas de cache/concatenação
+        var url = '/integracity/api/areas/listar/';
+        console.log('Carregando áreas de:', url);
+
+        try {
+            var response = await fetch(url);
+            console.log('Response status:', response.status);
+
+            if (!response.ok) {
+                console.error('Erro HTTP ao carregar áreas:', response.status);
+                return;
+            }
+
+            var data = await response.json();
+            console.log('Dados recebidos:', data);
+            var areas = data.areas || [];
+
+            console.log('Áreas carregadas:', areas.length);
+
+            areas.forEach(function(area) {
+                adicionarAreaNoMapa(area);
+            });
+
+            // Atualizar contagem
+            updateLayerCount('areasObservacao', areas);
+
+            // Marcar checkbox se há áreas
+            if (areas.length > 0) {
+                var checkbox = document.getElementById('layerAreasObservacao');
+                if (checkbox && !checkbox.checked) {
+                    checkbox.checked = true;
+                    var layerItem = checkbox.closest('.layer-item');
+                    if (layerItem) layerItem.classList.add('active');
+                }
+            }
+
+        } catch (error) {
+            console.error('Erro ao carregar áreas:', error);
+        }
+    }
+
+    // Adicionar área no mapa
+    function adicionarAreaNoMapa(area) {
+        console.log('Adicionando área:', area.nome, area.id);
+
+        try {
+            var geojson = area.geojson;
+            console.log('GeoJSON original:', geojson);
+
+            if (typeof geojson === 'string') {
+                geojson = JSON.parse(geojson);
+                console.log('GeoJSON parseado');
+            }
+
+            // Converter coordenadas GeoJSON para LatLng
+            if (!geojson.coordinates || !geojson.coordinates[0]) {
+                console.error('Coordenadas inválidas:', geojson);
+                return;
+            }
+
+            var coords = geojson.coordinates[0];
+            console.log('Coordenadas:', coords.length, 'pontos');
+
+            var latlngs = coords.map(function(coord) {
+                return [coord[1], coord[0]];
+            });
+
+            var polygon = L.polygon(latlngs, {
+                color: area.cor || '#00D4FF',
+                fillColor: area.cor || '#00D4FF',
+                fillOpacity: 0.15,
+                weight: 2,
+                dashArray: '5, 5'
+            });
+
+            polygon.areaId = area.id;
+            polygon.areaNome = area.nome;
+
+            adicionarPopupArea(polygon, area);
+            mapLayers.areasObservacao.addLayer(polygon);
+            console.log('Área adicionada com sucesso:', area.nome);
+
+        } catch (e) {
+            console.error('Erro ao adicionar área no mapa:', e, area);
+        }
+    }
+
+    // Obter CSRF token
+    function getCSRFToken() {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.startsWith('csrftoken=')) {
+                return cookie.substring('csrftoken='.length);
+            }
+        }
+        return '';
+    }
+
+    // Inicializar quando o mapa estiver pronto
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(initAreasDraw, 1000);
+    });
+
+    // Expor funções globalmente
+    window.iniciarDesenhoArea = iniciarDesenhoArea;
+    window.cancelarDesenhoArea = cancelarDesenhoArea;
+
 </script>
 
 <!-- ============================================
@@ -3379,5 +3787,735 @@
         </div>
     </div>
 </div>
+
+<!-- ============================================
+     MODAL DE ALERTA - OCORRÊNCIA EM ÁREA DE OBSERVAÇÃO
+     ============================================ -->
+<div class="area-alert-overlay" id="areaAlertOverlay">
+    <div class="area-alert-modal" id="areaAlertModal">
+        <div class="area-alert-header">
+            <div class="alert-icon-pulse">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3>ALERTA DE OCORRÊNCIA</h3>
+            <span class="alert-badge">ÁREA MONITORADA</span>
+        </div>
+
+        <div class="area-alert-body">
+            <div class="alert-info-section">
+                <div class="alert-area-info">
+                    <label><i class="fas fa-draw-polygon"></i> Área de Observação</label>
+                    <span id="alertAreaNome">--</span>
+                </div>
+                <div class="alert-ocorrencia-info">
+                    <label><i class="fas fa-exclamation-circle"></i> Ocorrência</label>
+                    <span id="alertOcorrenciaTitulo">--</span>
+                </div>
+                <div class="alert-details-grid">
+                    <div class="alert-detail">
+                        <label>Categoria</label>
+                        <span id="alertCategoria">--</span>
+                    </div>
+                    <div class="alert-detail">
+                        <label>Prioridade</label>
+                        <span id="alertPrioridade" class="priority-badge">--</span>
+                    </div>
+                    <div class="alert-detail">
+                        <label>Endereço</label>
+                        <span id="alertEndereco">--</span>
+                    </div>
+                    <div class="alert-detail">
+                        <label>Data/Hora</label>
+                        <span id="alertDataHora">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campo de Justificativa (inicialmente oculto) -->
+            <div class="justificativa-section" id="justificativaSection" style="display: none;">
+                <label for="justificativaTexto">
+                    <i class="fas fa-comment-alt"></i> <span id="justificativaLabel">Justificativa</span>
+                </label>
+                <textarea id="justificativaTexto" placeholder="Digite a justificativa..." rows="3"></textarea>
+                <div class="justificativa-actions">
+                    <button class="btn-justificativa-cancelar" onclick="cancelarJustificativa()">
+                        <i class="fas fa-times"></i> Voltar
+                    </button>
+                    <button class="btn-justificativa-enviar" onclick="enviarJustificativa()">
+                        <i class="fas fa-check"></i> Enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="area-alert-footer" id="alertFooterButtons">
+            <button class="btn-alert btn-apurar" onclick="apurarAlerta()">
+                <i class="fas fa-clock"></i> Apurar
+                <span class="btn-hint">Volta em 5 min</span>
+            </button>
+            <button class="btn-alert btn-cancelar" onclick="cancelarAlerta()">
+                <i class="fas fa-times-circle"></i> Cancelar
+            </button>
+            <button class="btn-alert btn-confirmar" onclick="confirmarAlerta()">
+                <i class="fas fa-check-circle"></i> Confirmar
+            </button>
+        </div>
+
+        <!-- Timer de Apuração -->
+        <div class="apuracao-timer" id="apuracaoTimer" style="display: none;">
+            <i class="fas fa-hourglass-half"></i>
+            <span>Retornando em: <strong id="timerCountdown">5:00</strong></span>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ============================================
+   ESTILOS DO MODAL DE ALERTA DE ÁREA
+   ============================================ */
+.area-alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+}
+
+.area-alert-overlay.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.area-alert-modal {
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 25px 80px rgba(255, 0, 85, 0.3), 0 0 0 1px rgba(255, 0, 85, 0.5);
+    animation: slideUp 0.4s ease;
+    overflow: hidden;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.area-alert-header {
+    background: linear-gradient(135deg, #ff0055, #ff3366);
+    padding: 20px;
+    text-align: center;
+    position: relative;
+}
+
+.alert-icon-pulse {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    animation: pulse-alert 1.5s infinite;
+}
+
+.alert-icon-pulse i {
+    font-size: 28px;
+    color: #fff;
+}
+
+@keyframes pulse-alert {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); }
+}
+
+.area-alert-header h3 {
+    color: #fff;
+    margin: 0;
+    font-family: 'Orbitron', monospace;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+}
+
+.alert-badge {
+    display: inline-block;
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    margin-top: 8px;
+    letter-spacing: 1px;
+}
+
+.area-alert-body {
+    padding: 25px;
+}
+
+.alert-info-section {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.alert-area-info, .alert-ocorrencia-info {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.alert-area-info label, .alert-ocorrencia-info label {
+    display: block;
+    color: #888;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.alert-area-info label i, .alert-ocorrencia-info label i {
+    color: #00d4ff;
+    margin-right: 5px;
+}
+
+.alert-area-info span, .alert-ocorrencia-info span {
+    display: block;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.alert-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.alert-detail label {
+    display: block;
+    color: #666;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+}
+
+.alert-detail span {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.priority-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem !important;
+    font-weight: 600;
+}
+
+.priority-badge.critica { background: #ff0055; color: #fff; }
+.priority-badge.alta { background: #ff6b35; color: #fff; }
+.priority-badge.media { background: #ffd93d; color: #000; }
+.priority-badge.baixa { background: #00c853; color: #fff; }
+
+/* Seção de Justificativa */
+.justificativa-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(0, 212, 255, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.justificativa-section label {
+    display: block;
+    color: #00d4ff;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+}
+
+.justificativa-section textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+    color: #fff;
+    font-size: 0.95rem;
+    resize: none;
+    font-family: inherit;
+}
+
+.justificativa-section textarea:focus {
+    outline: none;
+    border-color: #00d4ff;
+}
+
+.justificativa-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-justificativa-cancelar, .btn-justificativa-enviar {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.btn-justificativa-cancelar {
+    background: #444;
+    color: #fff;
+}
+
+.btn-justificativa-cancelar:hover {
+    background: #555;
+}
+
+.btn-justificativa-enviar {
+    background: #00d4ff;
+    color: #000;
+    font-weight: 600;
+}
+
+.btn-justificativa-enviar:hover {
+    background: #00b8e6;
+}
+
+/* Footer com botões */
+.area-alert-footer {
+    padding: 20px;
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-alert {
+    flex: 1;
+    padding: 14px 10px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+}
+
+.btn-alert i {
+    font-size: 1.2rem;
+}
+
+.btn-hint {
+    font-size: 0.65rem;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+.btn-apurar {
+    background: linear-gradient(135deg, #ff9800, #ff6f00);
+    color: #fff;
+}
+
+.btn-apurar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(255, 152, 0, 0.4);
+}
+
+.btn-cancelar {
+    background: linear-gradient(135deg, #607d8b, #455a64);
+    color: #fff;
+}
+
+.btn-cancelar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(96, 125, 139, 0.4);
+}
+
+.btn-confirmar {
+    background: linear-gradient(135deg, #00c853, #00a844);
+    color: #fff;
+}
+
+.btn-confirmar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 200, 83, 0.4);
+}
+
+/* Timer de Apuração */
+.apuracao-timer {
+    text-align: center;
+    padding: 15px;
+    background: rgba(255, 152, 0, 0.2);
+    color: #ff9800;
+    font-size: 0.9rem;
+}
+
+.apuracao-timer i {
+    margin-right: 8px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.apuracao-timer strong {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+}
+</style>
+
+<script>
+// ============================================
+// SISTEMA DE ALERTA DE OCORRÊNCIAS EM ÁREAS
+// ============================================
+
+var alertaAtual = null;
+var alertasApurados = {}; // { alertaId: timestampExpiracao }
+var alertasProcessados = new Set(); // IDs de ocorrências já notificadas
+var alertasConfirmados = new Set(); // IDs de ocorrências confirmadas (permanente)
+var tipoAcaoAtual = null; // 'cancelar' ou 'confirmar'
+var intervalVerificacao = null;
+
+// Carregar alertas confirmados do localStorage
+function carregarAlertasConfirmados() {
+    try {
+        var salvos = localStorage.getItem('alertasConfirmados');
+        if (salvos) {
+            var lista = JSON.parse(salvos);
+            lista.forEach(function(id) {
+                alertasConfirmados.add(id);
+                alertasProcessados.add(id);
+            });
+            console.log('Alertas confirmados carregados:', alertasConfirmados.size);
+        }
+    } catch (e) {
+        console.log('Erro ao carregar alertas confirmados:', e);
+    }
+}
+
+// Salvar alertas confirmados no localStorage
+function salvarAlertasConfirmados() {
+    try {
+        var lista = Array.from(alertasConfirmados);
+        localStorage.setItem('alertasConfirmados', JSON.stringify(lista));
+    } catch (e) {
+        console.log('Erro ao salvar alertas confirmados:', e);
+    }
+}
+
+// Carregar ao iniciar
+carregarAlertasConfirmados();
+
+// Verificar se ponto está dentro de polígono (Ray Casting Algorithm)
+function pontoEmPoligono(lat, lng, poligono) {
+    var x = lng, y = lat;
+    var inside = false;
+
+    for (var i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
+        var xi = poligono[i][0], yi = poligono[i][1];
+        var xj = poligono[j][0], yj = poligono[j][1];
+
+        var intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+
+    return inside;
+}
+
+// Converter GeoJSON para array de coordenadas [lng, lat]
+function geojsonParaCoords(geojson) {
+    if (typeof geojson === 'string') {
+        geojson = JSON.parse(geojson);
+    }
+    if (geojson.coordinates && geojson.coordinates[0]) {
+        return geojson.coordinates[0];
+    }
+    return [];
+}
+
+// Verificar ocorrências dentro das áreas
+async function verificarOcorrenciasEmAreas() {
+    try {
+        // Buscar áreas de observação
+        var areasResponse = await fetch('/integracity/api/areas/listar/');
+        if (!areasResponse.ok) return;
+        var areasData = await areasResponse.json();
+        var areas = areasData.areas || [];
+
+        if (areas.length === 0) return;
+
+        // Buscar ocorrências
+        var ocorrenciasResponse = await fetch('/integracity/api/ocorrencias/mapa/');
+        if (!ocorrenciasResponse.ok) return;
+        var ocorrenciasData = await ocorrenciasResponse.json();
+        var ocorrencias = ocorrenciasData.data || ocorrenciasData.ocorrencias || [];
+
+        // Verificar cada ocorrência
+        for (var o of ocorrencias) {
+            var ocorrenciaId = o.id;
+
+            // Pular se foi confirmada/cancelada permanentemente
+            if (alertasConfirmados.has(ocorrenciaId)) continue;
+
+            // Pular se já foi processada nesta sessão
+            if (alertasProcessados.has(ocorrenciaId)) continue;
+
+            // Pular se está em período de apuração
+            if (alertasApurados[ocorrenciaId] && Date.now() < alertasApurados[ocorrenciaId]) continue;
+
+            var lat = o.latitude || o.lat;
+            var lng = o.longitude || o.lng;
+
+            if (!lat || !lng) continue;
+
+            // Verificar em cada área
+            for (var area of areas) {
+                var coords = geojsonParaCoords(area.geojson);
+                if (coords.length === 0) continue;
+
+                if (pontoEmPoligono(lat, lng, coords)) {
+                    // Ocorrência dentro da área!
+                    mostrarAlertaOcorrencia(area, o);
+                    return; // Mostra um alerta por vez
+                }
+            }
+        }
+
+    } catch (error) {
+        console.error('Erro ao verificar ocorrências em áreas:', error);
+    }
+}
+
+// Mostrar modal de alerta
+function mostrarAlertaOcorrencia(area, ocorrencia) {
+    alertaAtual = {
+        area: area,
+        ocorrencia: ocorrencia,
+        id: ocorrencia.id
+    };
+
+    // Preencher dados
+    document.getElementById('alertAreaNome').textContent = area.nome;
+    document.getElementById('alertOcorrenciaTitulo').textContent = ocorrencia.titulo || ocorrencia.tipo || 'Nova Ocorrência';
+    document.getElementById('alertCategoria').textContent = ocorrencia.categoria || '--';
+
+    var prioridadeEl = document.getElementById('alertPrioridade');
+    var prioridade = (ocorrencia.prioridade || 'media').toLowerCase();
+    prioridadeEl.textContent = prioridade.charAt(0).toUpperCase() + prioridade.slice(1);
+    prioridadeEl.className = 'priority-badge ' + prioridade;
+
+    document.getElementById('alertEndereco').textContent = ocorrencia.endereco || ocorrencia.bairro || '--';
+    document.getElementById('alertDataHora').textContent = ocorrencia.criado_em ?
+        new Date(ocorrencia.criado_em).toLocaleString('pt-BR') : '--';
+
+    // Resetar estado do modal
+    document.getElementById('justificativaSection').style.display = 'none';
+    document.getElementById('alertFooterButtons').style.display = 'flex';
+    document.getElementById('apuracaoTimer').style.display = 'none';
+    document.getElementById('justificativaTexto').value = '';
+
+    // Mostrar modal
+    document.getElementById('areaAlertOverlay').classList.add('show');
+
+    // Tocar som de alerta (opcional)
+    tocarSomAlerta();
+
+    console.log('Alerta: Ocorrência "' + (ocorrencia.titulo || ocorrencia.id) + '" na área "' + area.nome + '"');
+}
+
+// Som de alerta
+function tocarSomAlerta() {
+    try {
+        var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        var oscillator = audioContext.createOscillator();
+        var gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+
+        oscillator.start();
+
+        setTimeout(function() {
+            oscillator.frequency.value = 600;
+        }, 150);
+
+        setTimeout(function() {
+            oscillator.frequency.value = 800;
+        }, 300);
+
+        setTimeout(function() {
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            setTimeout(function() { oscillator.stop(); }, 100);
+        }, 450);
+
+    } catch (e) {
+        console.log('Som de alerta não disponível');
+    }
+}
+
+// Fechar modal
+function fecharAlertaModal() {
+    document.getElementById('areaAlertOverlay').classList.remove('show');
+}
+
+// Botão APURAR - Oculta por 5 minutos
+function apurarAlerta() {
+    if (!alertaAtual) return;
+
+    var ocorrenciaId = alertaAtual.id;
+    var cincoMinutos = 5 * 60 * 1000; // 5 minutos em ms
+
+    alertasApurados[ocorrenciaId] = Date.now() + cincoMinutos;
+
+    // Mostrar timer
+    document.getElementById('alertFooterButtons').style.display = 'none';
+    document.getElementById('apuracaoTimer').style.display = 'block';
+
+    // Iniciar countdown
+    var tempoRestante = 300; // 5 minutos em segundos
+    var timerEl = document.getElementById('timerCountdown');
+
+    var countdownInterval = setInterval(function() {
+        tempoRestante--;
+        var minutos = Math.floor(tempoRestante / 60);
+        var segundos = tempoRestante % 60;
+        timerEl.textContent = minutos + ':' + (segundos < 10 ? '0' : '') + segundos;
+
+        if (tempoRestante <= 0) {
+            clearInterval(countdownInterval);
+            // Remover da lista de apurados para reaparecer
+            delete alertasApurados[ocorrenciaId];
+        }
+    }, 1000);
+
+    showToast('Alerta em apuração. Retornará em 5 minutos.', 'warning');
+
+    // Fechar modal após 2 segundos
+    setTimeout(function() {
+        fecharAlertaModal();
+    }, 2000);
+}
+
+// Botão CANCELAR - Abre justificativa
+function cancelarAlerta() {
+    tipoAcaoAtual = 'cancelar';
+    document.getElementById('justificativaLabel').textContent = 'Justificativa do Cancelamento';
+    document.getElementById('justificativaSection').style.display = 'block';
+    document.getElementById('alertFooterButtons').style.display = 'none';
+}
+
+// Botão CONFIRMAR - Abre justificativa
+function confirmarAlerta() {
+    tipoAcaoAtual = 'confirmar';
+    document.getElementById('justificativaLabel').textContent = 'Observações da Confirmação';
+    document.getElementById('justificativaSection').style.display = 'block';
+    document.getElementById('alertFooterButtons').style.display = 'none';
+}
+
+// Voltar da justificativa
+function cancelarJustificativa() {
+    document.getElementById('justificativaSection').style.display = 'none';
+    document.getElementById('alertFooterButtons').style.display = 'flex';
+    document.getElementById('justificativaTexto').value = '';
+    tipoAcaoAtual = null;
+}
+
+// Enviar justificativa
+async function enviarJustificativa() {
+    var justificativa = document.getElementById('justificativaTexto').value.trim();
+
+    if (!justificativa) {
+        showToast('Por favor, preencha a justificativa', 'warning');
+        return;
+    }
+
+    if (!alertaAtual) return;
+
+    var ocorrenciaId = alertaAtual.id;
+
+    // Marcar como processado localmente (sempre funciona)
+    alertasProcessados.add(ocorrenciaId);
+
+    // Se confirmou, marcar permanentemente
+    if (tipoAcaoAtual === 'confirmar') {
+        alertasConfirmados.add(ocorrenciaId);
+        salvarAlertasConfirmados();
+        showToast('Ocorrência confirmada! Alerta desabilitado permanentemente.', 'success');
+        console.log('Ocorrência ' + ocorrenciaId + ' confirmada e desabilitada');
+    } else {
+        // Cancelar também desabilita permanentemente
+        alertasConfirmados.add(ocorrenciaId);
+        salvarAlertasConfirmados();
+        showToast('Alerta cancelado! Não aparecerá novamente.', 'info');
+        console.log('Ocorrência ' + ocorrenciaId + ' cancelada e desabilitada');
+    }
+
+    // Tentar registrar no servidor (opcional, não bloqueia)
+    try {
+        fetch('/integracity/api/areas/alertas/responder/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                acao: tipoAcaoAtual,
+                justificativa: justificativa,
+                area_id: alertaAtual.area.id,
+                ocorrencia_id: ocorrenciaId
+            })
+        }).catch(function(e) {
+            console.log('API de resposta não disponível (ignorando)');
+        });
+    } catch (e) {
+        // Ignorar erros de API
+    }
+
+    fecharAlertaModal();
+}
+
+// Iniciar monitoramento periódico
+function iniciarMonitoramentoAreas() {
+    console.log('Iniciando monitoramento de ocorrências em áreas...');
+
+    // Verificar imediatamente
+    setTimeout(verificarOcorrenciasEmAreas, 3000);
+
+    // Verificar a cada 30 segundos
+    intervalVerificacao = setInterval(verificarOcorrenciasEmAreas, 30000);
+}
+
+// Inicializar quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    // Aguardar um pouco para as outras inicializações
+    setTimeout(iniciarMonitoramentoAreas, 5000);
+});
+</script>
 
 {% endblock %}

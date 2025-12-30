@@ -96,10 +96,16 @@ class AreasObservacao {
     initEventHandlers() {
         // Evento quando uma área é criada
         this.map.on(L.Draw.Event.CREATED, (e) => {
+            console.log('=== EVENTO CREATED RECEBIDO ===');
+            console.log('Layer:', e.layer);
+            console.log('Type:', e.layerType);
+
             const layer = e.layer;
             const type = e.layerType;
 
             this.drawnItems.addLayer(layer);
+            console.log('Layer adicionado ao drawnItems');
+
             this.abrirModalNomearArea(layer, type);
         });
 
@@ -125,6 +131,582 @@ class AreasObservacao {
     }
 
     abrirModalNomearArea(layer, type) {
+        console.log('=== ABRINDO MODAL ===');
+        console.log('Layer recebido:', layer);
+        console.log('Type:', type);
+
+        // Guardar referência ao layer atual
+        this.currentLayer = layer;
+        this.currentType = type;
+
+        // Usar prompt nativo do JavaScript - mais confiável
+        this.abrirPromptSimples(layer, type);
+    }
+
+    async abrirPromptSimples(layer, type) {
+        // Usar prompt nativo do JavaScript - funciona em qualquer navegador
+        const nome = prompt('Digite o nome da área de observação:', '');
+
+        if (!nome || nome.trim() === '') {
+            // Usuário cancelou ou não digitou nada
+            this.drawnItems.removeLayer(layer);
+            this.mostrarNotificacao('Criação de área cancelada', 'warning');
+            return;
+        }
+
+        const descricao = prompt('Digite uma descrição (opcional):', '') || '';
+
+        // Cor padrão
+        const cor = '#00D4FF';
+
+        // Converter layer para GeoJSON
+        const geojson = layer.toGeoJSON();
+
+        const dados = {
+            nome: nome.trim(),
+            descricao: descricao.trim(),
+            cor: cor,
+            geojson: geojson.geometry,
+            tipo_desenho: type === 'rectangle' ? 'rectangle' : 'polygon'
+        };
+
+        try {
+            this.mostrarNotificacao('Salvando área...', 'info');
+
+            const response = await fetch(`${this.baseUrl}/api/areas/criar/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify(dados)
+            });
+
+            if (response.ok) {
+                const resultado = await response.json();
+                console.log('Área salva com sucesso:', resultado);
+
+                // Atualizar layer
+                layer.areaId = resultado.area_id;
+                layer.areaNome = nome;
+
+                // Mover para camada de áreas salvas
+                this.drawnItems.removeLayer(layer);
+                this.areasLayer.addLayer(layer);
+
+                // Adicionar popup
+                this.adicionarPopupArea(layer, resultado);
+
+                this.mostrarNotificacao(`Área "${nome}" criada com sucesso!`, 'success');
+
+                // Recarregar página para mostrar na lista
+                setTimeout(() => location.reload(), 1500);
+
+            } else {
+                const erro = await response.json();
+                alert('Erro ao salvar: ' + (erro.error || 'Erro desconhecido'));
+                this.drawnItems.removeLayer(layer);
+            }
+        } catch (error) {
+            console.error('Erro ao salvar área:', error);
+            alert('Erro de conexão ao salvar área. Verifique sua conexão.');
+            this.drawnItems.removeLayer(layer);
+        }
+    }
+
+    abrirModalBootstrap(layer, type) {
+        // Usar modal existente no DOM
+        const modalElement = document.getElementById('modalNomearArea');
+        if (!modalElement) {
+            console.error('Modal não encontrado no DOM!');
+            this.abrirModalCustomizado(layer, type);
+            return;
+        }
+
+        // Limpar campos
+        document.getElementById('areaNome').value = '';
+        document.getElementById('areaDescricao').value = '';
+
+        // Resetar cor selecionada
+        document.querySelectorAll('.btn-cor').forEach(btn => {
+            btn.style.border = '2px solid transparent';
+        });
+        const firstColor = document.querySelector('.btn-cor');
+        if (firstColor) {
+            firstColor.style.border = '2px solid #fff';
+            firstColor.classList.add('active');
+        }
+
+        // Configurar eventos do modal
+        this.setupModalEvents(layer, type);
+
+        // Abrir modal
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Focar no campo nome
+        setTimeout(() => {
+            document.getElementById('areaNome').focus();
+        }, 300);
+    }
+
+    abrirModalCustomizado(layer, type) {
+        // Remover modal anterior se existir
+        const existingModal = document.getElementById('customModalNomearArea');
+        if (existingModal) existingModal.remove();
+
+        // Criar modal customizado
+        const modalHtml = `
+            <div id="customModalNomearArea" class="custom-modal-overlay">
+                <div class="custom-modal-dialog">
+                    <div class="custom-modal-content">
+                        <div class="custom-modal-header">
+                            <h5><i class="fas fa-draw-polygon"></i> Nova Área de Observação</h5>
+                            <button type="button" class="custom-modal-close" id="customModalClose">&times;</button>
+                        </div>
+                        <div class="custom-modal-body">
+                            <div class="form-group">
+                                <label for="customAreaNome">Nome da Área *</label>
+                                <input type="text" id="customAreaNome" name="customAreaNome" class="custom-input"
+                                       placeholder="Ex: Zona Sul - Copacabana" required tabindex="1" autocomplete="off">
+                            </div>
+                            <div class="form-group">
+                                <label for="customAreaDescricao">Descrição</label>
+                                <textarea id="customAreaDescricao" name="customAreaDescricao" class="custom-input"
+                                          rows="3" placeholder="Descrição opcional da área" tabindex="2"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Cor no Mapa</label>
+                                <div class="color-selector" id="customCorSelector">
+                                    <button type="button" class="custom-btn-cor active" data-cor="#00D4FF" style="background:#00D4FF"></button>
+                                    <button type="button" class="custom-btn-cor" data-cor="#FF6B35" style="background:#FF6B35"></button>
+                                    <button type="button" class="custom-btn-cor" data-cor="#7B2CBF" style="background:#7B2CBF"></button>
+                                    <button type="button" class="custom-btn-cor" data-cor="#00C853" style="background:#00C853"></button>
+                                    <button type="button" class="custom-btn-cor" data-cor="#FFD93D" style="background:#FFD93D"></button>
+                                    <button type="button" class="custom-btn-cor" data-cor="#FF1744" style="background:#FF1744"></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="custom-modal-footer">
+                            <button type="button" class="custom-btn custom-btn-secondary" id="customBtnCancelar">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="button" class="custom-btn custom-btn-primary" id="customBtnSalvar">
+                                <i class="fas fa-save"></i> Salvar Área
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Adicionar estilos do modal customizado
+        this.injectCustomModalStyles();
+
+        // Adicionar ao DOM
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const modal = document.getElementById('customModalNomearArea');
+        const self = this;
+
+        // Eventos de cor
+        document.querySelectorAll('.custom-btn-cor').forEach(btn => {
+            btn.onclick = function() {
+                document.querySelectorAll('.custom-btn-cor').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const cor = this.dataset.cor;
+                layer.setStyle({ color: cor, fillColor: cor });
+            };
+        });
+
+        // Botão salvar
+        document.getElementById('customBtnSalvar').onclick = function() {
+            self.salvarAreaCustomModal(layer, type, modal);
+        };
+
+        // Botão cancelar
+        document.getElementById('customBtnCancelar').onclick = function() {
+            self.drawnItems.removeLayer(layer);
+            modal.remove();
+        };
+
+        // Botão fechar
+        document.getElementById('customModalClose').onclick = function() {
+            self.drawnItems.removeLayer(layer);
+            modal.remove();
+        };
+
+        // Fechar ao clicar fora (apenas no overlay, não no conteúdo)
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                self.drawnItems.removeLayer(layer);
+                modal.remove();
+            }
+        });
+
+        // Prevenir que cliques no conteúdo fechem o modal
+        const dialogContent = modal.querySelector('.custom-modal-dialog');
+        if (dialogContent) {
+            dialogContent.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+
+        // Mostrar modal com animação
+        setTimeout(() => {
+            modal.classList.add('show');
+            const nomeInput = document.getElementById('customAreaNome');
+            if (nomeInput) {
+                nomeInput.focus();
+                nomeInput.click();
+            }
+        }, 50);
+    }
+
+    async salvarAreaCustomModal(layer, type, modal) {
+        const nome = document.getElementById('customAreaNome').value.trim();
+        const descricao = document.getElementById('customAreaDescricao').value.trim();
+        const corAtiva = document.querySelector('.custom-btn-cor.active');
+        const cor = corAtiva ? corAtiva.dataset.cor : '#00D4FF';
+
+        if (!nome) {
+            alert('Por favor, informe o nome da área');
+            document.getElementById('customAreaNome').focus();
+            return;
+        }
+
+        // Converter layer para GeoJSON
+        const geojson = layer.toGeoJSON();
+
+        const dados = {
+            nome: nome,
+            descricao: descricao,
+            cor: cor,
+            geojson: geojson.geometry,
+            tipo_desenho: type === 'rectangle' ? 'rectangle' : 'polygon'
+        };
+
+        try {
+            const response = await fetch(`${this.baseUrl}/api/areas/criar/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify(dados)
+            });
+
+            if (response.ok) {
+                const resultado = await response.json();
+                console.log('Área salva com sucesso:', resultado);
+
+                // Atualizar layer
+                layer.areaId = resultado.area_id;
+                layer.areaNome = nome;
+
+                // Mover para camada de áreas salvas
+                this.drawnItems.removeLayer(layer);
+                this.areasLayer.addLayer(layer);
+
+                // Adicionar popup
+                this.adicionarPopupArea(layer, resultado);
+
+                // Fechar modal
+                modal.remove();
+
+                this.mostrarNotificacao(`Área "${nome}" criada com sucesso!`, 'success');
+
+                // Recarregar página para mostrar na lista
+                setTimeout(() => location.reload(), 1000);
+
+            } else {
+                const erro = await response.json();
+                alert(erro.error || 'Erro ao salvar área');
+            }
+        } catch (error) {
+            console.error('Erro ao salvar área:', error);
+            alert('Erro de conexão ao salvar área');
+        }
+    }
+
+    injectCustomModalStyles() {
+        if (document.getElementById('custom-modal-styles')) return;
+
+        const styles = `
+            .custom-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            .custom-modal-overlay.show {
+                opacity: 1;
+            }
+            .custom-modal-dialog {
+                width: 90%;
+                max-width: 450px;
+                transform: scale(0.9);
+                transition: transform 0.3s ease;
+                position: relative;
+                z-index: 10001;
+            }
+            .custom-modal-overlay.show .custom-modal-dialog {
+                transform: scale(1);
+            }
+            .custom-modal-content {
+                background: #1e1e2d;
+                border-radius: 12px;
+                overflow: visible;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                border: 1px solid #333;
+                position: relative;
+            }
+            .custom-modal-header {
+                padding: 20px;
+                border-bottom: 1px solid #333;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                position: relative;
+            }
+            .custom-modal-header h5 {
+                margin: 0;
+                color: #fff;
+                font-size: 1.1rem;
+            }
+            .custom-modal-header h5 i {
+                color: #00D4FF;
+                margin-right: 10px;
+            }
+            .custom-modal-close {
+                background: none;
+                border: none;
+                color: #888;
+                font-size: 24px;
+                cursor: pointer;
+                line-height: 1;
+                z-index: 10003;
+            }
+            .custom-modal-close:hover {
+                color: #fff;
+            }
+            .custom-modal-body {
+                padding: 20px;
+                position: relative;
+                z-index: 10002;
+            }
+            .form-group {
+                margin-bottom: 20px;
+            }
+            .form-group label {
+                display: block;
+                color: #aaa;
+                margin-bottom: 8px;
+                font-size: 0.9rem;
+            }
+            .custom-input {
+                width: 100%;
+                padding: 12px;
+                background: #2a2a3e;
+                border: 1px solid #444;
+                border-radius: 8px;
+                color: #fff;
+                font-size: 1rem;
+                box-sizing: border-box;
+                position: relative;
+                z-index: 10002;
+                pointer-events: auto !important;
+                -webkit-user-select: text !important;
+                user-select: text !important;
+            }
+            .custom-input:focus {
+                outline: none;
+                border-color: #00D4FF;
+                box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+            }
+            textarea.custom-input {
+                resize: vertical;
+                min-height: 80px;
+            }
+            .color-selector {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            .custom-btn-cor {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                border: 3px solid transparent;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .custom-btn-cor:hover {
+                transform: scale(1.15);
+            }
+            .custom-btn-cor.active {
+                border-color: #fff;
+                box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            }
+            .custom-modal-footer {
+                padding: 15px 20px;
+                border-top: 1px solid #333;
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+            .custom-btn {
+                padding: 10px 20px;
+                border-radius: 8px;
+                border: none;
+                cursor: pointer;
+                font-size: 0.9rem;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                transition: all 0.2s;
+            }
+            .custom-btn-secondary {
+                background: #444;
+                color: #fff;
+            }
+            .custom-btn-secondary:hover {
+                background: #555;
+            }
+            .custom-btn-primary {
+                background: #00D4FF;
+                color: #000;
+                font-weight: 600;
+            }
+            .custom-btn-primary:hover {
+                background: #00b8e6;
+                box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+            }
+        `;
+
+        const styleEl = document.createElement('style');
+        styleEl.id = 'custom-modal-styles';
+        styleEl.textContent = styles;
+        document.head.appendChild(styleEl);
+    }
+
+    setupModalEvents(layer, type) {
+        const self = this;
+
+        // Eventos de cor
+        document.querySelectorAll('.btn-cor').forEach(btn => {
+            btn.onclick = function() {
+                document.querySelectorAll('.btn-cor').forEach(b => {
+                    b.style.border = '2px solid transparent';
+                    b.classList.remove('active');
+                });
+                this.style.border = '2px solid #fff';
+                this.classList.add('active');
+
+                // Atualizar cor do layer
+                const cor = this.dataset.cor;
+                layer.setStyle({ color: cor, fillColor: cor });
+            };
+        });
+
+        // Botão salvar
+        document.getElementById('btnSalvarArea').onclick = function() {
+            self.salvarAreaDoModal(layer, type);
+        };
+
+        // Botão cancelar - remover layer
+        document.getElementById('btnCancelarArea').onclick = function() {
+            self.drawnItems.removeLayer(layer);
+        };
+
+        // Quando modal fecha sem salvar
+        const modalElement = document.getElementById('modalNomearArea');
+        modalElement.addEventListener('hidden.bs.modal', function handler() {
+            if (!layer.areaId) {
+                self.drawnItems.removeLayer(layer);
+            }
+            modalElement.removeEventListener('hidden.bs.modal', handler);
+        });
+    }
+
+    async salvarAreaDoModal(layer, type) {
+        const nome = document.getElementById('areaNome').value.trim();
+        const descricao = document.getElementById('areaDescricao').value.trim();
+        const corAtiva = document.querySelector('.btn-cor.active');
+        const cor = corAtiva ? corAtiva.dataset.cor : '#00D4FF';
+
+        if (!nome) {
+            alert('Por favor, informe o nome da área');
+            document.getElementById('areaNome').focus();
+            return;
+        }
+
+        // Converter layer para GeoJSON
+        const geojson = layer.toGeoJSON();
+
+        const dados = {
+            nome: nome,
+            descricao: descricao,
+            cor: cor,
+            geojson: geojson.geometry,
+            tipo_desenho: type === 'rectangle' ? 'rectangle' : 'polygon'
+        };
+
+        try {
+            const response = await fetch(`${this.baseUrl}/api/areas/criar/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify(dados)
+            });
+
+            if (response.ok) {
+                const resultado = await response.json();
+                console.log('Área salva com sucesso:', resultado);
+
+                // Atualizar layer
+                layer.areaId = resultado.area_id;
+                layer.areaNome = nome;
+
+                // Mover para camada de áreas salvas
+                this.drawnItems.removeLayer(layer);
+                this.areasLayer.addLayer(layer);
+
+                // Adicionar popup
+                this.adicionarPopupArea(layer, resultado);
+
+                // Fechar modal
+                const modalElement = document.getElementById('modalNomearArea');
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) modal.hide();
+
+                this.mostrarNotificacao(`Área "${nome}" criada com sucesso!`, 'success');
+
+                // Recarregar página para mostrar na lista
+                setTimeout(() => location.reload(), 1000);
+
+            } else {
+                const erro = await response.json();
+                alert(erro.error || 'Erro ao salvar área');
+            }
+        } catch (error) {
+            console.error('Erro ao salvar área:', error);
+            alert('Erro de conexão ao salvar área');
+        }
+    }
+
+    // MÉTODO ANTIGO - MANTIDO PARA COMPATIBILIDADE
+    _abrirModalNomearArea_OLD(layer, type) {
         // Criar modal para nomear a área
         const modalHtml = `
             <div class="modal fade" id="modalNomearArea" tabindex="-1" data-bs-backdrop="static">
@@ -193,8 +775,13 @@ class AreasObservacao {
 
         // Adicionar modal ao DOM
         document.body.insertAdjacentHTML('beforeend', modalHtml);
+        console.log('Modal HTML adicionado ao DOM');
 
-        const modal = new bootstrap.Modal(document.getElementById('modalNomearArea'));
+        const modalElement = document.getElementById('modalNomearArea');
+        console.log('Modal element:', modalElement);
+
+        const modal = new bootstrap.Modal(modalElement);
+        console.log('Bootstrap Modal criado:', modal);
 
         // Carregar eventos ativos
         this.carregarEventos();
@@ -291,7 +878,7 @@ class AreasObservacao {
                 const resultado = await response.json();
 
                 // Atualizar layer com ID da área
-                layer.areaId = resultado.id;
+                layer.areaId = resultado.area_id;
                 layer.areaNome = nome;
 
                 // Mover para camada de áreas salvas
@@ -366,12 +953,18 @@ class AreasObservacao {
         try {
             const response = await fetch(`${this.baseUrl}/api/areas/listar/`);
             if (response.ok) {
-                const areas = await response.json();
-                this.areasSalvas = areas;
+                const data = await response.json();
 
-                areas.forEach(area => {
-                    this.desenharArea(area);
-                });
+                // API retorna {success: true, areas: [...], total: N}
+                if (data.success && data.areas) {
+                    this.areasSalvas = data.areas;
+
+                    data.areas.forEach(area => {
+                        this.desenharArea(area);
+                    });
+
+                    console.log(`${data.areas.length} área(s) carregada(s) do servidor`);
+                }
             }
         } catch (error) {
             console.error('Erro ao carregar áreas:', error);

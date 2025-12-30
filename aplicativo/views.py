@@ -518,6 +518,16 @@ def cor_dashboard_hightech_view(request):
         'notifications_count': 0,
     }
 
+    # Adicionar áreas de observação
+    try:
+        from .models import AreaObservacao
+        areas_obs = AreaObservacao.objects.filter(ativa=True).values(
+            'id', 'nome', 'cor', 'geojson', 'nivel_operacional'
+        )
+        context['areas_observacao'] = list(areas_obs)
+    except:
+        context['areas_observacao'] = []
+
     return render(request, 'cor_dashboard_hightech.html', context)
 
 

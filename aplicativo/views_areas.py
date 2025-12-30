@@ -174,6 +174,7 @@ def api_listar_areas(request):
     })
 
 
+@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def api_criar_area(request):
@@ -235,7 +236,7 @@ def api_criar_area(request):
 
 
 @login_required
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "PUT"])
 def api_atualizar_area(request, area_id):
     """API para atualizar uma área existente"""
 

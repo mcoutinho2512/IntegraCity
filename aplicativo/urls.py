@@ -128,6 +128,7 @@ urlpatterns = [
     path('api/brt/', views.api_brt, name='api_brt'),
     path('api/metro/', views.api_metro, name='api_metro'),
     path('api/bike-rio/', views.api_bike_rio, name='api_bike_rio'),
+    path('api/bolsoes/', views.api_tixxi_bolsoes, name='api_bolsoes'),
 
     # ============================================
     # MATRIZ DECISÓRIA - MOTOR DE DECISÃO

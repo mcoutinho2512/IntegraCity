@@ -4,6 +4,8 @@
 {% block title %}Áreas de Observação - IntegraCity{% endblock %}
 
 {% block extra_css %}
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
 <style>
     .areas-container {
@@ -409,7 +411,178 @@
         </div>
         <div id="areasMap"></div>
 
-        <!-- Toolbar Customizada -->
+        <!-- Controles do Mapa (igual ao Dashboard) -->
+        <div class="map-controls" style="position: absolute; top: 80px; left: 15px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;">
+            <button class="map-control-btn" id="layersToggleBtn" onclick="toggleLayersSidebar()" title="Camadas do Mapa">
+                <i class="fas fa-layer-group"></i>
+            </button>
+        </div>
+
+        <!-- SIDEBAR DIREITA - CAMADAS DO MAPA (igual ao Dashboard) -->
+        <div class="layers-sidebar" id="layersSidebar" style="position: absolute; top: 10px;">
+            <div class="layers-content">
+                <div class="layers-header">
+                    <i class="fas fa-layer-group"></i>
+                    <span>CAMADAS</span>
+                    <button class="layers-close" onclick="toggleLayersSidebar()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="layers-list">
+                    <!-- Escolas -->
+                    <div class="layer-item" onclick="toggleLayerByClick('escolas', event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerEscolas" onchange="toggleMapLayer('escolas')">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(76, 175, 80, 0.2); color: #4CAF50;">
+                            <i class="fas fa-school"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Escolas</span>
+                            <span class="layer-count" id="countEscolas">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Hospitais -->
+                    <div class="layer-item" onclick="toggleLayerByClick('hospitais', event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerHospitais" onchange="toggleMapLayer('hospitais')">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(244, 67, 54, 0.2); color: #F44336;">
+                            <i class="fas fa-hospital"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Hospitais</span>
+                            <span class="layer-count" id="countHospitais">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Pluviometros -->
+                    <div class="layer-item" onclick="toggleLayerByClick('pluviometros', event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerPluviometros" onchange="toggleMapLayer('pluviometros')">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(33, 150, 243, 0.2); color: #2196F3;">
+                            <i class="fas fa-cloud-rain"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Pluviometros</span>
+                            <span class="layer-count" id="countPluviometros">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Sirenes -->
+                    <div class="layer-item" onclick="toggleLayerByClick('sirenes', event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerSirenes" onchange="toggleMapLayer('sirenes')" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(255, 152, 0, 0.2); color: #FF9800;">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Sirenes</span>
+                            <span class="layer-count" id="countSirenes">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Cameras -->
+                    <div class="layer-item" onclick="toggleLayerByClick('cameras', event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerCameras" onchange="toggleMapLayer('cameras')">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(156, 39, 176, 0.2); color: #9C27B0;">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Cameras</span>
+                            <span class="layer-count" id="countCameras">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Metro -->
+                    <div class="layer-item" onclick="toggleLayerByClick('metro', event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerMetro" onchange="toggleMapLayer('metro')">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(255, 87, 34, 0.2); color: #FF5722;">
+                            <i class="fas fa-subway"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Metro</span>
+                            <span class="layer-count" id="countMetro">--</span>
+                        </div>
+                    </div>
+
+                    <!-- BRT -->
+                    <div class="layer-item" onclick="toggleLayerByClick('brt', event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerBRT" onchange="toggleMapLayer('brt')">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(0, 150, 136, 0.2); color: #009688;">
+                            <i class="fas fa-bus"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">BRT</span>
+                            <span class="layer-count" id="countBRT">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Waze -->
+                    <div class="layer-item" onclick="toggleLayerByClick('waze', event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerWaze" onchange="toggleMapLayer('waze')">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(0, 212, 255, 0.2); color: #00d4ff;">
+                            <i class="fab fa-waze"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Waze</span>
+                            <span class="layer-count" id="countWaze">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Bolsoes de Alagamento -->
+                    <div class="layer-item" onclick="toggleLayerByClick('bolsoes', event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerBolsoes" onchange="toggleMapLayer('bolsoes')">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(6, 182, 212, 0.2); color: #06b6d4;">
+                            <i class="fas fa-water"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Bolsoes</span>
+                            <span class="layer-count" id="countBolsoes">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Ocorrencias -->
+                    <div class="layer-item" onclick="toggleLayerByClick('ocorrencias', event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerOcorrencias" onchange="toggleMapLayer('ocorrencias')" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(255, 0, 85, 0.2); color: #FF0055;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Ocorrencias</span>
+                            <span class="layer-count" id="countOcorrencias">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbar Customizada de Desenho -->
         <div class="custom-draw-toolbar" id="customDrawToolbar">
             <!-- Botões de desenho -->
             <div class="draw-btn-wrapper" id="drawTools">
@@ -442,21 +615,71 @@
                 <span class="draw-btn-label">Excluir Áreas</span>
             </div>
 
-            <!-- Botões durante o desenho -->
-            <div class="drawing-actions" id="drawingActions">
-                <div class="draw-separator"></div>
-                <div class="draw-btn-wrapper">
-                    <button class="draw-btn save-btn" id="btnFinishDraw" title="Finalizar Desenho">
-                        <i class="fas fa-check"></i>
-                    </button>
-                    <span class="draw-btn-label">Finalizar e Salvar</span>
+            <!-- Botões de salvar/cancelar - SEMPRE VISÍVEIS -->
+            <div class="draw-separator"></div>
+            <div class="draw-btn-wrapper">
+                <button class="draw-btn save-btn" id="btnFinishDraw" title="Finalizar Desenho">
+                    <i class="fas fa-check"></i>
+                </button>
+                <span class="draw-btn-label">Finalizar e Salvar</span>
+            </div>
+            <div class="draw-btn-wrapper">
+                <button class="draw-btn cancel-btn" id="btnCancelDraw" title="Cancelar">
+                    <i class="fas fa-times"></i>
+                </button>
+                <span class="draw-btn-label">Cancelar</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para nomear área - INLINE no template -->
+<div class="modal fade" id="modalNomearArea" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">
+                    <i class="fas fa-draw-polygon me-2"></i>Nova Área de Observação
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Nome da Área *</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary"
+                           id="areaNome" placeholder="Ex: Zona Sul - Copacabana" required>
                 </div>
-                <div class="draw-btn-wrapper">
-                    <button class="draw-btn cancel-btn" id="btnCancelDraw" title="Cancelar">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    <span class="draw-btn-label">Cancelar</span>
+                <div class="mb-3">
+                    <label class="form-label">Descrição</label>
+                    <textarea class="form-control bg-dark text-white border-secondary"
+                              id="areaDescricao" rows="3"
+                              placeholder="Descrição opcional da área"></textarea>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label">Cor no Mapa</label>
+                    <div class="d-flex gap-2 flex-wrap" id="corSelector">
+                        <button type="button" class="btn-cor active" data-cor="#00D4FF"
+                                style="background:#00D4FF; width:32px; height:32px; border-radius:50%; border:2px solid #fff;"></button>
+                        <button type="button" class="btn-cor" data-cor="#FF6B35"
+                                style="background:#FF6B35; width:32px; height:32px; border-radius:50%; border:2px solid transparent;"></button>
+                        <button type="button" class="btn-cor" data-cor="#7B2CBF"
+                                style="background:#7B2CBF; width:32px; height:32px; border-radius:50%; border:2px solid transparent;"></button>
+                        <button type="button" class="btn-cor" data-cor="#00C853"
+                                style="background:#00C853; width:32px; height:32px; border-radius:50%; border:2px solid transparent;"></button>
+                        <button type="button" class="btn-cor" data-cor="#FFD93D"
+                                style="background:#FFD93D; width:32px; height:32px; border-radius:50%; border:2px solid transparent;"></button>
+                        <button type="button" class="btn-cor" data-cor="#FF1744"
+                                style="background:#FF1744; width:32px; height:32px; border-radius:50%; border:2px solid transparent;"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="btnCancelarArea">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="btnSalvarArea">
+                    <i class="fas fa-save me-1"></i>Salvar Área
+                </button>
             </div>
         </div>
     </div>
@@ -464,8 +687,63 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Bootstrap JS - CDN com múltiplos fallbacks -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+<script>
+    // Verificar se Bootstrap carregou - com múltiplos fallbacks
+    (function() {
+        function checkBootstrap() {
+            return typeof bootstrap !== 'undefined' && typeof bootstrap.Modal !== 'undefined';
+        }
+
+        function tryFallback(url) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = url;
+                script.onload = () => resolve(checkBootstrap());
+                script.onerror = () => reject();
+                document.head.appendChild(script);
+            });
+        }
+
+        if (!checkBootstrap()) {
+            console.warn('Bootstrap CDN principal não carregou, tentando fallbacks...');
+
+            // Lista de fallbacks
+            const fallbacks = [
+                'https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js',
+                'https://unpkg.com/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
+                '{% static "js/bootstrap.bundle.min.js" %}'
+            ];
+
+            let index = 0;
+            function tryNext() {
+                if (index < fallbacks.length) {
+                    tryFallback(fallbacks[index++])
+                        .then(success => {
+                            if (success) {
+                                console.log('Bootstrap carregado via fallback');
+                            } else {
+                                tryNext();
+                            }
+                        })
+                        .catch(tryNext);
+                } else {
+                    // Último recurso - implementar Modal básico
+                    console.error('Todos os CDNs falharam, usando modal customizado');
+                    window.bootstrapFallbackActive = true;
+                }
+            }
+            tryNext();
+        } else {
+            console.log('Bootstrap carregado com sucesso');
+        }
+    })();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-<script src="{% static 'js/areas_observacao.js' %}?v={% now 'U' %}"></script>
+<script src="{% static 'js/areas_observacao.js' %}?v={{ request.session.session_key|default:'nocache' }}"></script>
 <script>
     let map;
     let areasManager;
@@ -504,6 +782,11 @@
         } catch (e) {
             console.error('Erro ao inicializar AreasObservacao:', e);
         }
+
+        // ============================================
+        // CARREGAR CAMADAS DE DADOS
+        // ============================================
+        carregarCamadasDados();
 
         // Busca de áreas
         document.getElementById('searchArea').addEventListener('input', function() {
@@ -554,6 +837,7 @@
 
     let currentDrawer = null;
     let isDrawing = false;
+    let drawnPoints = []; // Armazenar pontos manualmente
 
     function iniciarDesenho() {
         startDrawPolygon();
@@ -566,14 +850,66 @@
         }
 
         cancelCurrentDraw();
+        drawnPoints = []; // Resetar pontos
 
         const options = areasManager.drawControl.options.draw.polygon;
         currentDrawer = new L.Draw.Polygon(map, options);
         currentDrawer.enable();
 
+        // Capturar cada ponto desenhado
+        map.on('draw:drawvertex', onDrawVertex);
+        map.on('click', onMapClickDuringDraw);
+
         setDrawingMode(true, 'polygon');
         document.getElementById('drawInstructions').style.display = 'block';
-        document.getElementById('instructionText').textContent = 'Clique no mapa para desenhar. Clique no primeiro ponto para fechar.';
+        document.getElementById('instructionText').innerHTML = '<strong>Clique no mapa para desenhar.</strong> Clique no primeiro ponto para fechar ou use o botão <i class="fas fa-check text-success"></i>';
+    }
+
+    function onDrawVertex(e) {
+        // Capturar coordenadas de cada vértice adicionado
+        console.log('draw:drawvertex evento:', e);
+
+        if (e.layers) {
+            drawnPoints = [];
+            e.layers.eachLayer(function(layer) {
+                if (layer.getLatLng) {
+                    drawnPoints.push(layer.getLatLng());
+                }
+            });
+        }
+
+        // Alternativa: pegar diretamente do drawer
+        if (drawnPoints.length === 0 && currentDrawer && currentDrawer._markers) {
+            drawnPoints = [];
+            currentDrawer._markers.forEach(function(marker) {
+                if (marker && marker.getLatLng) {
+                    drawnPoints.push(marker.getLatLng());
+                }
+            });
+        }
+
+        // Alternativa 2: pegar do _poly
+        if (drawnPoints.length === 0 && currentDrawer && currentDrawer._poly) {
+            try {
+                const coords = currentDrawer._poly.getLatLngs();
+                if (coords && coords.length > 0) {
+                    drawnPoints = Array.isArray(coords[0]) ? [...coords[0]] : [...coords];
+                }
+            } catch(err) {
+                console.log('Erro ao obter coords:', err);
+            }
+        }
+
+        console.log('Pontos capturados:', drawnPoints.length, drawnPoints);
+    }
+
+    // Capturar cliques no mapa durante desenho como backup
+    function onMapClickDuringDraw(e) {
+        if (isDrawing && currentDrawer) {
+            // Adicionar ponto manualmente
+            drawnPoints.push(e.latlng);
+            console.log('Ponto adicionado via click:', drawnPoints.length);
+        }
     }
 
     function startDrawRectangle() {
@@ -598,27 +934,77 @@
             currentDrawer.disable();
             currentDrawer = null;
         }
+        // Remover listeners
+        map.off('draw:drawvertex', onDrawVertex);
+        map.off('click', onMapClickDuringDraw);
+        drawnPoints = [];
         setDrawingMode(false);
         document.getElementById('drawInstructions').style.display = 'none';
     }
 
     function finishCurrentDraw() {
-        if (currentDrawer && currentDrawer._markers && currentDrawer._markers.length >= 3) {
-            currentDrawer.completeShape();
+        if (!currentDrawer) {
+            showToast('Nenhum desenho em andamento', 'warning');
+            return;
+        }
+
+        console.log('finishCurrentDraw - Pontos armazenados:', drawnPoints.length);
+
+        // Usar os pontos armazenados manualmente
+        if (drawnPoints.length >= 3) {
+            // Desabilitar o drawer primeiro
+            currentDrawer.disable();
+            map.off('draw:drawvertex', onDrawVertex);
+            map.off('click', onMapClickDuringDraw);
+
+            // Criar polígono manualmente
+            const polygon = L.polygon(drawnPoints, {
+                color: '#00D4FF',
+                fillColor: '#00D4FF',
+                fillOpacity: 0.2,
+                weight: 2
+            });
+
+            // Limpar estado
+            currentDrawer = null;
+            const savedPoints = [...drawnPoints];
+            drawnPoints = [];
+
+            // Disparar evento CREATED manualmente
+            map.fire(L.Draw.Event.CREATED, {
+                layer: polygon,
+                layerType: 'polygon'
+            });
+
+            setDrawingMode(false);
+            document.getElementById('drawInstructions').style.display = 'none';
+
+            console.log('Polígono criado com', savedPoints.length, 'pontos');
         } else {
-            showToast('Desenhe pelo menos 3 pontos para criar uma área', 'warning');
+            showToast(`Desenhe pelo menos 3 pontos (você tem: ${drawnPoints.length})`, 'warning');
         }
     }
 
     function setDrawingMode(active, type = null) {
         isDrawing = active;
 
-        // Atualizar botões
-        document.getElementById('btnDrawPolygon').classList.toggle('active', active && type === 'polygon');
-        document.getElementById('btnDrawRectangle').classList.toggle('active', active && type === 'rectangle');
+        // Atualizar botões - verificar se existem antes de acessar
+        const btnPolygon = document.getElementById('btnDrawPolygon');
+        const btnRectangle = document.getElementById('btnDrawRectangle');
+        const btnFinish = document.getElementById('btnFinishDraw');
+        const btnCancel = document.getElementById('btnCancelDraw');
 
-        // Mostrar/esconder botões de ação
-        document.getElementById('drawingActions').classList.toggle('active', active);
+        if (btnPolygon) btnPolygon.classList.toggle('active', active && type === 'polygon');
+        if (btnRectangle) btnRectangle.classList.toggle('active', active && type === 'rectangle');
+
+        // Destacar botões de salvar/cancelar quando estiver desenhando
+        if (btnFinish) {
+            btnFinish.style.animation = active ? 'pulse-glow 1.5s infinite' : 'none';
+            btnFinish.style.opacity = active ? '1' : '0.6';
+        }
+        if (btnCancel) {
+            btnCancel.style.opacity = active ? '1' : '0.6';
+        }
     }
 
     function startEditMode() {
@@ -668,6 +1054,58 @@
         document.addEventListener('keydown', escHandler);
     }
 
+    // Função de toast se não existir
+    function showToast(message, type = 'info') {
+        // Usar notificação existente se disponível
+        if (typeof showNotification === 'function') {
+            showNotification(message, type);
+            return;
+        }
+
+        // Criar toast simples
+        const colors = {
+            success: '#00C853',
+            error: '#FF1744',
+            warning: '#FFC107',
+            info: '#00D4FF'
+        };
+
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 30, 45, 0.95);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border-left: 4px solid ${colors[type] || colors.info};
+            z-index: 10000;
+            font-size: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        `;
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}" style="margin-right: 8px; color: ${colors[type] || colors.info}"></i>${message}`;
+
+        // Adicionar keyframes se não existir
+        if (!document.getElementById('toast-animation')) {
+            const style = document.createElement('style');
+            style.id = 'toast-animation';
+            style.textContent = '@keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }';
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(20px)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
     // Conectar botões customizados
     document.addEventListener('DOMContentLoaded', function() {
         // Aguardar inicialização do mapa
@@ -679,11 +1117,310 @@
             document.getElementById('btnFinishDraw').addEventListener('click', finishCurrentDraw);
             document.getElementById('btnCancelDraw').addEventListener('click', cancelCurrentDraw);
 
-            // Quando desenho é criado, esconder botões de ação
-            map.on(L.Draw.Event.CREATED, function() {
+            // Quando desenho é criado, esconder botões de ação e resetar drawer
+            map.on(L.Draw.Event.CREATED, function(e) {
+                console.log('Área criada:', e.layerType);
                 setDrawingMode(false);
+                currentDrawer = null;
             });
         }, 500);
     });
+
+    // ============================================
+    // SISTEMA DE CAMADAS COMPLETO (igual ao Dashboard)
+    // ============================================
+
+    // Camadas do mapa
+    var mapLayers = {
+        escolas: L.layerGroup(),
+        hospitais: L.layerGroup(),
+        pluviometros: L.layerGroup(),
+        sirenes: L.layerGroup(),
+        cameras: L.layerGroup(),
+        metro: L.layerGroup(),
+        brt: L.layerGroup(),
+        waze: L.layerGroup(),
+        bolsoes: L.layerGroup(),
+        ocorrencias: L.layerGroup()
+    };
+
+    // Cache de dados carregados
+    var layerDataCache = {};
+
+    // Configuração de ícones por tipo de camada
+    var layerIcons = {
+        escolas: { icon: 'fa-school', color: '#4CAF50' },
+        hospitais: { icon: 'fa-hospital', color: '#F44336' },
+        pluviometros: { icon: 'fa-cloud-rain', color: '#2196F3' },
+        sirenes: { icon: 'fa-bullhorn', color: '#FF9800' },
+        cameras: { icon: 'fa-video', color: '#9C27B0' },
+        metro: { icon: 'fa-subway', color: '#FF5722' },
+        brt: { icon: 'fa-bus', color: '#009688' },
+        waze: { icon: 'fa-map-marker-alt', color: '#00d4ff' },
+        bolsoes: { icon: 'fa-water', color: '#06b6d4' },
+        ocorrencias: { icon: 'fa-exclamation-triangle', color: '#FF0055' }
+    };
+
+    // Toggle da sidebar de camadas
+    function toggleLayersSidebar() {
+        var sidebar = document.getElementById('layersSidebar');
+        var toggleBtn = document.getElementById('layersToggleBtn');
+        if (sidebar) {
+            sidebar.classList.toggle('expanded');
+            if (toggleBtn) {
+                toggleBtn.classList.toggle('active', sidebar.classList.contains('expanded'));
+            }
+        }
+    }
+
+    // Toggle de camada ao clicar na linha
+    function toggleLayerByClick(layerName, event) {
+        if (event) event.stopPropagation();
+        var checkboxId = 'layer' + layerName.charAt(0).toUpperCase() + layerName.slice(1);
+        var checkbox = document.getElementById(checkboxId);
+        if (checkbox) {
+            checkbox.checked = !checkbox.checked;
+            toggleMapLayer(layerName);
+        }
+    }
+
+    // Toggle de camada individual
+    function toggleMapLayer(layerName) {
+        var checkbox = document.getElementById('layer' + layerName.charAt(0).toUpperCase() + layerName.slice(1));
+        var isChecked = checkbox ? checkbox.checked : false;
+        var layerItem = checkbox ? checkbox.closest('.layer-item') : null;
+
+        if (isChecked) {
+            // Adicionar camada ao mapa
+            if (!map.hasLayer(mapLayers[layerName])) {
+                mapLayers[layerName].addTo(map);
+            }
+            if (layerItem) layerItem.classList.add('active');
+
+            // Carregar dados se ainda não carregou
+            if (!layerDataCache[layerName]) {
+                loadLayerData(layerName);
+            }
+            showToast('Camada ' + layerName + ' ativada', 'success');
+        } else {
+            // Remover camada do mapa
+            if (map.hasLayer(mapLayers[layerName])) {
+                map.removeLayer(mapLayers[layerName]);
+            }
+            if (layerItem) layerItem.classList.remove('active');
+            showToast('Camada ' + layerName + ' desativada', 'info');
+        }
+    }
+
+    // Criar ícone de marcador
+    function createLayerIcon(type) {
+        var config = layerIcons[type] || { icon: 'fa-map-marker', color: '#00d4ff' };
+        return L.divIcon({
+            className: 'custom-layer-marker',
+            html: '<div style="background: ' + config.color + '; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"><i class="fas ' + config.icon + '" style="color: white; font-size: 12px;"></i></div>',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+            popupAnchor: [0, -14]
+        });
+    }
+
+    // Base URL para APIs
+    var baseUrl = window.location.origin + '/integracity/';
+
+    // Carregar dados de uma camada específica
+    function loadLayerData(layerName) {
+        var apiUrls = {
+            escolas: baseUrl + 'api/escolas/',
+            hospitais: baseUrl + 'api/hospitais/',
+            pluviometros: baseUrl + 'api/pluviometros/',
+            sirenes: baseUrl + 'api/sirenes/',
+            cameras: baseUrl + 'api/cameras/',
+            metro: baseUrl + 'api/metro/',
+            brt: baseUrl + 'api/brt/',
+            waze: baseUrl + 'api/waze-alerts/',
+            bolsoes: baseUrl + 'api/bolsoes/',
+            ocorrencias: baseUrl + 'api/ocorrencias/mapa/'
+        };
+
+        var url = apiUrls[layerName];
+        if (!url) return;
+
+        showToast('Carregando ' + layerName + '...', 'info');
+        console.log('Carregando camada ' + layerName + ' de:', url);
+
+        fetch(url)
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('Dados recebidos para ' + layerName + ':', data);
+                layerDataCache[layerName] = data;
+                renderLayerMarkers(layerName, data);
+                updateLayerCount(layerName, data);
+                showToast(layerName + ' carregado(a) com sucesso', 'success');
+            })
+            .catch(function(error) {
+                console.error('Erro ao carregar ' + layerName + ':', error);
+                updateLayerCount(layerName, []);
+            });
+    }
+
+    // Renderizar marcadores de uma camada
+    function renderLayerMarkers(layerName, data) {
+        mapLayers[layerName].clearLayers();
+
+        var items = [];
+
+        // Normalizar dados conforme o tipo de API
+        if (Array.isArray(data)) {
+            items = data;
+        } else if (data.features) {
+            items = data.features.map(f => ({
+                ...f.properties,
+                latitude: f.geometry?.coordinates?.[1],
+                longitude: f.geometry?.coordinates?.[0]
+            }));
+        } else if (data.data) {
+            items = Array.isArray(data.data) ? data.data : [];
+        } else if (data.results) {
+            items = data.results;
+        } else if (data.alerts) {
+            items = data.alerts;
+        } else if (data.escolas) {
+            items = data.escolas;
+        } else if (data.hospitais) {
+            items = data.hospitais;
+        } else if (data.sirenes) {
+            items = data.sirenes;
+        } else if (data.cameras) {
+            items = data.cameras;
+        } else if (data.ocorrencias) {
+            items = data.ocorrencias;
+        } else if (data.estacoes) {
+            items = data.estacoes;
+        } else if (data.linhas) {
+            items = data.linhas;
+        }
+
+        items.forEach(function(item) {
+            var lat = item.latitude || item.lat || item.y || (item.location && item.location.lat);
+            var lng = item.longitude || item.lng || item.lon || item.x || (item.location && item.location.lng);
+
+            if (lat && lng) {
+                var marker = L.marker([lat, lng], {
+                    icon: createLayerIcon(layerName)
+                });
+
+                var popupContent = createPopupContent(layerName, item);
+                marker.bindPopup(popupContent);
+                mapLayers[layerName].addLayer(marker);
+            }
+        });
+
+        console.log('Camada ' + layerName + ': ' + mapLayers[layerName].getLayers().length + ' marcadores');
+    }
+
+    // Criar conteúdo do popup
+    function createPopupContent(layerName, item) {
+        var config = layerIcons[layerName];
+        var title = item.nome || item.name || item.titulo || item.title || item.tipo || item.type || layerName;
+        var details = '';
+
+        switch(layerName) {
+            case 'escolas':
+                details = '<p>' + (item.endereco || item.bairro || '--') + '</p>';
+                if (item.telefone) details += '<p>Tel: ' + item.telefone + '</p>';
+                break;
+            case 'hospitais':
+                details = '<p>' + (item.endereco || item.bairro || '--') + '</p>';
+                if (item.telefone) details += '<p>Tel: ' + item.telefone + '</p>';
+                break;
+            case 'pluviometros':
+                details = '<p>Bairro: ' + (item.bairro || '--') + '</p>';
+                if (item.acumulado_15min !== undefined) details += '<p>15min: ' + item.acumulado_15min + 'mm</p>';
+                if (item.acumulado_1h !== undefined) details += '<p>1h: ' + item.acumulado_1h + 'mm</p>';
+                break;
+            case 'sirenes':
+                details = '<p>Bairro: ' + (item.bairro || '--') + '</p>';
+                details += '<p>Status: ' + (item.acionada ? '<span style="color:#ff0055">ACIONADA</span>' : '<span style="color:#00ff88">Stand-by</span>') + '</p>';
+                break;
+            case 'cameras':
+                details = '<p>' + (item.zona || item.localizacao || item.bairro || '--') + '</p>';
+                break;
+            case 'metro':
+                details = '<p>Linha: ' + (item.linha || '--') + '</p>';
+                details += '<p>Status: ' + (item.status || 'Normal') + '</p>';
+                break;
+            case 'brt':
+                details = '<p>Corredor: ' + (item.corredor || '--') + '</p>';
+                details += '<p>Status: ' + (item.status || 'Normal') + '</p>';
+                break;
+            case 'waze':
+                details = '<p>Tipo: ' + (item.type || item.subtype || '--') + '</p>';
+                if (item.street) details += '<p>' + item.street + '</p>';
+                break;
+            case 'bolsoes':
+                details = '<p>Local: ' + (item.local || '--') + '</p>';
+                if (item.referencia) details += '<p>Ref: ' + item.referencia + '</p>';
+                break;
+            case 'ocorrencias':
+                details = '<p>Categoria: ' + (item.categoria || '--') + '</p>';
+                details += '<p>Status: ' + (item.status || '--') + '</p>';
+                if (item.prioridade) details += '<p>Prioridade: ' + item.prioridade + '</p>';
+                break;
+            default:
+                details = '<p>' + (item.descricao || item.description || '--') + '</p>';
+        }
+
+        return '<div style="font-family: Rajdhani, sans-serif; min-width: 180px;">' +
+            '<h4 style="margin: 0 0 8px 0; color: ' + config.color + '; font-family: Orbitron, monospace; font-size: 0.9rem;">' +
+            '<i class="fas ' + config.icon + '"></i> ' + (title || '').substring(0, 30) + '</h4>' +
+            '<div style="font-size: 0.85rem; color: #ccc;">' + details + '</div>' +
+            '</div>';
+    }
+
+    // Atualizar contagem de itens na camada
+    function updateLayerCount(layerName, data) {
+        var countEl = document.getElementById('count' + layerName.charAt(0).toUpperCase() + layerName.slice(1));
+        if (countEl) {
+            var count = 0;
+            if (Array.isArray(data)) {
+                count = data.length;
+            } else if (data.features) {
+                count = data.features.length;
+            } else if (data.data) {
+                count = data.data.length;
+            } else if (data.results) {
+                count = data.results.length;
+            } else if (data[layerName]) {
+                count = data[layerName].length;
+            } else if (data.ocorrencias) {
+                count = data.ocorrencias.length;
+            }
+            countEl.textContent = count;
+        }
+    }
+
+    // Carregar camadas de dados inicial
+    async function carregarCamadasDados() {
+        console.log('Inicializando sistema de camadas...');
+
+        // Carregar camadas marcadas como checked por padrão
+        var checkboxes = document.querySelectorAll('.layer-checkbox input[type="checkbox"]:checked');
+        checkboxes.forEach(function(checkbox) {
+            var layerName = checkbox.id.replace('layer', '').toLowerCase();
+            if (mapLayers[layerName]) {
+                mapLayers[layerName].addTo(map);
+                loadLayerData(layerName);
+                var layerItem = checkbox.closest('.layer-item');
+                if (layerItem) layerItem.classList.add('active');
+            }
+        });
+
+        console.log('Sistema de camadas inicializado');
+    }
 </script>
 {% endblock %}
