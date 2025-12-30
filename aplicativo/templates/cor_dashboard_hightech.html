@@ -788,8 +788,22 @@
         })
     };
 
-    // Adicionar camada dark como padrao
-    layers.dark.addTo(map);
+    // Adicionar camada baseada no tema salvo
+    var savedTheme = 'dark';
+    try {
+        var savedSettingsInit = localStorage.getItem('integracity_settings');
+        if (savedSettingsInit) {
+            var parsedSettings = JSON.parse(savedSettingsInit);
+            savedTheme = parsedSettings.theme || 'dark';
+        }
+    } catch(e) {}
+
+    // Aplicar layer inicial: street para tema claro, dark para tema escuro
+    var initialLayer = (savedTheme === 'light') ? 'street' : 'dark';
+    layers[initialLayer].addTo(map);
+
+    // Variavel global para rastrear o layer atual baseado no tema
+    var currentThemeLayer = initialLayer;
 
     // ============================================
     // FUNCAO SWITCH LAYER (SOBRESCREVER)
@@ -2117,6 +2131,20 @@
             lng: s.mapLng || -43.45,
             zoom: s.mapZoom || 11
         };
+
+        // Trocar layer do mapa baseado no tema
+        var newThemeLayer = (s.theme === 'light') ? 'street' : 'dark';
+        if (newThemeLayer !== currentThemeLayer) {
+            // Remover layer atual do tema
+            if (layers[currentThemeLayer] && map.hasLayer(layers[currentThemeLayer])) {
+                map.removeLayer(layers[currentThemeLayer]);
+            }
+            // Adicionar novo layer
+            layers[newThemeLayer].addTo(map);
+            currentThemeLayer = newThemeLayer;
+            console.log('🗺️ Mapa alterado para: ' + newThemeLayer);
+        }
+
         console.log('⚙️ Configurações do tour atualizadas');
     });
 
