@@ -4198,20 +4198,157 @@ var alertasConfirmados = new Set(); // IDs de ocorrências confirmadas (permanen
 var tipoAcaoAtual = null; // 'cancelar' ou 'confirmar'
 var intervalVerificacao = null;
 
-// Carregar alertas confirmados do localStorage
-function carregarAlertasConfirmados() {
+// Normalizar ID para string (remove hifens e converte para minúsculas)
+function normalizarId(id) {
+    if (!id) return '';
+    return String(id).toLowerCase().replace(/-/g, '');
+}
+
+// Carregar alertas confirmados do SERVIDOR (persistência real)
+async function carregarAlertasConfirmados() {
+    console.log('[LOAD] ====================================');
+    console.log('[LOAD] Iniciando carregamento de alertas...');
+    console.log('[LOAD] URL: /integracity/api/alertas-confirmados/');
+
     try {
-        var salvos = localStorage.getItem('alertasConfirmados');
-        if (salvos) {
-            var lista = JSON.parse(salvos);
-            lista.forEach(function(id) {
-                alertasConfirmados.add(id);
-                alertasProcessados.add(id);
-            });
-            console.log('Alertas confirmados carregados:', alertasConfirmados.size);
+        // Buscar do servidor primeiro (fonte de verdade)
+        var response = await fetch('/integracity/api/alertas-confirmados/', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+        console.log('[LOAD] Response status:', response.status);
+        console.log('[LOAD] Response URL:', response.url);
+
+        // Verificar se foi redirecionado (login)
+        if (response.url && response.url.includes('/login')) {
+            console.error('[LOAD] ERRO: Foi redirecionado para login! Sessão expirada?');
+            carregarDoLocalStorage();
+            return;
+        }
+
+        // Verificar Content-Type
+        var contentType = response.headers.get('content-type');
+        console.log('[LOAD] Content-Type:', contentType);
+
+        if (!contentType || !contentType.includes('application/json')) {
+            console.error('[LOAD] ERRO: Resposta não é JSON! Tipo:', contentType);
+            // Tentar ler como texto para debug
+            var textResponse = await response.text();
+            console.error('[LOAD] Conteúdo (primeiros 200 chars):', textResponse.substring(0, 200));
+            carregarDoLocalStorage();
+            return;
+        }
+
+        // Verificar se é 401 (não autenticado)
+        if (response.status === 401) {
+            console.error('[LOAD] ERRO 401: Usuário não autenticado!');
+            carregarDoLocalStorage();
+            return;
+        }
+
+        if (response.ok) {
+            var data = await response.json();
+            console.log('[LOAD] Dados recebidos:', JSON.stringify(data));
+            console.log('[LOAD] Usuário logado:', data.usuario || 'não informado');
+
+            if (data.success && data.alertas_confirmados) {
+                console.log('[LOAD] ✓ Alertas do servidor:', data.alertas_confirmados.length);
+                data.alertas_confirmados.forEach(function(id) {
+                    var idNormalizado = normalizarId(id);
+                    console.log('[LOAD] Adicionando ID:', id, '->', idNormalizado);
+                    alertasConfirmados.add(idNormalizado);
+                    alertasProcessados.add(idNormalizado);
+                });
+                console.log('[LOAD] ✓ Total no Set:', alertasConfirmados.size);
+                console.log('[LOAD] ✓ IDs carregados:', Array.from(alertasConfirmados));
+
+                // Salvar no localStorage como cache (backup)
+                try {
+                    localStorage.setItem('integracity_alertas_confirmados', JSON.stringify(data.alertas_confirmados));
+                } catch (e) {}
+            } else {
+                console.warn('[LOAD] Resposta sem alertas ou success=false:', data);
+            }
+        } else {
+            console.error('[LOAD] ERRO: Status não-OK:', response.status);
+            carregarDoLocalStorage();
         }
     } catch (e) {
-        console.log('Erro ao carregar alertas confirmados:', e);
+        console.error('[LOAD] ERRO de conexão:', e.message || e);
+        carregarDoLocalStorage();
+    }
+
+    console.log('[LOAD] ==================================== FIM');
+}
+
+// Fallback: carregar do localStorage (para quando servidor estiver indisponível)
+function carregarDoLocalStorage() {
+    try {
+        var salvos = localStorage.getItem('integracity_alertas_confirmados');
+        if (salvos) {
+            var lista = JSON.parse(salvos);
+            console.log('[INIT] Carregando do localStorage (fallback):', lista.length);
+            lista.forEach(function(id) {
+                var idNormalizado = normalizarId(id);
+                alertasConfirmados.add(idNormalizado);
+                alertasProcessados.add(idNormalizado);
+            });
+        }
+    } catch (e) {
+        console.error('[INIT] Erro ao carregar do localStorage:', e);
+    }
+}
+
+// Recarregar alertas do servidor (chamado antes de cada verificação)
+async function recarregarAlertasDoServidor() {
+    try {
+        var response = await fetch('/integracity/api/alertas-confirmados/', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+        // Verificar se foi redirecionado para login
+        if (response.url && response.url.includes('/login')) {
+            console.warn('[RELOAD] Sessão expirada, redirecionado para login');
+            return;
+        }
+
+        // Verificar Content-Type
+        var contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.warn('[RELOAD] Resposta não é JSON:', contentType);
+            return;
+        }
+
+        if (response.ok) {
+            var data = await response.json();
+            if (data.success && data.alertas_confirmados) {
+                var novosAdicionados = 0;
+                data.alertas_confirmados.forEach(function(id) {
+                    var idNormalizado = normalizarId(id);
+                    if (!alertasConfirmados.has(idNormalizado)) {
+                        alertasConfirmados.add(idNormalizado);
+                        alertasProcessados.add(idNormalizado);
+                        novosAdicionados++;
+                    }
+                });
+                if (novosAdicionados > 0) {
+                    console.log('[RELOAD] ✓ Novos alertas do servidor:', novosAdicionados);
+                    console.log('[RELOAD] Total no Set:', alertasConfirmados.size);
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('[RELOAD] Erro:', e.message || e);
     }
 }
 
@@ -4219,14 +4356,171 @@ function carregarAlertasConfirmados() {
 function salvarAlertasConfirmados() {
     try {
         var lista = Array.from(alertasConfirmados);
-        localStorage.setItem('alertasConfirmados', JSON.stringify(lista));
+        localStorage.setItem('integracity_alertas_confirmados', JSON.stringify(lista));
+        console.log('Alertas confirmados salvos:', lista.length);
     } catch (e) {
-        console.log('Erro ao salvar alertas confirmados:', e);
+        console.error('Erro ao salvar alertas confirmados:', e);
     }
 }
 
-// Carregar ao iniciar
-carregarAlertasConfirmados();
+// Verificar se alerta está confirmado
+function alertaEstaConfirmado(id) {
+    var idNormalizado = normalizarId(id);
+    var resultado = alertasConfirmados.has(idNormalizado);
+    console.log('[CHECK] Verificando ID:', id, '-> Normalizado:', idNormalizado, '-> Confirmado?', resultado);
+    return resultado;
+}
+
+// Adicionar alerta confirmado (salva no SERVIDOR e localStorage)
+async function adicionarAlertaConfirmado(id, areaId) {
+    var idNormalizado = normalizarId(id);
+    alertasConfirmados.add(idNormalizado);
+    alertasProcessados.add(idNormalizado);
+
+    console.log('[SAVE] ====================================');
+    console.log('[SAVE] Salvando alerta no SERVIDOR:', idNormalizado);
+    console.log('[SAVE] Area ID:', areaId);
+    console.log('[SAVE] CSRF Token:', getCSRFToken() ? 'Presente' : 'AUSENTE!');
+
+    // Salvar no servidor (persistência real)
+    try {
+        var payload = {
+            alerta_id: idNormalizado,
+            area_id: areaId || null,
+            tipo: 'confirmado'
+        };
+        console.log('[SAVE] Payload:', JSON.stringify(payload));
+
+        var response = await fetch('/integracity/api/alertas-confirmados/salvar/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        });
+
+        console.log('[SAVE] Response status:', response.status);
+        console.log('[SAVE] Response ok:', response.ok);
+
+        var responseText = await response.text();
+        console.log('[SAVE] Response body:', responseText);
+
+        if (response.ok) {
+            try {
+                var data = JSON.parse(responseText);
+                console.log('[SAVE] ✓ Salvo no servidor com sucesso!');
+                showToast('Alerta salvo no servidor', 'success');
+            } catch (e) {
+                console.log('[SAVE] Resposta não é JSON:', responseText);
+            }
+        } else {
+            console.error('[SAVE] ✗ Erro ao salvar no servidor:', response.status, responseText);
+            showToast('Erro ao salvar no servidor: ' + response.status, 'error');
+        }
+    } catch (e) {
+        console.error('[SAVE] ✗ Falha ao conectar com servidor:', e);
+        showToast('Falha ao conectar com servidor', 'error');
+    }
+
+    // Também salvar no localStorage como backup
+    salvarAlertasConfirmados();
+
+    console.log('[SAVE] Total de alertas confirmados agora:', alertasConfirmados.size);
+    console.log('[SAVE] ====================================');
+}
+
+// Função de debug (pode ser chamada do console: debugAlertas())
+window.debugAlertas = function() {
+    console.log('========== DEBUG ALERTAS ==========');
+    console.log('localStorage disponível:', typeof localStorage !== 'undefined');
+    console.log('Valor no localStorage:', localStorage.getItem('integracity_alertas_confirmados'));
+    console.log('Set alertasConfirmados:', Array.from(alertasConfirmados));
+    console.log('Set alertasProcessados:', Array.from(alertasProcessados));
+    console.log('Tamanho do Set:', alertasConfirmados.size);
+    console.log('CSRF Token:', getCSRFToken() ? 'Presente' : 'AUSENTE');
+    console.log('===================================');
+    return {
+        localStorage: localStorage.getItem('integracity_alertas_confirmados'),
+        confirmados: Array.from(alertasConfirmados),
+        processados: Array.from(alertasProcessados),
+        csrfToken: getCSRFToken() ? 'presente' : 'ausente'
+    };
+};
+
+// Função para testar a API de salvar (pode ser chamada do console: testarSalvarAlerta())
+window.testarSalvarAlerta = async function() {
+    console.log('=== TESTANDO API DE SALVAR ===');
+    var testId = 'teste_' + Date.now();
+
+    try {
+        var response = await fetch('/integracity/api/alertas-confirmados/salvar/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                alerta_id: testId,
+                tipo: 'confirmado'
+            })
+        });
+
+        console.log('Status:', response.status);
+        var text = await response.text();
+        console.log('Resposta:', text);
+
+        if (response.ok) {
+            console.log('✓ API funcionando!');
+            return { success: true, status: response.status, body: text };
+        } else {
+            console.error('✗ Erro na API');
+            return { success: false, status: response.status, body: text };
+        }
+    } catch (e) {
+        console.error('✗ Erro de conexão:', e);
+        return { success: false, error: e.message };
+    }
+};
+
+// Função para listar alertas do servidor (pode ser chamada do console: listarAlertasServidor())
+window.listarAlertasServidor = async function() {
+    console.log('=== BUSCANDO ALERTAS DO SERVIDOR ===');
+    try {
+        var response = await fetch('/integracity/api/alertas-confirmados/', {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+        console.log('Status:', response.status);
+        var text = await response.text();
+        console.log('Resposta:', text);
+        return text;
+    } catch (e) {
+        console.error('Erro:', e);
+        return null;
+    }
+};
+
+// Função para testar se um ID específico está confirmado
+window.verificarIdConfirmado = function(id) {
+    var idNormalizado = normalizarId(id);
+    var esta = alertasConfirmados.has(idNormalizado);
+    console.log('ID original:', id);
+    console.log('ID normalizado:', idNormalizado);
+    console.log('Está confirmado:', esta);
+    console.log('Todos confirmados:', Array.from(alertasConfirmados));
+    return esta;
+};
+
+// Flag para indicar se alertas foram carregados
+var alertasCarregados = false;
+
+// Carregar ao iniciar (async - busca do servidor)
+console.log('========================================');
+console.log('INICIANDO SISTEMA DE ALERTAS (SERVIDOR)');
+console.log('========================================');
 
 // Verificar se ponto está dentro de polígono (Ray Casting Algorithm)
 function pontoEmPoligono(lat, lng, poligono) {
@@ -4258,6 +4552,12 @@ function geojsonParaCoords(geojson) {
 // Verificar ocorrências dentro das áreas
 async function verificarOcorrenciasEmAreas() {
     try {
+        // SEMPRE recarregar do SERVIDOR antes de verificar (garante dados atualizados)
+        await recarregarAlertasDoServidor();
+
+        console.log('=== VERIFICANDO OCORRÊNCIAS EM ÁREAS ===');
+        console.log('Total de alertas confirmados no Set:', alertasConfirmados.size);
+
         // Buscar áreas de observação
         var areasResponse = await fetch('/integracity/api/areas/listar/');
         if (!areasResponse.ok) return;
@@ -4275,15 +4575,22 @@ async function verificarOcorrenciasEmAreas() {
         // Verificar cada ocorrência
         for (var o of ocorrencias) {
             var ocorrenciaId = o.id;
+            var idNormalizado = normalizarId(ocorrenciaId);
 
             // Pular se foi confirmada/cancelada permanentemente
-            if (alertasConfirmados.has(ocorrenciaId)) continue;
+            if (alertaEstaConfirmado(ocorrenciaId)) {
+                console.log('Ocorrência já confirmada (IGNORANDO):', idNormalizado, '- Título:', o.titulo);
+                continue;
+            }
 
             // Pular se já foi processada nesta sessão
-            if (alertasProcessados.has(ocorrenciaId)) continue;
+            if (alertasProcessados.has(idNormalizado)) {
+                console.log('Ocorrência já processada nesta sessão (ignorando):', idNormalizado);
+                continue;
+            }
 
             // Pular se está em período de apuração
-            if (alertasApurados[ocorrenciaId] && Date.now() < alertasApurados[ocorrenciaId]) continue;
+            if (alertasApurados[idNormalizado] && Date.now() < alertasApurados[idNormalizado]) continue;
 
             var lat = o.latitude || o.lat;
             var lng = o.longitude || o.lng;
@@ -4422,20 +4729,46 @@ function apurarAlerta() {
     }, 2000);
 }
 
-// Botão CANCELAR - Abre justificativa
-function cancelarAlerta() {
-    tipoAcaoAtual = 'cancelar';
-    document.getElementById('justificativaLabel').textContent = 'Justificativa do Cancelamento';
-    document.getElementById('justificativaSection').style.display = 'block';
-    document.getElementById('alertFooterButtons').style.display = 'none';
+// Botão CANCELAR - Salva imediatamente e fecha
+async function cancelarAlerta() {
+    console.log('[CANCELAR] Botão cancelar clicado');
+
+    if (!alertaAtual) {
+        console.error('[CANCELAR] alertaAtual é null!');
+        return;
+    }
+
+    var ocorrenciaId = alertaAtual.id;
+    var areaId = alertaAtual.area ? alertaAtual.area.id : null;
+
+    console.log('[CANCELAR] Salvando ocorrência:', ocorrenciaId);
+
+    // Salvar imediatamente no servidor
+    await adicionarAlertaConfirmado(ocorrenciaId, areaId);
+
+    showToast('Alerta cancelado! Não aparecerá novamente.', 'info');
+    fecharAlertaModal();
 }
 
-// Botão CONFIRMAR - Abre justificativa
-function confirmarAlerta() {
-    tipoAcaoAtual = 'confirmar';
-    document.getElementById('justificativaLabel').textContent = 'Observações da Confirmação';
-    document.getElementById('justificativaSection').style.display = 'block';
-    document.getElementById('alertFooterButtons').style.display = 'none';
+// Botão CONFIRMAR - Salva imediatamente e fecha
+async function confirmarAlerta() {
+    console.log('[CONFIRMAR] Botão confirmar clicado');
+
+    if (!alertaAtual) {
+        console.error('[CONFIRMAR] alertaAtual é null!');
+        return;
+    }
+
+    var ocorrenciaId = alertaAtual.id;
+    var areaId = alertaAtual.area ? alertaAtual.area.id : null;
+
+    console.log('[CONFIRMAR] Salvando ocorrência:', ocorrenciaId);
+
+    // Salvar imediatamente no servidor
+    await adicionarAlertaConfirmado(ocorrenciaId, areaId);
+
+    showToast('Ocorrência confirmada! Não aparecerá novamente.', 'success');
+    fecharAlertaModal();
 }
 
 // Voltar da justificativa
@@ -4458,63 +4791,65 @@ async function enviarJustificativa() {
     if (!alertaAtual) return;
 
     var ocorrenciaId = alertaAtual.id;
+    var areaId = alertaAtual.area ? alertaAtual.area.id : null;
+    var idNormalizado = normalizarId(ocorrenciaId);
 
-    // Marcar como processado localmente (sempre funciona)
-    alertasProcessados.add(ocorrenciaId);
+    // Marcar como processado e confirmado permanentemente no SERVIDOR
+    await adicionarAlertaConfirmado(ocorrenciaId, areaId);
 
-    // Se confirmou, marcar permanentemente
+    // Mensagem de feedback
     if (tipoAcaoAtual === 'confirmar') {
-        alertasConfirmados.add(ocorrenciaId);
-        salvarAlertasConfirmados();
-        showToast('Ocorrência confirmada! Alerta desabilitado permanentemente.', 'success');
-        console.log('Ocorrência ' + ocorrenciaId + ' confirmada e desabilitada');
+        showToast('Ocorrência confirmada! Alerta salvo no servidor.', 'success');
+        console.log('Ocorrência confirmada e salva no servidor:', idNormalizado);
     } else {
-        // Cancelar também desabilita permanentemente
-        alertasConfirmados.add(ocorrenciaId);
-        salvarAlertasConfirmados();
-        showToast('Alerta cancelado! Não aparecerá novamente.', 'info');
-        console.log('Ocorrência ' + ocorrenciaId + ' cancelada e desabilitada');
-    }
-
-    // Tentar registrar no servidor (opcional, não bloqueia)
-    try {
-        fetch('/integracity/api/areas/alertas/responder/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({
-                acao: tipoAcaoAtual,
-                justificativa: justificativa,
-                area_id: alertaAtual.area.id,
-                ocorrencia_id: ocorrenciaId
-            })
-        }).catch(function(e) {
-            console.log('API de resposta não disponível (ignorando)');
-        });
-    } catch (e) {
-        // Ignorar erros de API
+        showToast('Alerta cancelado! Salvo no servidor.', 'info');
+        console.log('Ocorrência cancelada e salva no servidor:', idNormalizado);
     }
 
     fecharAlertaModal();
 }
 
-// Iniciar monitoramento periódico
+// Iniciar monitoramento periódico (só após alertas carregados)
 function iniciarMonitoramentoAreas() {
-    console.log('Iniciando monitoramento de ocorrências em áreas...');
+    if (!alertasCarregados) {
+        console.log('[MONITOR] Aguardando alertas serem carregados...');
+        setTimeout(iniciarMonitoramentoAreas, 1000);
+        return;
+    }
+
+    console.log('=== INICIANDO MONITORAMENTO ===');
+    console.log('Alertas confirmados carregados:', alertasConfirmados.size);
+    console.log('IDs confirmados:', Array.from(alertasConfirmados));
 
     // Verificar imediatamente
-    setTimeout(verificarOcorrenciasEmAreas, 3000);
+    setTimeout(verificarOcorrenciasEmAreas, 2000);
 
     // Verificar a cada 30 segundos
     intervalVerificacao = setInterval(verificarOcorrenciasEmAreas, 30000);
 }
 
+// Inicialização principal - carrega alertas PRIMEIRO, depois inicia monitoramento
+async function inicializarSistemaAlertas() {
+    console.log('[INIT] Carregando alertas confirmados do servidor...');
+
+    try {
+        await carregarAlertasConfirmados();
+        alertasCarregados = true;
+        console.log('[INIT] ✓ Alertas carregados com sucesso:', alertasConfirmados.size);
+        console.log('[INIT] IDs:', Array.from(alertasConfirmados));
+    } catch (e) {
+        console.error('[INIT] Erro ao carregar alertas:', e);
+        alertasCarregados = true; // Continua mesmo com erro
+    }
+
+    // Agora inicia o monitoramento
+    iniciarMonitoramentoAreas();
+}
+
 // Inicializar quando a página carregar
 document.addEventListener('DOMContentLoaded', function() {
-    // Aguardar um pouco para as outras inicializações
-    setTimeout(iniciarMonitoramentoAreas, 5000);
+    // Aguardar um pouco para outras inicializações do mapa
+    setTimeout(inicializarSistemaAlertas, 3000);
 });
 </script>
 

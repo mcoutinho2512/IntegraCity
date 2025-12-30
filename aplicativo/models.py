@@ -7153,3 +7153,53 @@ class AlertaArea(models.Model):
 
     def __str__(self):
         return f"[{self.get_gravidade_display()}] {self.titulo}"
+
+
+class AlertaUsuarioConfirmado(models.Model):
+    """Registro de alertas de área confirmados/dispensados por cada usuário.
+    
+    Usado para persistir no servidor quais alertas o usuário já viu,
+    evitando que apareçam novamente mesmo em modo InPrivate do navegador.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Usuário que confirmou o alerta
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='alertas_confirmados'
+    )
+    
+    # ID do alerta confirmado (pode ser ID de AlertaArea ou ID customizado)
+    alerta_id = models.CharField(max_length=100, db_index=True)
+    
+    # Área relacionada (opcional, para referência)
+    area = models.ForeignKey(
+        AreaObservacao,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='confirmacoes'
+    )
+    
+    # Tipo de confirmação
+    TIPO_CHOICES = [
+        ('confirmado', 'Confirmado (Ciente)'),
+        ('dispensado', 'Dispensado'),
+    ]
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='confirmado')
+    
+    # Timestamp
+    data_confirmacao = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'alertas_usuario_confirmado'
+        verbose_name = 'Alerta Confirmado pelo Usuário'
+        verbose_name_plural = 'Alertas Confirmados pelos Usuários'
+        # Garante que cada usuário só pode confirmar cada alerta uma vez
+        unique_together = ['usuario', 'alerta_id']
+        ordering = ['-data_confirmacao']
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.alerta_id} ({self.tipo})"

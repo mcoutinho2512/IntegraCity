@@ -191,19 +191,362 @@ function showDetail(title, data = null) {
 function refreshData() {
     showLoading('ATUALIZANDO DADOS...');
 
-    // Simular atualização (substituir por chamada AJAX real)
-    setTimeout(() => {
-        hideLoading();
-        showToast('Dados atualizados com sucesso', 'success');
-    }, 1500);
+    // Array of refresh promises
+    const refreshPromises = [];
+
+    // Refresh ocorrencias layer if function exists
+    if (typeof carregarOcorrencias === 'function') {
+        refreshPromises.push(
+            Promise.resolve().then(() => {
+                carregarOcorrencias();
+                return 'ocorrencias';
+            }).catch(e => console.log('Error refreshing ocorrencias:', e))
+        );
+    }
+
+    // Refresh cameras layer if function exists
+    if (typeof carregarCameras === 'function') {
+        refreshPromises.push(
+            Promise.resolve().then(() => {
+                carregarCameras();
+                return 'cameras';
+            }).catch(e => console.log('Error refreshing cameras:', e))
+        );
+    }
+
+    // Refresh waze layer if function exists
+    if (typeof carregarWaze === 'function') {
+        refreshPromises.push(
+            Promise.resolve().then(() => {
+                carregarWaze();
+                return 'waze';
+            }).catch(e => console.log('Error refreshing waze:', e))
+        );
+    }
+
+    // Refresh areas if function exists
+    if (typeof carregarAreasExistentes === 'function') {
+        refreshPromises.push(
+            Promise.resolve().then(() => {
+                carregarAreasExistentes();
+                return 'areas';
+            }).catch(e => console.log('Error refreshing areas:', e))
+        );
+    }
+
+    // Refresh escolas if function exists
+    if (typeof carregarEscolas === 'function') {
+        refreshPromises.push(
+            Promise.resolve().then(() => {
+                carregarEscolas();
+                return 'escolas';
+            }).catch(e => console.log('Error refreshing escolas:', e))
+        );
+    }
+
+    // Refresh sirenes if function exists
+    if (typeof carregarSirenes === 'function') {
+        refreshPromises.push(
+            Promise.resolve().then(() => {
+                carregarSirenes();
+                return 'sirenes';
+            }).catch(e => console.log('Error refreshing sirenes:', e))
+        );
+    }
+
+    // Refresh bolsoes if function exists
+    if (typeof carregarBolsoes === 'function') {
+        refreshPromises.push(
+            Promise.resolve().then(() => {
+                carregarBolsoes();
+                return 'bolsoes';
+            }).catch(e => console.log('Error refreshing bolsoes:', e))
+        );
+    }
+
+    // If no specific refresh functions, simulate update
+    if (refreshPromises.length === 0) {
+        setTimeout(() => {
+            hideLoading();
+            showToast('Dados atualizados', 'success');
+            addSystemNotification('Dados Atualizados', 'Refresh manual realizado', 'success', 'fa-sync-alt');
+        }, 1000);
+        return;
+    }
+
+    // Wait for all refreshes
+    Promise.all(refreshPromises)
+        .then(results => {
+            hideLoading();
+            const refreshedLayers = results.filter(r => r).length;
+            showToast(`${refreshedLayers} camadas atualizadas`, 'success');
+            addSystemNotification('Dados Atualizados', `${refreshedLayers} camadas atualizadas com sucesso`, 'success', 'fa-sync-alt');
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('Erro ao atualizar dados', 'error');
+            console.error('Refresh error:', error);
+        });
 }
 
 // ============================================
 // 8. SHOW NOTIFICATIONS
 // ============================================
+
+// Notifications storage
+let notificationsData = [];
+let currentNotificationFilter = 'todas';
+
 function showNotifications() {
-    showToast('Central de notificações', 'info');
-    // Implementar abertura do painel de notificações
+    const modal = document.getElementById('notificationsModal');
+    if (modal) {
+        modal.classList.add('active');
+        loadNotifications();
+    }
+}
+
+function closeNotifications() {
+    const modal = document.getElementById('notificationsModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function switchNotificationsTab(tabName) {
+    currentNotificationFilter = tabName;
+
+    // Update tab buttons
+    document.querySelectorAll('.notifications-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabName);
+    });
+
+    // Re-render notifications with filter
+    renderNotifications();
+}
+
+function loadNotifications() {
+    const list = document.getElementById('notificationsList');
+    if (list) {
+        // Show loading
+        list.innerHTML = '<div class="notifications-loading"><i class="fas fa-spinner fa-spin"></i> Carregando notificacoes...</div>';
+    }
+
+    // Load notifications from multiple sources
+    return Promise.all([
+        loadOcorrenciasNotifications(),
+        loadSystemNotifications()
+    ]).then(([ocorrencias, sistema]) => {
+        notificationsData = [...ocorrencias, ...sistema];
+
+        // Sort by date (newest first)
+        notificationsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        if (list) {
+            renderNotifications();
+        }
+        updateNotificationBadge();
+    }).catch(error => {
+        console.error('Error loading notifications:', error);
+        if (list) {
+            list.innerHTML = '<div class="notification-empty"><i class="fas fa-exclamation-circle"></i><p>Erro ao carregar notificacoes</p></div>';
+        }
+    });
+}
+
+function loadOcorrenciasNotifications() {
+    return fetch('/integracity/api/ocorrencias/mapa/')
+        .then(response => response.json())
+        .then(data => {
+            const ocorrencias = data.data || data.ocorrencias || [];
+
+            // Get last 10 recent occurrences
+            return ocorrencias.slice(0, 10).map(oc => ({
+                id: oc.id,
+                type: 'ocorrencia',
+                title: oc.titulo || 'Nova Ocorrencia',
+                description: oc.categoria || oc.status || 'Ocorrencia registrada',
+                timestamp: oc.criado_em || new Date().toISOString(),
+                read: false,
+                icon: 'fa-exclamation-circle',
+                iconClass: 'ocorrencia',
+                latitude: oc.latitude,
+                longitude: oc.longitude
+            }));
+        })
+        .catch(error => {
+            console.log('Ocorrencias API unavailable:', error);
+            return [];
+        });
+}
+
+function loadSystemNotifications() {
+    // Get system notifications from localStorage or generate default ones
+    const savedNotifications = localStorage.getItem('integracity_system_notifications');
+    let systemNotifications = [];
+
+    if (savedNotifications) {
+        try {
+            systemNotifications = JSON.parse(savedNotifications);
+        } catch (e) {
+            systemNotifications = [];
+        }
+    }
+
+    // Add some default system notifications if empty
+    if (systemNotifications.length === 0) {
+        const now = new Date();
+        systemNotifications = [
+            {
+                id: 'sys_1',
+                type: 'sistema',
+                title: 'Sistema Inicializado',
+                description: 'IntegraCity Command Center operacional',
+                timestamp: now.toISOString(),
+                read: true,
+                icon: 'fa-check-circle',
+                iconClass: 'success'
+            },
+            {
+                id: 'sys_2',
+                type: 'sistema',
+                title: 'Configuracoes Carregadas',
+                description: 'Preferencias do usuario aplicadas',
+                timestamp: new Date(now - 60000).toISOString(),
+                read: true,
+                icon: 'fa-cog',
+                iconClass: 'sistema'
+            }
+        ];
+    }
+
+    return Promise.resolve(systemNotifications);
+}
+
+function renderNotifications() {
+    const list = document.getElementById('notificationsList');
+    if (!list) return;
+
+    // Filter notifications based on current tab
+    let filtered = notificationsData;
+    if (currentNotificationFilter !== 'todas') {
+        filtered = notificationsData.filter(n => n.type === currentNotificationFilter);
+    }
+
+    if (filtered.length === 0) {
+        list.innerHTML = `
+            <div class="notification-empty">
+                <i class="fas fa-bell-slash"></i>
+                <p>Nenhuma notificacao ${currentNotificationFilter !== 'todas' ? 'nesta categoria' : ''}</p>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = filtered.map(notification => {
+        const timeAgo = getTimeAgo(notification.timestamp);
+        return `
+            <div class="notification-item ${notification.read ? '' : 'unread'}"
+                 onclick="handleNotificationClick('${notification.id}', ${notification.latitude || 'null'}, ${notification.longitude || 'null'})">
+                <div class="notification-icon ${notification.iconClass}">
+                    <i class="fas ${notification.icon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${notification.title}</div>
+                    <div class="notification-description">${notification.description}</div>
+                    <div class="notification-time">${timeAgo}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function handleNotificationClick(id, lat, lng) {
+    // Mark as read
+    const notification = notificationsData.find(n => n.id === id);
+    if (notification) {
+        notification.read = true;
+    }
+
+    // Close modal
+    closeNotifications();
+
+    // If has coordinates, navigate to location
+    if (lat && lng && typeof map !== 'undefined') {
+        map.setView([lat, lng], 16);
+        showToast('Navegando para a ocorrencia', 'info');
+    }
+
+    // Update notification badge
+    updateNotificationBadge();
+}
+
+function updateNotificationBadge() {
+    const unreadCount = notificationsData.filter(n => !n.read).length;
+    const badge = document.querySelector('.notification-badge');
+
+    if (badge) {
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
+function clearAllNotifications() {
+    if (confirm('Tem certeza que deseja limpar todas as notificacoes?')) {
+        notificationsData = [];
+        localStorage.removeItem('integracity_system_notifications');
+        renderNotifications();
+        updateNotificationBadge();
+        showToast('Notificacoes limpas', 'success');
+    }
+}
+
+function markAllAsRead() {
+    notificationsData.forEach(n => n.read = true);
+    renderNotifications();
+    updateNotificationBadge();
+    showToast('Todas marcadas como lidas', 'success');
+}
+
+function addSystemNotification(title, description, iconClass = 'sistema', icon = 'fa-info-circle') {
+    const notification = {
+        id: 'sys_' + Date.now(),
+        type: 'sistema',
+        title: title,
+        description: description,
+        timestamp: new Date().toISOString(),
+        read: false,
+        icon: icon,
+        iconClass: iconClass
+    };
+
+    // Add to current data
+    notificationsData.unshift(notification);
+
+    // Save to localStorage
+    const systemNotifications = notificationsData.filter(n => n.type === 'sistema');
+    localStorage.setItem('integracity_system_notifications', JSON.stringify(systemNotifications.slice(0, 50)));
+
+    // Update badge
+    updateNotificationBadge();
+
+    return notification;
+}
+
+function getTimeAgo(timestamp) {
+    const now = new Date();
+    const date = new Date(timestamp);
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return 'Agora mesmo';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} min atras`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} h atras`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)} dias atras`;
+
+    return date.toLocaleDateString('pt-BR');
 }
 
 // ============================================
@@ -630,6 +973,7 @@ function initKeyboardShortcuts() {
         if (e.key === 'Escape') {
             hideLoading();
             closeSettings();
+            closeNotifications();
         }
 
         // F - Fullscreen (quando não estiver em input)
@@ -651,6 +995,15 @@ function initKeyboardShortcuts() {
         if (e.key === 'r' && !e.target.matches('input, textarea') && !e.ctrlKey) {
             e.preventDefault();
             refreshData();
+        }
+
+        // N - Notifications
+        if (e.key === 'n' && !e.target.matches('input, textarea')) {
+            const notificationsModal = document.getElementById('notificationsModal');
+            if (!notificationsModal || !notificationsModal.classList.contains('active')) {
+                e.preventDefault();
+                showNotifications();
+            }
         }
     });
 }
@@ -714,6 +1067,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Fechar notifications modal ao clicar fora
+    const notificationsModal = document.getElementById('notificationsModal');
+    if (notificationsModal) {
+        notificationsModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeNotifications();
+            }
+        });
+    }
+
+    // Inicializar badge de notificações
+    setTimeout(() => {
+        loadNotifications().catch(() => {});
+    }, 2000);
+
     // Toast de inicialização
     setTimeout(() => {
         showToast('Sistema inicializado', 'success');
@@ -721,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Log de inicialização
     console.log('IntegraCity High-Tech Interface initialized');
-    console.log('Keyboard shortcuts: F=Fullscreen, S=Sidebar, R=Refresh, ESC=Close');
+    console.log('Keyboard shortcuts: F=Fullscreen, S=Sidebar, R=Refresh, N=Notifications, ESC=Close');
 });
 
 // ============================================
@@ -809,6 +1177,13 @@ window.IntegraCity = {
     showDetail,
     refreshData,
     showNotifications,
+    closeNotifications,
+    switchNotificationsTab,
+    loadNotifications,
+    clearAllNotifications,
+    markAllAsRead,
+    addSystemNotification,
+    updateNotificationBadge,
     showSettings,
     closeSettings,
     switchSettingsTab,

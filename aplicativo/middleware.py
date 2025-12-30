@@ -6,7 +6,7 @@ import time
 
 class SecurityMiddleware(MiddlewareMixin):
     """Middleware de segurança - APÓS AuthenticationMiddleware"""
-    
+
     # URLs publicas (que nao precisam de login)
     # SEGURANCA: APIs restritas - apenas endpoints especificos sao publicos
     PUBLIC_URLS = getattr(settings, 'PUBLIC_URLS', [
@@ -20,7 +20,13 @@ class SecurityMiddleware(MiddlewareMixin):
         '/api/estagio-atual/',
         '/api/estagio-externo/',
     ])
-    
+
+    # APIs que gerenciam sua própria autenticação (retornam JSON 401 em vez de redirect)
+    # Isso é necessário para que o JavaScript possa detectar sessão expirada corretamente
+    API_SELF_AUTH_URLS = [
+        '/api/alertas-confirmados/',
+    ]
+
     def process_view(self, request, view_func, view_args, view_kwargs):
         """
         Executar DEPOIS que o usuário já foi autenticado
@@ -31,6 +37,10 @@ class SecurityMiddleware(MiddlewareMixin):
 
         # Se é URL pública, permitir
         if any(path.startswith(url) for url in self.PUBLIC_URLS):
+            return None
+
+        # APIs que gerenciam própria autenticação - deixar a view retornar JSON 401
+        if any(path.startswith(url) for url in self.API_SELF_AUTH_URLS):
             return None
 
         # AGORA o request.user existe!

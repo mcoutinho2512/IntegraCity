@@ -188,6 +188,11 @@ urlpatterns = [
     path('api/areas/<uuid:area_id>/exportar/geojson/', views_areas.api_exportar_geojson, name='api_exportar_geojson'),
     path('api/areas/<uuid:area_id>/exportar/kml/', views_areas.api_exportar_kml, name='api_exportar_kml'),
     path('api/areas/<uuid:area_id>/exportar/pdf/', views_areas.api_exportar_relatorio_pdf, name='api_exportar_pdf'),
+
+    # APIs de Alertas Confirmados pelo Usuário (persistência no servidor)
+    path('api/alertas-confirmados/', views_areas.api_alertas_confirmados_listar, name='api_alertas_confirmados_listar'),
+    path('api/alertas-confirmados/salvar/', views_areas.api_alertas_confirmados_salvar, name='api_alertas_confirmados_salvar'),
+    path('api/alertas-confirmados/salvar-lote/', views_areas.api_alertas_confirmados_salvar_lote, name='api_alertas_confirmados_salvar_lote'),
 ]
 
 # Servir arquivos estáticos em desenvolvimento

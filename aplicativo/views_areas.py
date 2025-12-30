@@ -8,6 +8,7 @@ tudo que está dentro (ocorrências, Waze, POIs, etc.)
 
 import json
 from datetime import timedelta
+from functools import wraps
 from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
@@ -18,8 +19,25 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
 from .models import (
-    AreaObservacao, InventarioArea, AlertaArea, Cliente
+    AreaObservacao, InventarioArea, AlertaArea, Cliente, AlertaUsuarioConfirmado
 )
+
+
+def api_login_required(view_func):
+    """
+    Decorator para APIs que retorna JSON 401 em vez de redirect.
+    Isso permite que o JavaScript detecte corretamente quando a sessão expira.
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'error': 'Não autenticado',
+                'login_required': True
+            }, status=401)
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 # ============================================
@@ -636,6 +654,152 @@ def api_exportar_relatorio_pdf(request, area_id):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
     return response
+
+
+# ============================================
+# APIs DE ALERTAS CONFIRMADOS PELO USUÁRIO
+# ============================================
+
+@api_login_required
+@require_http_methods(["GET"])
+def api_alertas_confirmados_listar(request):
+    """Lista todos os alertas confirmados pelo usuário logado.
+
+    Usado para sincronizar o estado de alertas no navegador
+    (resolve problema de perda de dados em modo InPrivate).
+    """
+    try:
+        confirmados = AlertaUsuarioConfirmado.objects.filter(
+            usuario=request.user
+        ).values_list('alerta_id', flat=True)
+
+        return JsonResponse({
+            'success': True,
+            'alertas_confirmados': list(confirmados),
+            'total': len(confirmados),
+            'usuario': request.user.username
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@api_login_required
+@require_http_methods(["POST"])
+def api_alertas_confirmados_salvar(request):
+    """Salva um alerta como confirmado/dispensado pelo usuário.
+
+    Espera JSON com:
+    - alerta_id: ID do alerta (string)
+    - area_id: ID da área (opcional, UUID)
+    - tipo: 'confirmado' ou 'dispensado' (opcional, default 'confirmado')
+    """
+    try:
+        data = json.loads(request.body)
+
+        alerta_id = data.get('alerta_id')
+        if not alerta_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'alerta_id é obrigatório'
+            }, status=400)
+
+        # Normalizar o ID (remover hifens, lowercase)
+        alerta_id_normalizado = str(alerta_id).lower().replace('-', '')
+
+        # Buscar área se fornecida
+        area = None
+        area_id = data.get('area_id')
+        if area_id:
+            try:
+                area = AreaObservacao.objects.get(id=area_id)
+            except AreaObservacao.DoesNotExist:
+                pass
+
+        tipo = data.get('tipo', 'confirmado')
+        if tipo not in ['confirmado', 'dispensado']:
+            tipo = 'confirmado'
+
+        # Criar ou atualizar registro
+        confirmacao, created = AlertaUsuarioConfirmado.objects.update_or_create(
+            usuario=request.user,
+            alerta_id=alerta_id_normalizado,
+            defaults={
+                'area': area,
+                'tipo': tipo,
+            }
+        )
+
+        return JsonResponse({
+            'success': True,
+            'created': created,
+            'alerta_id': alerta_id_normalizado,
+            'tipo': tipo
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'JSON inválido'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@api_login_required
+@require_http_methods(["POST"])
+def api_alertas_confirmados_salvar_lote(request):
+    """Salva múltiplos alertas como confirmados de uma vez.
+
+    Espera JSON com:
+    - alertas: lista de IDs de alertas
+    """
+    try:
+        data = json.loads(request.body)
+
+        alertas = data.get('alertas', [])
+        if not alertas:
+            return JsonResponse({
+                'success': False,
+                'error': 'Lista de alertas é obrigatória'
+            }, status=400)
+
+        salvos = 0
+        for alerta_id in alertas:
+            alerta_id_normalizado = str(alerta_id).lower().replace('-', '')
+
+            _, created = AlertaUsuarioConfirmado.objects.get_or_create(
+                usuario=request.user,
+                alerta_id=alerta_id_normalizado,
+                defaults={'tipo': 'confirmado'}
+            )
+            if created:
+                salvos += 1
+
+        return JsonResponse({
+            'success': True,
+            'salvos': salvos,
+            'total_enviados': len(alertas)
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'JSON inválido'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 
 # ============================================

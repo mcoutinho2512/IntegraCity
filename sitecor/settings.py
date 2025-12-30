@@ -174,8 +174,10 @@ SESSION_COOKIE_AGE = 43200  # 12 horas
 SESSION_SAVE_EVERY_REQUEST = True
 
 # CSRF
-CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Strict'
+# IMPORTANTE: CSRF_COOKIE_HTTPONLY deve ser False para permitir
+# que JavaScript acesse o token CSRF para requisições AJAX
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'  # Lax permite requisições same-origin
 
 # Headers de seguranca
 SECURE_BROWSER_XSS_FILTER = True
