@@ -189,6 +189,17 @@ urlpatterns = [
     path('api/areas/<uuid:area_id>/exportar/kml/', views_areas.api_exportar_kml, name='api_exportar_kml'),
     path('api/areas/<uuid:area_id>/exportar/pdf/', views_areas.api_exportar_relatorio_pdf, name='api_exportar_pdf'),
 
+    # Importação de KML/KMZ
+    path('api/areas/importar-kml/', views_areas.api_importar_kml, name='api_importar_kml'),
+
+    # Gerenciamento de Áreas Importadas
+    path('api/areas/importacoes/', views_areas.api_listar_importacoes, name='api_listar_importacoes'),
+    path('api/areas/<uuid:area_id>/excluir/', views_areas.api_excluir_area, name='api_excluir_area'),
+    path('api/areas/<uuid:area_id>/toggle-ativa/', views_areas.api_toggle_area_ativa, name='api_toggle_area_ativa'),
+    path('api/areas/grupo/<str:grupo_id>/excluir/', views_areas.api_excluir_grupo_importacao, name='api_excluir_grupo'),
+    path('api/areas/grupo/<str:grupo_id>/agendamento/', views_areas.api_atualizar_agendamento_grupo, name='api_atualizar_agendamento_grupo'),
+    path('api/areas/excluir-todas/', views_areas.api_excluir_todas_areas, name='api_excluir_todas_areas'),
+
     # APIs de Alertas Confirmados pelo Usuário (persistência no servidor)
     path('api/alertas-confirmados/', views_areas.api_alertas_confirmados_listar, name='api_alertas_confirmados_listar'),
     path('api/alertas-confirmados/salvar/', views_areas.api_alertas_confirmados_salvar, name='api_alertas_confirmados_salvar'),

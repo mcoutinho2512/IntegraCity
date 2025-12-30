@@ -396,9 +396,17 @@
             {% endif %}
         </div>
 
-        <div class="p-3 border-top" style="border-color: var(--border-color) !important;">
-            <button class="btn btn-primary btn-new-area" onclick="iniciarDesenho()">
-                <i class="fas fa-plus me-2"></i>Nova Área
+        <div class="p-3 border-top" style="border-color: var(--border-color) !important; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary btn-new-area" onclick="iniciarDesenho()" style="flex: 1;">
+                    <i class="fas fa-plus me-2"></i>Nova Área
+                </button>
+                <button class="btn btn-success" onclick="abrirModalImportarKML()" title="Importar arquivo KML/KMZ" style="padding: 0 15px;">
+                    <i class="fas fa-file-import"></i>
+                </button>
+            </div>
+            <button class="btn btn-outline-warning btn-sm" onclick="abrirGerenciadorImportacoes()" style="width: 100%;">
+                <i class="fas fa-cog me-2"></i>Gerenciar Importações
             </button>
         </div>
     </div>
@@ -677,7 +685,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="btnCancelarArea">
                     <i class="fas fa-times me-1"></i>Cancelar
                 </button>
-                <button type="button" class="btn btn-primary" id="btnSalvarArea">
+                <button type="button" class="btn btn-primary" id="btnSalvarArea" onclick="handleSalvarAreaClick()">
                     <i class="fas fa-save me-1"></i>Salvar Área
                 </button>
             </div>
@@ -741,9 +749,141 @@
             console.log('Bootstrap carregado com sucesso');
         }
     })();
+
+    // ========================================
+    // FUNÇÃO GLOBAL PARA SALVAR ÁREA (onclick)
+    // ========================================
+    async function handleSalvarAreaClick() {
+        console.log('handleSalvarAreaClick chamado!');
+
+        var nome = document.getElementById('areaNome').value.trim();
+        var descricao = document.getElementById('areaDescricao').value.trim();
+        var corAtiva = document.querySelector('.btn-cor.active');
+        var cor = corAtiva ? corAtiva.dataset.cor : '#00D4FF';
+
+        if (!nome) {
+            alert('Por favor, informe o nome da área');
+            document.getElementById('areaNome').focus();
+            return;
+        }
+
+        // Buscar o layer atual do areasManager
+        var layer = (typeof areasManager !== 'undefined' && areasManager) ? areasManager.currentLayer : null;
+        if (!layer) {
+            alert('Erro: Nenhuma área desenhada. Por favor, desenhe uma área primeiro.');
+            return;
+        }
+
+        var geojson = layer.toGeoJSON();
+        var tipoDesenho = (typeof areasManager !== 'undefined' && areasManager && areasManager.currentType)
+                          ? areasManager.currentType : 'polygon';
+
+        var dados = {
+            nome: nome,
+            descricao: descricao,
+            cor: cor,
+            geojson: geojson.geometry,
+            tipo_desenho: tipoDesenho
+        };
+
+        // Desabilitar botão durante o salvamento
+        var btnSalvar = document.getElementById('btnSalvarArea');
+        var textoOriginal = btnSalvar.innerHTML;
+        btnSalvar.disabled = true;
+        btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Salvando...';
+
+        try {
+            var response = await fetch('/integracity/api/areas/criar/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(dados)
+            });
+
+            var data = await response.json();
+            console.log('Resposta da API:', data);
+
+            if (response.ok && data.success !== false) {
+                // Fechar modal IMEDIATAMENTE
+                fecharModalAreaGlobal();
+
+                // Mostrar sucesso
+                if (typeof showToast === 'function') {
+                    showToast('Área "' + nome + '" criada com sucesso!', 'success');
+                } else {
+                    alert('Área "' + nome + '" criada com sucesso!');
+                }
+
+                // Recarregar página após pequeno delay
+                setTimeout(function() { location.reload(); }, 800);
+            } else {
+                alert('Erro ao salvar: ' + (data.error || 'Erro desconhecido'));
+                btnSalvar.disabled = false;
+                btnSalvar.innerHTML = textoOriginal;
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro de conexão ao salvar área: ' + error.message);
+            btnSalvar.disabled = false;
+            btnSalvar.innerHTML = textoOriginal;
+        }
+    }
+
+    // Função global para fechar o modal
+    function fecharModalAreaGlobal() {
+        var modalElement = document.getElementById('modalNomearArea');
+        if (!modalElement) return;
+
+        console.log('fecharModalAreaGlobal chamado');
+
+        // Método 1: Via Bootstrap API
+        try {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                var modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                    console.log('Modal fechado via Bootstrap.getInstance');
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn('Bootstrap.getInstance falhou:', e);
+        }
+
+        // Método 2: Fechar manualmente (fallback)
+        console.log('Usando fallback manual para fechar modal');
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        modalElement.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+
+        // Remover backdrop
+        var backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(function(b) { b.remove(); });
+    }
+
+    // Função getCookie caso não exista
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-<script src="{% static 'js/areas_observacao.js' %}?v={{ request.session.session_key|default:'nocache' }}"></script>
+<script src="{% static 'js/areas_observacao.js' %}?v={% now 'U' %}"></script>
 <script>
     let map;
     let areasManager;
@@ -1032,26 +1172,79 @@
         document.addEventListener('keydown', escHandler);
     }
 
+    // Variável para controlar modo de exclusão
+    let deleteModeActive = false;
+
     function startDeleteMode() {
         if (!areasManager) return;
 
-        const deleteHandler = new L.EditToolbar.Delete(map, {
-            featureGroup: areasManager.areasLayer
-        });
-        deleteHandler.enable();
+        const btn = document.getElementById('btnDeleteAreas');
 
-        document.getElementById('btnDeleteAreas').classList.add('active');
-        showToast('Clique nas áreas para excluir. Pressione ESC para sair.', 'info');
+        // Toggle do modo de exclusão
+        if (deleteModeActive) {
+            // Desativar modo de exclusão
+            deleteModeActive = false;
+            btn.classList.remove('active');
+            showToast('Modo de exclusão desativado', 'info');
+            return;
+        }
 
-        const escHandler = (e) => {
-            if (e.key === 'Escape') {
-                deleteHandler.disable();
-                deleteHandler.save();
-                document.getElementById('btnDeleteAreas').classList.remove('active');
-                document.removeEventListener('keydown', escHandler);
+        // Ativar modo de exclusão
+        deleteModeActive = true;
+        btn.classList.add('active');
+        showToast('Clique em uma área para excluí-la. Clique no botão novamente para sair.', 'warning');
+
+        // Adicionar handler de clique em cada área
+        areasManager.areasLayer.eachLayer(function(layer) {
+            // Guardar handler original se existir
+            if (!layer._originalClickHandler) {
+                layer._originalClickHandler = layer._events && layer._events.click ? [...(layer._events.click || [])] : [];
             }
-        };
-        document.addEventListener('keydown', escHandler);
+
+            // Adicionar handler de exclusão
+            layer.on('click', async function deleteClickHandler(e) {
+                if (!deleteModeActive) return;
+
+                // Prevenir propagação
+                L.DomEvent.stopPropagation(e);
+
+                const areaId = layer.areaId;
+                const areaNome = layer.areaNome || 'Área';
+
+                if (!areaId) {
+                    showToast('Erro: Área sem ID', 'error');
+                    return;
+                }
+
+                // Confirmação
+                if (!confirm('Tem certeza que deseja excluir a área "' + areaNome + '"?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/integracity/api/areas/' + areaId + '/excluir/', {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        // Remover do mapa
+                        areasManager.areasLayer.removeLayer(layer);
+                        showToast('Área "' + areaNome + '" excluída com sucesso!', 'success');
+                    } else {
+                        showToast('Erro: ' + (data.error || 'Falha ao excluir'), 'error');
+                    }
+                } catch (error) {
+                    console.error('Erro ao excluir área:', error);
+                    showToast('Erro ao conectar com o servidor', 'error');
+                }
+            });
+        });
     }
 
     // Função de toast se não existir
@@ -1123,8 +1316,113 @@
                 setDrawingMode(false);
                 currentDrawer = null;
             });
+
+            // Handler direto para o botão Salvar Área (fallback)
+            var btnSalvar = document.getElementById('btnSalvarArea');
+            if (btnSalvar) {
+                btnSalvar.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    console.log('btnSalvarArea clicked (handler do template)');
+
+                    // Se o areasManager tem a função, usa ela
+                    if (areasManager && areasManager.currentLayer) {
+                        try {
+                            await areasManager.salvarAreaDoModal(areasManager.currentLayer, areasManager.currentType || 'polygon');
+                        } catch (err) {
+                            console.error('Erro ao salvar via areasManager:', err);
+                            salvarAreaFallback();
+                        }
+                    } else {
+                        salvarAreaFallback();
+                    }
+                });
+            }
         }, 500);
     });
+
+    // Função fallback para salvar área
+    async function salvarAreaFallback() {
+        var nome = document.getElementById('areaNome').value.trim();
+        var descricao = document.getElementById('areaDescricao').value.trim();
+        var corAtiva = document.querySelector('.btn-cor.active');
+        var cor = corAtiva ? corAtiva.dataset.cor : '#00D4FF';
+
+        if (!nome) {
+            alert('Por favor, informe o nome da área');
+            document.getElementById('areaNome').focus();
+            return;
+        }
+
+        // Buscar o layer atual
+        var layer = areasManager ? areasManager.currentLayer : null;
+        if (!layer) {
+            alert('Erro: Nenhuma área desenhada');
+            return;
+        }
+
+        var geojson = layer.toGeoJSON();
+
+        var dados = {
+            nome: nome,
+            descricao: descricao,
+            cor: cor,
+            geojson: geojson.geometry,
+            tipo_desenho: 'polygon'
+        };
+
+        try {
+            var response = await fetch('/integracity/api/areas/criar/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(dados)
+            });
+
+            var data = await response.json();
+
+            if (response.ok && data.success !== false) {
+                console.log('Área salva:', data);
+
+                // Fechar modal
+                fecharModalArea();
+
+                // Mostrar sucesso
+                showToast('Área "' + nome + '" criada com sucesso!', 'success');
+
+                // Recarregar página
+                setTimeout(function() { location.reload(); }, 1000);
+            } else {
+                alert('Erro ao salvar: ' + (data.error || 'Erro desconhecido'));
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro de conexão ao salvar área');
+        }
+    }
+
+    // Função para fechar o modal de área
+    function fecharModalArea() {
+        var modalElement = document.getElementById('modalNomearArea');
+        if (!modalElement) return;
+
+        try {
+            // Tentar via Bootstrap
+            var modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+                return;
+            }
+        } catch (e) {}
+
+        // Fallback: fechar manualmente
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        var backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) backdrop.remove();
+    }
 
     // ============================================
     // SISTEMA DE CAMADAS COMPLETO (igual ao Dashboard)
@@ -1422,5 +1720,525 @@
 
         console.log('Sistema de camadas inicializado');
     }
+
+    // ============================================
+    // IMPORTAÇÃO KML/KMZ
+    // ============================================
+    var arquivoKMLSelecionado = null;
+
+    function abrirModalImportarKML() {
+        var modal = document.getElementById('modalImportarKML');
+        if (modal) {
+            modal.classList.add('active');
+            inicializarKMLDropZone();
+        }
+    }
+
+    function fecharModalImportarKML() {
+        var modal = document.getElementById('modalImportarKML');
+        if (modal) {
+            modal.classList.remove('active');
+            limparArquivoKML();
+        }
+    }
+
+    function inicializarKMLDropZone() {
+        var dropZone = document.getElementById('kmlDropZone');
+        if (!dropZone) return;
+
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            var files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processarArquivoKML(files[0]);
+            }
+        });
+    }
+
+    function handleKMLFileSelect(input) {
+        if (input.files && input.files[0]) {
+            processarArquivoKML(input.files[0]);
+        }
+    }
+
+    function processarArquivoKML(file) {
+        var validExtensions = ['.kml', '.kmz'];
+        var fileName = file.name.toLowerCase();
+        var isValid = validExtensions.some(function(ext) { return fileName.endsWith(ext); });
+
+        if (!isValid) {
+            showToast('Formato inválido. Use arquivos .kml ou .kmz', 'error');
+            return;
+        }
+
+        arquivoKMLSelecionado = file;
+
+        // Atualizar UI
+        var dropZone = document.getElementById('kmlDropZone');
+        var fileInfo = document.getElementById('kmlFileInfo');
+        var fileName = document.getElementById('kmlFileName');
+        var fileSize = document.getElementById('kmlFileSize');
+        var importBtn = document.getElementById('kmlImportBtn');
+
+        if (dropZone) dropZone.style.display = 'none';
+        if (fileInfo) fileInfo.style.display = 'flex';
+        if (fileName) fileName.textContent = file.name;
+        if (fileSize) fileSize.textContent = formatarTamanhoArquivo(file.size);
+        if (importBtn) importBtn.disabled = false;
+    }
+
+    function limparArquivoKML() {
+        arquivoKMLSelecionado = null;
+        var dropZone = document.getElementById('kmlDropZone');
+        var fileInfo = document.getElementById('kmlFileInfo');
+        var fileInput = document.getElementById('kmlFileInput');
+        var importBtn = document.getElementById('kmlImportBtn');
+
+        if (dropZone) dropZone.style.display = 'flex';
+        if (fileInfo) fileInfo.style.display = 'none';
+        if (fileInput) fileInput.value = '';
+        if (importBtn) importBtn.disabled = true;
+    }
+
+    function formatarTamanhoArquivo(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function toggleAgendamentoKML() {
+        var tipoArea = document.querySelector('input[name="kmlTipoArea"]:checked');
+        var agendamentoDiv = document.getElementById('kmlAgendamento');
+
+        if (tipoArea && agendamentoDiv) {
+            if (tipoArea.value === 'temporaria') {
+                agendamentoDiv.style.display = 'block';
+            } else {
+                agendamentoDiv.style.display = 'none';
+            }
+        }
+    }
+
+    async function importarKML() {
+        if (!arquivoKMLSelecionado) {
+            showToast('Selecione um arquivo primeiro', 'error');
+            return;
+        }
+
+        var importBtn = document.getElementById('kmlImportBtn');
+        var progressBar = document.getElementById('kmlProgressBar');
+        var progressFill = document.getElementById('kmlProgressFill');
+
+        if (importBtn) {
+            importBtn.disabled = true;
+            importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importando...';
+        }
+        if (progressBar) progressBar.style.display = 'block';
+
+        try {
+            var formData = new FormData();
+            formData.append('file', arquivoKMLSelecionado);
+
+            var prefixo = document.getElementById('kmlPrefixo');
+            var cor = document.getElementById('kmlCor');
+            if (prefixo && prefixo.value) formData.append('prefixo', prefixo.value);
+            if (cor && cor.value) formData.append('cor', cor.value);
+
+            // Capturar tipo e agendamento
+            var tipoArea = document.querySelector('input[name="kmlTipoArea"]:checked');
+            var temporaria = tipoArea && tipoArea.value === 'temporaria';
+            formData.append('temporaria', temporaria ? 'true' : 'false');
+
+            if (temporaria) {
+                var eventoInicio = document.getElementById('kmlEventoInicio');
+                var eventoFim = document.getElementById('kmlEventoFim');
+                if (eventoInicio && eventoInicio.value) formData.append('evento_inicio', eventoInicio.value);
+                if (eventoFim && eventoFim.value) formData.append('evento_fim', eventoFim.value);
+            }
+
+            // Animar progress bar
+            if (progressFill) {
+                progressFill.style.width = '30%';
+                setTimeout(function() { progressFill.style.width = '60%'; }, 500);
+            }
+
+            var response = await fetch('/integracity/api/areas/importar-kml/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+
+            if (progressFill) progressFill.style.width = '90%';
+
+            var data = await response.json();
+
+            if (data.success) {
+                if (progressFill) progressFill.style.width = '100%';
+                showToast(data.total + ' área(s) importada(s) com sucesso!', 'success');
+
+                // Recarregar a página para mostrar as novas áreas
+                setTimeout(function() {
+                    fecharModalImportarKML();
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.error || 'Erro ao importar');
+            }
+
+        } catch (error) {
+            console.error('Erro ao importar KML:', error);
+            showToast('Erro: ' + error.message, 'error');
+            if (importBtn) {
+                importBtn.disabled = false;
+                importBtn.innerHTML = '<i class="fas fa-upload"></i> Importar';
+            }
+            if (progressBar) progressBar.style.display = 'none';
+            if (progressFill) progressFill.style.width = '0%';
+        }
+    }
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // ============================================
+    // GERENCIADOR DE IMPORTAÇÕES
+    // ============================================
+
+    function abrirGerenciadorImportacoes() {
+        var modal = document.getElementById('modalGerenciarImportacoes');
+        if (modal) {
+            modal.classList.add('active');
+            carregarImportacoes();
+        }
+    }
+
+    function fecharGerenciadorImportacoes() {
+        var modal = document.getElementById('modalGerenciarImportacoes');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    async function carregarImportacoes() {
+        var listaDiv = document.getElementById('listaImportacoes');
+        if (!listaDiv) return;
+
+        listaDiv.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;"><i class="fas fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Carregando...</p></div>';
+
+        try {
+            var response = await fetch('/integracity/api/areas/importacoes/', {
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            });
+            var data = await response.json();
+
+            if (data.success && data.importacoes.length > 0) {
+                listaDiv.innerHTML = data.importacoes.map(function(imp) {
+                    var dataImport = imp.data_importacao ? new Date(imp.data_importacao).toLocaleString('pt-BR') : '--';
+                    var tipoLabel = imp.temporaria ? '<span style="color: #FF9800;"><i class="fas fa-hourglass-half"></i> Temporária</span>' : '<span style="color: #00D4FF;"><i class="fas fa-infinity"></i> Permanente</span>';
+                    var statusLabel = imp.ativa ? '<span style="color: #4CAF50;"><i class="fas fa-eye"></i> Ativa</span>' : '<span style="color: #888;"><i class="fas fa-eye-slash"></i> Inativa</span>';
+
+                    var agendamento = '';
+                    if (imp.temporaria) {
+                        var inicio = imp.evento_inicio ? new Date(imp.evento_inicio).toLocaleString('pt-BR') : 'Não definido';
+                        var fim = imp.evento_fim ? new Date(imp.evento_fim).toLocaleString('pt-BR') : 'Não definido';
+                        agendamento = '<div style="font-size: 11px; color: #888; margin-top: 5px;"><i class="fas fa-calendar"></i> ' + inicio + ' - ' + fim + '</div>';
+                    }
+
+                    return '<div class="importacao-item" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 15px; margin-bottom: 10px;">' +
+                        '<div style="display: flex; justify-content: space-between; align-items: start;">' +
+                            '<div style="flex: 1;">' +
+                                '<div style="color: #fff; font-weight: bold; margin-bottom: 5px;"><i class="fas fa-file-code" style="color: #4CAF50;"></i> ' + (imp.arquivo || 'Arquivo desconhecido') + '</div>' +
+                                '<div style="font-size: 12px; color: #888;">' + imp.total_areas + ' área(s) | ' + dataImport + '</div>' +
+                                '<div style="font-size: 12px; margin-top: 5px;">' + tipoLabel + ' | ' + statusLabel + '</div>' +
+                                agendamento +
+                            '</div>' +
+                            '<div style="display: flex; gap: 5px;">' +
+                                '<button onclick="excluirGrupoImportacao(\'' + imp.grupo_id + '\', \'' + (imp.arquivo || '').replace(/'/g, "\\'") + '\')" title="Excluir todas as áreas deste arquivo" style="background: rgba(244, 67, 54, 0.2); border: 1px solid rgba(244, 67, 54, 0.5); color: #F44336; padding: 8px 12px; border-radius: 5px; cursor: pointer;">' +
+                                    '<i class="fas fa-trash"></i>' +
+                                '</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            } else {
+                listaDiv.innerHTML = '<div style="text-align: center; padding: 40px; color: #888;"><i class="fas fa-inbox fa-3x" style="margin-bottom: 15px; opacity: 0.5;"></i><p>Nenhuma importação encontrada</p><p style="font-size: 12px;">Importe arquivos KML/KMZ para gerenciá-los aqui.</p></div>';
+            }
+        } catch (error) {
+            console.error('Erro ao carregar importações:', error);
+            listaDiv.innerHTML = '<div style="text-align: center; padding: 30px; color: #ff5252;"><i class="fas fa-exclamation-circle fa-2x"></i><p style="margin-top: 10px;">Erro ao carregar importações</p></div>';
+        }
+    }
+
+    async function excluirGrupoImportacao(grupoId, arquivo) {
+        if (!confirm('Tem certeza que deseja EXCLUIR todas as áreas do arquivo "' + arquivo + '"?\n\nEsta ação não pode ser desfeita!')) {
+            return;
+        }
+
+        try {
+            var response = await fetch('/integracity/api/areas/grupo/' + grupoId + '/excluir/', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            var data = await response.json();
+
+            if (data.success) {
+                showToast(data.mensagem + ' - Recarregando...', 'success');
+                // Fechar modal e forçar recarga imediata
+                fecharGerenciadorImportacoes();
+                // Forçar reload completo (ignorar cache)
+                window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+            } else {
+                throw new Error(data.error || 'Erro ao excluir');
+            }
+        } catch (error) {
+            console.error('Erro ao excluir grupo:', error);
+            showToast('Erro: ' + error.message, 'error');
+        }
+    }
+
+    async function excluirAreaIndividual(areaId, nome) {
+        if (!confirm('Tem certeza que deseja excluir a área "' + nome + '"?')) {
+            return;
+        }
+
+        try {
+            var response = await fetch('/integracity/api/areas/' + areaId + '/excluir/', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            var data = await response.json();
+
+            if (data.success) {
+                showToast(data.mensagem, 'success');
+                window.location.reload();
+            } else {
+                throw new Error(data.error || 'Erro ao excluir');
+            }
+        } catch (error) {
+            console.error('Erro ao excluir área:', error);
+            showToast('Erro: ' + error.message, 'error');
+        }
+    }
+
+    async function excluirTodasAreas() {
+        if (!confirm('⚠️ ATENÇÃO!\n\nVocê está prestes a EXCLUIR TODAS AS ÁREAS de observação!\n\nIsso inclui:\n- Áreas importadas de KML/KMZ\n- Áreas desenhadas manualmente\n\nEsta ação NÃO PODE ser desfeita!\n\nTem certeza que deseja continuar?')) {
+            return;
+        }
+
+        // Segunda confirmação para evitar exclusão acidental
+        if (!confirm('ÚLTIMA CONFIRMAÇÃO:\n\nDigite "SIM" mentalmente e clique OK para confirmar a exclusão de TODAS as áreas.')) {
+            return;
+        }
+
+        try {
+            var response = await fetch('/integracity/api/areas/excluir-todas/', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            var data = await response.json();
+
+            if (data.success) {
+                showToast(data.mensagem + ' - Recarregando...', 'success');
+                fecharGerenciadorImportacoes();
+                window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+            } else {
+                throw new Error(data.error || 'Erro ao excluir');
+            }
+        } catch (error) {
+            console.error('Erro ao excluir todas as áreas:', error);
+            showToast('Erro: ' + error.message, 'error');
+        }
+    }
 </script>
+
+<!-- Modal de Importação KML/KMZ -->
+<div class="mosaic-modal" id="modalImportarKML" style="display: none;">
+    <div class="mosaic-modal-content" style="max-width: 500px;">
+        <div class="mosaic-modal-header" style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);">
+            <h3><i class="fas fa-file-import"></i> Importar KML/KMZ</h3>
+            <button class="mosaic-close-btn" onclick="fecharModalImportarKML()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="mosaic-modal-body" style="padding: 20px;">
+            <p style="color: #aaa; margin-bottom: 20px;">
+                Importe arquivos KML ou KMZ para criar áreas de observação automaticamente.
+            </p>
+
+            <!-- Área de Drop -->
+            <div id="kmlDropZone" class="drop-zone" style="border: 2px dashed #4CAF50; border-radius: 10px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(76, 175, 80, 0.05);" onclick="document.getElementById('kmlFileInput').click()">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: #4CAF50; margin-bottom: 15px;"></i>
+                <p style="color: #ccc; margin: 0;">Arraste um arquivo aqui ou clique para selecionar</p>
+                <small style="color: #888;">.kml ou .kmz</small>
+                <input type="file" id="kmlFileInput" accept=".kml,.kmz" style="display: none;" onchange="handleKMLFileSelect(this)">
+            </div>
+
+            <!-- Info do arquivo selecionado -->
+            <div id="kmlFileInfo" style="display: none; align-items: center; gap: 15px; padding: 15px; background: rgba(76, 175, 80, 0.1); border-radius: 8px; margin-top: 15px;">
+                <i class="fas fa-file-code" style="font-size: 2rem; color: #4CAF50;"></i>
+                <div style="flex: 1;">
+                    <div id="kmlFileName" style="color: #fff; font-weight: bold;"></div>
+                    <div id="kmlFileSize" style="color: #888; font-size: 0.85rem;"></div>
+                </div>
+                <button onclick="limparArquivoKML()" style="background: none; border: none; color: #ff5252; cursor: pointer; font-size: 1.2rem;">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            </div>
+
+            <!-- Opções -->
+            <div style="margin-top: 20px;">
+                <label style="color: #aaa; font-size: 0.85rem;">Prefixo para nomes (opcional)</label>
+                <input type="text" id="kmlPrefixo" placeholder="Ex: Operação Verão" style="width: 100%; padding: 10px; border: 1px solid #333; border-radius: 5px; background: rgba(0,0,0,0.3); color: #fff; margin-top: 5px;">
+            </div>
+
+            <div style="margin-top: 15px;">
+                <label style="color: #aaa; font-size: 0.85rem;">Cor padrão</label>
+                <input type="color" id="kmlCor" value="#00D4FF" style="width: 100%; height: 40px; border: 1px solid #333; border-radius: 5px; background: rgba(0,0,0,0.3); cursor: pointer; margin-top: 5px;">
+            </div>
+
+            <!-- Tipo: Temporária ou Permanente -->
+            <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                <label style="display: block; margin-bottom: 12px; color: #fff; font-size: 14px; font-weight: 600;">
+                    <i class="fas fa-clock"></i> Tipo de Área
+                </label>
+                <div style="display: flex; gap: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 6px; flex: 1;">
+                        <input type="radio" name="kmlTipoArea" value="permanente" checked style="accent-color: #00D4FF;" onchange="toggleAgendamentoKML()">
+                        <span style="color: #fff;"><i class="fas fa-infinity"></i> Permanente</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; background: rgba(255, 152, 0, 0.1); border: 1px solid rgba(255, 152, 0, 0.3); border-radius: 6px; flex: 1;">
+                        <input type="radio" name="kmlTipoArea" value="temporaria" style="accent-color: #FF9800;" onchange="toggleAgendamentoKML()">
+                        <span style="color: #fff;"><i class="fas fa-hourglass-half"></i> Temporária</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Agendamento (visível apenas quando temporária) -->
+            <div id="kmlAgendamento" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255, 152, 0, 0.1); border: 1px solid rgba(255, 152, 0, 0.3); border-radius: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: #aaa; font-size: 13px;">
+                            <i class="fas fa-play-circle"></i> Início (quando aparecer)
+                        </label>
+                        <input type="datetime-local" id="kmlEventoInicio" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 13px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: #aaa; font-size: 13px;">
+                            <i class="fas fa-stop-circle"></i> Fim (quando desaparecer)
+                        </label>
+                        <input type="datetime-local" id="kmlEventoFim" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 13px;">
+                    </div>
+                </div>
+                <p style="margin: 10px 0 0 0; font-size: 11px; color: #888;">
+                    <i class="fas fa-info-circle"></i> As áreas aparecerão automaticamente no horário de início e desaparecerão no horário de fim.
+                </p>
+            </div>
+
+            <!-- Progress bar -->
+            <div id="kmlProgressBar" style="display: none; margin-top: 20px;">
+                <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                    <div id="kmlProgressFill" style="height: 100%; width: 0%; background: linear-gradient(90deg, #4CAF50, #8BC34A); transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="mosaic-modal-footer" style="padding: 15px 20px; border-top: 1px solid #333; display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="cancel-btn" onclick="fecharModalImportarKML()" style="padding: 10px 20px; border: 1px solid #666; background: transparent; color: #aaa; border-radius: 5px; cursor: pointer;">Cancelar</button>
+            <button id="kmlImportBtn" onclick="importarKML()" disabled style="padding: 10px 20px; border: none; background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); color: #fff; border-radius: 5px; cursor: pointer; opacity: 0.5;">
+                <i class="fas fa-upload"></i> Importar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Gerenciar Importações -->
+<div class="mosaic-modal" id="modalGerenciarImportacoes" style="display: none;">
+    <div class="mosaic-modal-content" style="max-width: 600px;">
+        <div class="mosaic-modal-header" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);">
+            <h3><i class="fas fa-cog"></i> Gerenciar Importações</h3>
+            <button class="mosaic-close-btn" onclick="fecharGerenciadorImportacoes()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="mosaic-modal-body" style="padding: 20px; max-height: 500px; overflow-y: auto;">
+            <p style="color: #aaa; margin-bottom: 20px;">
+                <i class="fas fa-info-circle"></i> Gerencie os arquivos KML/KMZ importados. Você pode excluir grupos inteiros de áreas.
+            </p>
+            <div id="listaImportacoes">
+                <!-- Carregado via JavaScript -->
+            </div>
+        </div>
+        <div class="mosaic-modal-footer" style="padding: 15px 20px; border-top: 1px solid #333; display: flex; justify-content: space-between; gap: 10px;">
+            <button onclick="carregarImportacoes()" style="padding: 10px 20px; border: 1px solid #FF9800; background: transparent; color: #FF9800; border-radius: 5px; cursor: pointer;">
+                <i class="fas fa-sync"></i> Atualizar
+            </button>
+            <button onclick="excluirTodasAreas()" style="padding: 10px 20px; border: 1px solid #f44336; background: transparent; color: #f44336; border-radius: 5px; cursor: pointer;">
+                <i class="fas fa-trash-alt"></i> Excluir Todas
+            </button>
+            <button onclick="fecharGerenciadorImportacoes()" style="padding: 10px 20px; border: 1px solid #666; background: transparent; color: #aaa; border-radius: 5px; cursor: pointer;">
+                Fechar
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+#modalImportarKML.active,
+#modalGerenciarImportacoes.active {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+#kmlDropZone.drag-over {
+    background: rgba(76, 175, 80, 0.15) !important;
+    border-color: #8BC34A !important;
+}
+#kmlImportBtn:not(:disabled) {
+    opacity: 1 !important;
+}
+#kmlImportBtn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+.importacao-item:hover {
+    background: rgba(255,255,255,0.05) !important;
+    border-color: rgba(255,255,255,0.2) !important;
+}
+</style>
 {% endblock %}

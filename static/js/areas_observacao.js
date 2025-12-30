@@ -139,22 +139,23 @@ class AreasObservacao {
         this.currentLayer = layer;
         this.currentType = type;
 
-        // Usar prompt nativo do JavaScript - mais confiável
+        // SEMPRE usar prompt simples - mais confiável
         this.abrirPromptSimples(layer, type);
     }
 
     async abrirPromptSimples(layer, type) {
         // Usar prompt nativo do JavaScript - funciona em qualquer navegador
-        const nome = prompt('Digite o nome da área de observação:', '');
+        const nome = prompt('Digite o nome da área de observação:');
 
-        if (!nome || nome.trim() === '') {
+        if (nome === null || nome.trim() === '') {
             // Usuário cancelou ou não digitou nada
             this.drawnItems.removeLayer(layer);
             this.mostrarNotificacao('Criação de área cancelada', 'warning');
             return;
         }
 
-        const descricao = prompt('Digite uma descrição (opcional):', '') || '';
+        // Descrição vazia por padrão (simplificado)
+        const descricao = '';
 
         // Cor padrão
         const cor = '#00D4FF';
@@ -600,6 +601,7 @@ class AreasObservacao {
 
     setupModalEvents(layer, type) {
         const self = this;
+        console.log('setupModalEvents chamado');
 
         // Eventos de cor
         document.querySelectorAll('.btn-cor').forEach(btn => {
@@ -613,28 +615,48 @@ class AreasObservacao {
 
                 // Atualizar cor do layer
                 const cor = this.dataset.cor;
-                layer.setStyle({ color: cor, fillColor: cor });
+                if (layer && layer.setStyle) {
+                    layer.setStyle({ color: cor, fillColor: cor });
+                }
             };
         });
 
-        // Botão salvar
-        document.getElementById('btnSalvarArea').onclick = function() {
-            self.salvarAreaDoModal(layer, type);
-        };
+        // Botão salvar - com verificação
+        const btnSalvar = document.getElementById('btnSalvarArea');
+        if (btnSalvar) {
+            console.log('Botão Salvar encontrado, adicionando evento');
+            btnSalvar.onclick = async function(e) {
+                e.preventDefault();
+                console.log('Botão Salvar clicado!');
+                try {
+                    await self.salvarAreaDoModal(layer, type);
+                } catch (error) {
+                    console.error('Erro ao salvar:', error);
+                    alert('Erro ao salvar área: ' + error.message);
+                }
+            };
+        } else {
+            console.error('Botão btnSalvarArea não encontrado!');
+        }
 
         // Botão cancelar - remover layer
-        document.getElementById('btnCancelarArea').onclick = function() {
-            self.drawnItems.removeLayer(layer);
-        };
+        const btnCancelar = document.getElementById('btnCancelarArea');
+        if (btnCancelar) {
+            btnCancelar.onclick = function() {
+                self.drawnItems.removeLayer(layer);
+            };
+        }
 
         // Quando modal fecha sem salvar
         const modalElement = document.getElementById('modalNomearArea');
-        modalElement.addEventListener('hidden.bs.modal', function handler() {
-            if (!layer.areaId) {
-                self.drawnItems.removeLayer(layer);
-            }
-            modalElement.removeEventListener('hidden.bs.modal', handler);
-        });
+        if (modalElement) {
+            modalElement.addEventListener('hidden.bs.modal', function handler() {
+                if (!layer.areaId) {
+                    self.drawnItems.removeLayer(layer);
+                }
+                modalElement.removeEventListener('hidden.bs.modal', handler);
+            });
+        }
     }
 
     async salvarAreaDoModal(layer, type) {
@@ -685,10 +707,28 @@ class AreasObservacao {
                 // Adicionar popup
                 this.adicionarPopupArea(layer, resultado);
 
-                // Fechar modal
+                // Fechar modal de forma robusta
                 const modalElement = document.getElementById('modalNomearArea');
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) modal.hide();
+                if (modalElement) {
+                    // Tentar várias formas de fechar o modal
+                    try {
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                        } else {
+                            // Fallback: clicar no botão de fechar
+                            const closeBtn = modalElement.querySelector('[data-bs-dismiss="modal"]');
+                            if (closeBtn) closeBtn.click();
+                        }
+                    } catch (e) {
+                        // Fallback: remover classes manualmente
+                        modalElement.classList.remove('show');
+                        modalElement.style.display = 'none';
+                        document.body.classList.remove('modal-open');
+                        const backdrop = document.querySelector('.modal-backdrop');
+                        if (backdrop) backdrop.remove();
+                    }
+                }
 
                 this.mostrarNotificacao(`Área "${nome}" criada com sucesso!`, 'success');
 
@@ -932,20 +972,27 @@ class AreasObservacao {
 
     async deletarArea(areaId) {
         try {
-            const response = await fetch(`${this.baseUrl}/api/areas/${areaId}/deletar/`, {
+            // Usar a API de exclusão definitiva (hard delete)
+            const response = await fetch(`${this.baseUrl}/api/areas/${areaId}/excluir/`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRFToken': this.getCSRFToken()
+                    'X-CSRFToken': this.getCSRFToken(),
+                    'Content-Type': 'application/json'
                 }
             });
 
-            if (response.ok) {
-                this.mostrarNotificacao('Área removida com sucesso!', 'success');
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                this.mostrarNotificacao(data.mensagem || 'Área removida com sucesso!', 'success');
+                // Remover da lista local também
+                this.areasSalvas = this.areasSalvas.filter(a => a.id !== areaId);
             } else {
-                this.mostrarNotificacao('Erro ao remover área', 'danger');
+                this.mostrarNotificacao(data.error || 'Erro ao remover área', 'danger');
             }
         } catch (error) {
             console.error('Erro ao deletar área:', error);
+            this.mostrarNotificacao('Erro ao conectar com o servidor', 'danger');
         }
     }
 
@@ -974,18 +1021,62 @@ class AreasObservacao {
     desenharArea(area) {
         const geojson = area.geojson;
 
+        // Verificar estrutura do GeoJSON (pode ser Feature ou geometria direta)
+        let geometry = geojson;
+        if (geojson.type === 'Feature') {
+            geometry = geojson.geometry;
+        }
+
+        if (!geometry || !geometry.coordinates) {
+            console.error('Coordenadas inválidas:', geojson);
+            return;
+        }
+
         // Converter coordenadas GeoJSON para Leaflet
         let layer;
+        const cor = area.cor || '#00D4FF';
+        const geometryType = geometry.type;
 
-        if (geojson.type === 'Polygon') {
+        if (geometryType === 'Polygon') {
             // GeoJSON usa [lng, lat], Leaflet usa [lat, lng]
-            const latlngs = geojson.coordinates[0].map(coord => [coord[1], coord[0]]);
+            const latlngs = geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
             layer = L.polygon(latlngs, {
-                color: area.cor,
-                fillColor: area.cor,
+                color: cor,
+                fillColor: cor,
                 fillOpacity: 0.2,
                 weight: 2
             });
+
+        } else if (geometryType === 'LineString') {
+            // Linha/Rota
+            const latlngs = geometry.coordinates.map(coord => [coord[1], coord[0]]);
+            layer = L.polyline(latlngs, {
+                color: cor,
+                weight: 4,
+                opacity: 0.8,
+                dashArray: '10, 5'
+            });
+
+        } else if (geometryType === 'Point') {
+            // Ponto/Marcador
+            const coord = geometry.coordinates;
+            layer = L.circleMarker([coord[1], coord[0]], {
+                radius: 10,
+                color: cor,
+                fillColor: cor,
+                fillOpacity: 0.6,
+                weight: 2
+            });
+
+        } else if (geometryType === 'GeometryCollection') {
+            // Múltiplas geometrias - renderizar cada uma
+            geometry.geometries.forEach((geom, idx) => {
+                const subArea = Object.assign({}, area);
+                subArea.geojson = { type: 'Feature', geometry: geom };
+                subArea.nome = area.nome + ' (' + (idx + 1) + ')';
+                this.desenharArea(subArea);
+            });
+            return;
         }
 
         if (layer) {

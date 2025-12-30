@@ -6855,11 +6855,24 @@ class AreaObservacao(models.Model):
     tipo_desenho = models.CharField(max_length=20, choices=[
         ('polygon', 'Polígono'),
         ('rectangle', 'Retângulo'),
+        ('polyline', 'Linha'),
+        ('marker', 'Ponto'),
     ], default='polygon')
 
     # Status
     ativa = models.BooleanField('Área Ativa', default=True)
     alerta_habilitado = models.BooleanField('Alertas Habilitados', default=True)
+
+    # Temporária ou Permanente
+    temporaria = models.BooleanField('Área Temporária', default=False,
+        help_text='Áreas temporárias desaparecem após evento_fim')
+
+    # Origem da importação (para arquivos KML/KMZ)
+    importada_de_kml = models.BooleanField('Importada de KML', default=False)
+    arquivo_origem = models.CharField('Arquivo de Origem', max_length=255, blank=True, null=True,
+        help_text='Nome do arquivo KML/KMZ original')
+    grupo_importacao = models.CharField('Grupo de Importação', max_length=100, blank=True, null=True,
+        help_text='Identificador para agrupar áreas importadas juntas')
 
     # Evento (opcional)
     evento_nome = models.CharField('Nome do Evento', max_length=200, blank=True, null=True)

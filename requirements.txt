@@ -6,12 +6,14 @@ django-cors-headers==4.6.0
 # Geospatial (ATUALIZADO)
 django-geojson==4.1.0
 Shapely==2.0.6
+fastkml==1.4.0
+lxml==6.0.2
 
 # Location field
 django-location-field==2.7.3
 six==1.17.0
 
-# Firebase/Notificações
+# Firebase/Notificaï¿½ï¿½es
 pyfcm==1.5.4
 
 # HTTP/Requests
@@ -20,7 +22,7 @@ requests==2.32.3
 # Imagens
 Pillow==11.0.0
 
-# Configuração
+# Configuraï¿½ï¿½o
 python-decouple==3.8
 
 # Filtros
@@ -30,29 +32,29 @@ django-filter==24.3
 django-crispy-forms==2.3
 crispy-bootstrap4==2025.6
 
-# Utilitários
+# Utilitï¿½rios
 python-dateutil==2.9.0
 pytz==2024.2
 emoji==2.14.0
 
-# Twitter (se necessário)
+# Twitter (se necessï¿½rio)
 tweepy==4.14.0
 
 # WebSocket (para tempo real)
 channels==4.2.0
 daphne==4.1.2
 
-# Celery (tarefas assíncronas)
+# Celery (tarefas assï¿½ncronas)
 celery==5.4.0
 redis==5.2.0
 
 # Banco de dados
 psycopg2-binary==2.9.10
 
-# Flask (se necessário)
+# Flask (se necessï¿½rio)
 Flask==3.1.0
 
-# Extensões Django
+# Extensï¿½es Django
 django-extensions==3.2.3
 
 geopy==2.4.1

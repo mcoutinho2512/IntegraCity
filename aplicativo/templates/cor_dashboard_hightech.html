@@ -746,18 +746,65 @@
                     </div>
                 </div>
 
-                <!-- Areas de Observacao -->
-                <div class="layer-item" onclick="toggleLayerByClick('areasObservacao', event)">
-                    <label class="layer-checkbox" onclick="event.stopPropagation()">
-                        <input type="checkbox" id="layerAreasObservacao" onchange="toggleMapLayer('areasObservacao')" checked>
-                        <span class="checkmark"></span>
-                    </label>
-                    <div class="layer-icon" style="background: rgba(0, 212, 255, 0.2); color: #00D4FF;">
-                        <i class="fas fa-draw-polygon"></i>
+                <!-- Areas de Observacao - Com Submenu -->
+                <div class="layer-item-group">
+                    <div class="layer-item has-submenu" onclick="toggleAreasSubmenu(event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerAreasObservacao" onchange="toggleMapLayer('areasObservacao')" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(0, 212, 255, 0.2); color: #00D4FF;">
+                            <i class="fas fa-draw-polygon"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Areas de Observacao</span>
+                            <span class="layer-count" id="countAreasObservacao">--</span>
+                        </div>
+                        <div class="submenu-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
                     </div>
-                    <div class="layer-info">
-                        <span class="layer-name">Areas de Observacao</span>
-                        <span class="layer-count" id="countAreasObservacao">--</span>
+
+                    <!-- Submenu de Areas -->
+                    <div class="layer-submenu" id="areasSubmenu">
+                        <!-- Desenhar Nova Area -->
+                        <div class="submenu-item submenu-action" onclick="iniciarDesenhoArea(); event.stopPropagation();">
+                            <div class="submenu-icon" style="background: rgba(0, 212, 255, 0.2); color: #00D4FF;">
+                                <i class="fas fa-pencil-alt"></i>
+                            </div>
+                            <span class="submenu-label">Desenhar Nova Area</span>
+                            <i class="fas fa-pencil-alt submenu-arrow-icon"></i>
+                        </div>
+
+                        <!-- Importar KML/KMZ -->
+                        <div class="submenu-item submenu-action" onclick="abrirModalImportarKML(); event.stopPropagation();">
+                            <div class="submenu-icon" style="background: rgba(76, 175, 80, 0.2); color: #4CAF50;">
+                                <i class="fas fa-file-import"></i>
+                            </div>
+                            <span class="submenu-label">Importar KML/KMZ</span>
+                            <i class="fas fa-upload submenu-arrow-icon"></i>
+                        </div>
+
+                        <!-- Gerenciar Importacoes -->
+                        <div class="submenu-item submenu-action" onclick="abrirModalGerenciarImportacoes(); event.stopPropagation();">
+                            <div class="submenu-icon" style="background: rgba(156, 39, 176, 0.2); color: #9C27B0;">
+                                <i class="fas fa-folder-open"></i>
+                            </div>
+                            <span class="submenu-label">Gerenciar Importacoes</span>
+                            <i class="fas fa-cog submenu-arrow-icon"></i>
+                        </div>
+
+                        <!-- Separador -->
+                        <div class="submenu-divider"></div>
+
+                        <!-- Ver Todas as Areas -->
+                        <div class="submenu-item submenu-action" onclick="window.open('/integracity/areas/', '_blank'); event.stopPropagation();">
+                            <div class="submenu-icon" style="background: rgba(255, 152, 0, 0.2); color: #FF9800;">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            <span class="submenu-label">Gerenciar Areas</span>
+                            <i class="fas fa-external-link-alt submenu-arrow-icon"></i>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3658,7 +3705,7 @@
 
     // Adicionar área no mapa
     function adicionarAreaNoMapa(area) {
-        console.log('Adicionando área:', area.nome, area.id);
+        console.log('Adicionando área:', area.nome, area.id, 'tipo:', area.tipo_desenho);
 
         try {
             var geojson = area.geojson;
@@ -3669,33 +3716,85 @@
                 console.log('GeoJSON parseado');
             }
 
-            // Converter coordenadas GeoJSON para LatLng
-            if (!geojson.coordinates || !geojson.coordinates[0]) {
+            // Verificar estrutura do GeoJSON (pode ser Feature ou geometria direta)
+            var geometry = geojson;
+            if (geojson.type === 'Feature') {
+                geometry = geojson.geometry;
+            }
+
+            if (!geometry || !geometry.coordinates) {
                 console.error('Coordenadas inválidas:', geojson);
                 return;
             }
 
-            var coords = geojson.coordinates[0];
-            console.log('Coordenadas:', coords.length, 'pontos');
+            var layer = null;
+            var geometryType = geometry.type;
+            var cor = area.cor || '#00D4FF';
 
-            var latlngs = coords.map(function(coord) {
-                return [coord[1], coord[0]];
-            });
+            console.log('Tipo de geometria:', geometryType);
 
-            var polygon = L.polygon(latlngs, {
-                color: area.cor || '#00D4FF',
-                fillColor: area.cor || '#00D4FF',
-                fillOpacity: 0.15,
-                weight: 2,
-                dashArray: '5, 5'
-            });
+            if (geometryType === 'Polygon') {
+                // Polígono
+                var coords = geometry.coordinates[0];
+                var latlngs = coords.map(function(coord) {
+                    return [coord[1], coord[0]];
+                });
 
-            polygon.areaId = area.id;
-            polygon.areaNome = area.nome;
+                layer = L.polygon(latlngs, {
+                    color: cor,
+                    fillColor: cor,
+                    fillOpacity: 0.15,
+                    weight: 2,
+                    dashArray: '5, 5'
+                });
 
-            adicionarPopupArea(polygon, area);
-            mapLayers.areasObservacao.addLayer(polygon);
-            console.log('Área adicionada com sucesso:', area.nome);
+            } else if (geometryType === 'LineString') {
+                // Linha/Rota
+                var coords = geometry.coordinates;
+                var latlngs = coords.map(function(coord) {
+                    return [coord[1], coord[0]];
+                });
+
+                layer = L.polyline(latlngs, {
+                    color: cor,
+                    weight: 4,
+                    opacity: 0.8,
+                    dashArray: '10, 5'
+                });
+
+            } else if (geometryType === 'Point') {
+                // Ponto/Marcador
+                var coord = geometry.coordinates;
+                layer = L.circleMarker([coord[1], coord[0]], {
+                    radius: 10,
+                    color: cor,
+                    fillColor: cor,
+                    fillOpacity: 0.6,
+                    weight: 2
+                });
+
+            } else if (geometryType === 'GeometryCollection') {
+                // Múltiplas geometrias - renderizar cada uma
+                geometry.geometries.forEach(function(geom, idx) {
+                    var subArea = Object.assign({}, area);
+                    subArea.geojson = { type: 'Feature', geometry: geom };
+                    subArea.nome = area.nome + ' (' + (idx + 1) + ')';
+                    adicionarAreaNoMapa(subArea);
+                });
+                return;
+
+            } else {
+                console.warn('Tipo de geometria não suportado:', geometryType);
+                return;
+            }
+
+            if (layer) {
+                layer.areaId = area.id;
+                layer.areaNome = area.nome;
+                adicionarPopupArea(layer, area);
+                mapLayers.areasObservacao.addLayer(layer);
+                console.log('Área adicionada com sucesso:', area.nome, '(' + geometryType + ')');
+            }
 
         } catch (e) {
             console.error('Erro ao adicionar área no mapa:', e, area);
@@ -3787,6 +3886,322 @@
         </div>
     </div>
 </div>
+
+<!-- ============================================
+     MODAL DE IMPORTAÇÃO KML/KMZ
+     ============================================ -->
+<div id="kmlImportModal" class="mosaic-modal" style="display: none;">
+    <div class="mosaic-modal-content" style="max-width: 500px;">
+        <div class="mosaic-modal-header" style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);">
+            <h2><i class="fas fa-file-import"></i> Importar Planejamento</h2>
+            <button class="mosaic-close-btn" onclick="fecharModalImportarKML()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="mosaic-modal-body" style="padding: 25px;">
+            <!-- Instrucoes -->
+            <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #4CAF50; margin: 0 0 10px 0; font-size: 14px;">
+                    <i class="fas fa-info-circle"></i> Formatos Suportados
+                </h4>
+                <p style="margin: 0; color: #aaa; font-size: 13px;">
+                    Arquivos <strong>KML</strong> ou <strong>KMZ</strong> (Google Earth) contendo poligonos, linhas ou pontos.
+                    Cada elemento sera salvo como uma Area de Observacao.
+                </p>
+            </div>
+
+            <!-- Upload Area -->
+            <div id="kmlDropZone" class="kml-drop-zone" onclick="document.getElementById('kmlFileInput').click();">
+                <input type="file" id="kmlFileInput" accept=".kml,.kmz" style="display: none;" onchange="handleKMLFileSelect(this)">
+                <div class="drop-zone-content">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #4CAF50; margin-bottom: 15px;"></i>
+                    <p style="margin: 0; font-size: 16px; color: #fff;">Clique ou arraste o arquivo aqui</p>
+                    <p style="margin: 5px 0 0 0; font-size: 12px; color: #888;">.kml ou .kmz</p>
+                </div>
+            </div>
+
+            <!-- Arquivo Selecionado -->
+            <div id="kmlFileInfo" style="display: none; margin-top: 15px; padding: 12px; background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-file-code" style="font-size: 24px; color: #00D4FF;"></i>
+                    <div style="flex: 1;">
+                        <p id="kmlFileName" style="margin: 0; font-weight: 600; color: #fff;">arquivo.kml</p>
+                        <p id="kmlFileSize" style="margin: 2px 0 0 0; font-size: 11px; color: #888;">0 KB</p>
+                    </div>
+                    <button onclick="limparArquivoKML()" style="background: none; border: none; color: #ff5555; cursor: pointer; padding: 5px;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Opcoes -->
+            <div style="margin-top: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: #aaa; font-size: 13px;">
+                    <i class="fas fa-tag"></i> Prefixo para nomes (opcional)
+                </label>
+                <input type="text" id="kmlPrefixo" placeholder="Ex: Reveillon 2025, Carnaval..."
+                       style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 14px;">
+            </div>
+
+            <!-- Cor Padrao -->
+            <div style="margin-top: 15px;">
+                <label style="display: block; margin-bottom: 8px; color: #aaa; font-size: 13px;">
+                    <i class="fas fa-palette"></i> Cor padrao das areas
+                </label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="color" id="kmlCorPadrao" value="#00D4FF"
+                           style="width: 50px; height: 40px; border: none; border-radius: 6px; cursor: pointer;">
+                    <span style="color: #888; font-size: 12px;">Usado se o arquivo nao definir cores</span>
+                </div>
+            </div>
+
+            <!-- Tipo: Temporaria ou Permanente -->
+            <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                <label style="display: block; margin-bottom: 12px; color: #fff; font-size: 14px; font-weight: 600;">
+                    <i class="fas fa-clock"></i> Tipo de Area
+                </label>
+                <div style="display: flex; gap: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 6px; flex: 1;">
+                        <input type="radio" name="kmlTipoArea" value="permanente" checked
+                               style="accent-color: #00D4FF;" onchange="toggleAgendamentoKML()">
+                        <span style="color: #fff;"><i class="fas fa-infinity"></i> Permanente</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; background: rgba(255, 152, 0, 0.1); border: 1px solid rgba(255, 152, 0, 0.3); border-radius: 6px; flex: 1;">
+                        <input type="radio" name="kmlTipoArea" value="temporaria"
+                               style="accent-color: #FF9800;" onchange="toggleAgendamentoKML()">
+                        <span style="color: #fff;"><i class="fas fa-hourglass-half"></i> Temporaria</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Agendamento (visivel apenas quando temporaria) -->
+            <div id="kmlAgendamento" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255, 152, 0, 0.1); border: 1px solid rgba(255, 152, 0, 0.3); border-radius: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: #aaa; font-size: 13px;">
+                            <i class="fas fa-play-circle"></i> Inicio (quando aparecer)
+                        </label>
+                        <input type="datetime-local" id="kmlEventoInicio"
+                               style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 13px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: #aaa; font-size: 13px;">
+                            <i class="fas fa-stop-circle"></i> Fim (quando desaparecer)
+                        </label>
+                        <input type="datetime-local" id="kmlEventoFim"
+                               style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 13px;">
+                    </div>
+                </div>
+                <p style="margin: 10px 0 0 0; font-size: 11px; color: #888;">
+                    <i class="fas fa-info-circle"></i> As areas aparecerão automaticamente no horario de inicio e desaparecerão no horario de fim.
+                </p>
+            </div>
+
+            <!-- Progress -->
+            <div id="kmlProgress" style="display: none; margin-top: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <i class="fas fa-spinner fa-spin" style="color: #4CAF50;"></i>
+                    <span id="kmlProgressText" style="color: #fff;">Processando arquivo...</span>
+                </div>
+                <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                    <div id="kmlProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #4CAF50, #00D4FF); transition: width 0.3s;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mosaic-modal-footer">
+            <button class="cancel-btn" onclick="fecharModalImportarKML()">Cancelar</button>
+            <button id="kmlImportBtn" class="start-btn" onclick="importarKML()" disabled style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);">
+                <i class="fas fa-file-import"></i> Importar
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos para drop zone do KML */
+    .kml-drop-zone {
+        border: 2px dashed rgba(76, 175, 80, 0.5);
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(76, 175, 80, 0.05);
+    }
+    .kml-drop-zone:hover {
+        border-color: #4CAF50;
+        background: rgba(76, 175, 80, 0.1);
+    }
+    .kml-drop-zone.dragover {
+        border-color: #4CAF50;
+        background: rgba(76, 175, 80, 0.15);
+        transform: scale(1.02);
+    }
+    .kml-drop-zone.has-file {
+        border-style: solid;
+        border-color: #00D4FF;
+        background: rgba(0, 212, 255, 0.05);
+    }
+</style>
+
+<!-- ============================================
+     MODAL DE GERENCIAMENTO DE IMPORTAÇÕES KML
+     ============================================ -->
+<div class="mosaic-modal-overlay" id="modalGerenciarImportacoes" style="display: none;">
+    <div class="mosaic-modal" style="max-width: 700px; max-height: 80vh;">
+        <div class="mosaic-modal-header">
+            <div class="modal-title-area">
+                <i class="fas fa-folder-open" style="color: #9C27B0;"></i>
+                <h2>Gerenciar Importacoes KML/KMZ</h2>
+            </div>
+            <button class="modal-close-btn" onclick="fecharModalGerenciarImportacoes()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="mosaic-modal-body" style="overflow-y: auto; max-height: 50vh;">
+            <!-- Loading -->
+            <div id="importacoesLoading" style="text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #9C27B0;"></i>
+                <p style="margin-top: 15px; color: #888;">Carregando importacoes...</p>
+            </div>
+
+            <!-- Lista de Importacoes -->
+            <div id="importacoesLista" style="display: none;">
+                <!-- Será preenchido via JavaScript -->
+            </div>
+
+            <!-- Vazio -->
+            <div id="importacoesVazio" style="display: none; text-align: center; padding: 40px;">
+                <i class="fas fa-inbox" style="font-size: 48px; color: #555; margin-bottom: 15px;"></i>
+                <p style="color: #888;">Nenhum arquivo KML/KMZ importado ainda.</p>
+                <button onclick="fecharModalGerenciarImportacoes(); abrirModalImportarKML();"
+                        style="margin-top: 15px; padding: 10px 20px; background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); border: none; border-radius: 6px; color: #fff; cursor: pointer;">
+                    <i class="fas fa-file-import"></i> Importar Arquivo
+                </button>
+            </div>
+        </div>
+
+        <div class="mosaic-modal-footer">
+            <button class="cancel-btn" onclick="fecharModalGerenciarImportacoes()">Fechar</button>
+            <button class="start-btn" onclick="recarregarImportacoes()" style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);">
+                <i class="fas fa-sync-alt"></i> Atualizar
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos para itens de importação */
+    .importacao-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+        transition: all 0.3s ease;
+    }
+    .importacao-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(156, 39, 176, 0.3);
+    }
+    .importacao-item.temporaria {
+        border-left: 3px solid #FF9800;
+    }
+    .importacao-item.permanente {
+        border-left: 3px solid #00D4FF;
+    }
+    .importacao-item.inativa {
+        opacity: 0.5;
+    }
+    .importacao-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .importacao-nome {
+        font-weight: 600;
+        color: #fff;
+        font-size: 14px;
+    }
+    .importacao-badges {
+        display: flex;
+        gap: 6px;
+    }
+    .importacao-badge {
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+    .badge-temporaria {
+        background: rgba(255, 152, 0, 0.2);
+        color: #FF9800;
+    }
+    .badge-permanente {
+        background: rgba(0, 212, 255, 0.2);
+        color: #00D4FF;
+    }
+    .badge-areas {
+        background: rgba(156, 39, 176, 0.2);
+        color: #9C27B0;
+    }
+    .importacao-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 10px;
+    }
+    .importacao-info span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .importacao-acoes {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .importacao-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s ease;
+    }
+    .btn-editar {
+        background: rgba(0, 212, 255, 0.2);
+        color: #00D4FF;
+    }
+    .btn-editar:hover {
+        background: rgba(0, 212, 255, 0.3);
+    }
+    .btn-toggle {
+        background: rgba(255, 152, 0, 0.2);
+        color: #FF9800;
+    }
+    .btn-toggle:hover {
+        background: rgba(255, 152, 0, 0.3);
+    }
+    .btn-excluir {
+        background: rgba(244, 67, 54, 0.2);
+        color: #F44336;
+    }
+    .btn-excluir:hover {
+        background: rgba(244, 67, 54, 0.3);
+    }
+</style>
 
 <!-- ============================================
      MODAL DE ALERTA - OCORRÊNCIA EM ÁREA DE OBSERVAÇÃO
@@ -4850,7 +5265,449 @@ async function inicializarSistemaAlertas() {
 document.addEventListener('DOMContentLoaded', function() {
     // Aguardar um pouco para outras inicializações do mapa
     setTimeout(inicializarSistemaAlertas, 3000);
+
+    // Inicializar drag and drop para KML
+    inicializarKMLDropZone();
 });
+
+// ============================================
+// FUNÇÕES DE IMPORTAÇÃO KML/KMZ
+// ============================================
+
+var kmlArquivoSelecionado = null;
+
+function toggleAreasSubmenu(event) {
+    if (event) event.stopPropagation();
+    var submenu = document.getElementById('areasSubmenu');
+    var parentItem = submenu ? submenu.closest('.layer-item-group') : null;
+    var toggleIcon = parentItem ? parentItem.querySelector('.submenu-toggle i') : null;
+
+    if (submenu) {
+        submenu.classList.toggle('expanded');
+        if (toggleIcon) {
+            toggleIcon.classList.toggle('fa-chevron-down');
+            toggleIcon.classList.toggle('fa-chevron-up');
+        }
+    }
+}
+
+function abrirModalImportarKML() {
+    console.log('abrirModalImportarKML() chamada - versao 2025-12-30 19:30');
+    var modal = document.getElementById('kmlImportModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        limparArquivoKML();
+        // Verificar se campos novos existem
+        var tipoArea = document.querySelector('input[name="kmlTipoArea"]');
+        var gerenciarBtn = document.querySelector('[onclick*="abrirModalGerenciarImportacoes"]');
+        console.log('Campo Tipo Area:', tipoArea ? 'EXISTE' : 'NAO EXISTE');
+        console.log('Botao Gerenciar:', gerenciarBtn ? 'EXISTE' : 'NAO EXISTE');
+        if (!tipoArea) {
+            alert('ATENCAO: Template desatualizado! Pressione Ctrl+Shift+R para atualizar.');
+        }
+    }
+}
+
+function fecharModalImportarKML() {
+    var modal = document.getElementById('kmlImportModal');
+    if (modal) {
+        modal.style.display = 'none';
+        limparArquivoKML();
+    }
+}
+
+function inicializarKMLDropZone() {
+    var dropZone = document.getElementById('kmlDropZone');
+    if (!dropZone) return;
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
+        dropZone.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    ['dragenter', 'dragover'].forEach(function(eventName) {
+        dropZone.addEventListener(eventName, function() {
+            dropZone.classList.add('dragover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(function(eventName) {
+        dropZone.addEventListener(eventName, function() {
+            dropZone.classList.remove('dragover');
+        });
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        var files = e.dataTransfer.files;
+        if (files.length > 0) {
+            processarArquivoKML(files[0]);
+        }
+    });
+}
+
+function handleKMLFileSelect(input) {
+    if (input.files && input.files[0]) {
+        processarArquivoKML(input.files[0]);
+    }
+}
+
+function processarArquivoKML(file) {
+    var fileName = file.name.toLowerCase();
+    if (!fileName.endsWith('.kml') && !fileName.endsWith('.kmz')) {
+        showToast('Formato invalido. Use arquivos .kml ou .kmz', 'error');
+        return;
+    }
+
+    kmlArquivoSelecionado = file;
+
+    // Atualizar UI
+    document.getElementById('kmlDropZone').classList.add('has-file');
+    document.getElementById('kmlFileInfo').style.display = 'block';
+    document.getElementById('kmlFileName').textContent = file.name;
+    document.getElementById('kmlFileSize').textContent = formatarTamanhoArquivo(file.size);
+    document.getElementById('kmlImportBtn').disabled = false;
+}
+
+function limparArquivoKML() {
+    kmlArquivoSelecionado = null;
+    var dropZone = document.getElementById('kmlDropZone');
+    var fileInfo = document.getElementById('kmlFileInfo');
+    var fileInput = document.getElementById('kmlFileInput');
+    var importBtn = document.getElementById('kmlImportBtn');
+    var progress = document.getElementById('kmlProgress');
+
+    if (dropZone) dropZone.classList.remove('has-file');
+    if (fileInfo) fileInfo.style.display = 'none';
+    if (fileInput) fileInput.value = '';
+    if (importBtn) importBtn.disabled = true;
+    if (progress) progress.style.display = 'none';
+
+    // Limpar campos
+    var prefixo = document.getElementById('kmlPrefixo');
+    if (prefixo) prefixo.value = '';
+
+    // Resetar tipo e agendamento
+    var radioPermanente = document.querySelector('input[name="kmlTipoArea"][value="permanente"]');
+    if (radioPermanente) radioPermanente.checked = true;
+    var agendamento = document.getElementById('kmlAgendamento');
+    if (agendamento) agendamento.style.display = 'none';
+    var eventoInicio = document.getElementById('kmlEventoInicio');
+    var eventoFim = document.getElementById('kmlEventoFim');
+    if (eventoInicio) eventoInicio.value = '';
+    if (eventoFim) eventoFim.value = '';
+}
+
+function formatarTamanhoArquivo(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    var k = 1024;
+    var sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    var i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Toggle exibição do agendamento
+function toggleAgendamentoKML() {
+    var tipoArea = document.querySelector('input[name="kmlTipoArea"]:checked').value;
+    var agendamentoDiv = document.getElementById('kmlAgendamento');
+
+    if (tipoArea === 'temporaria') {
+        agendamentoDiv.style.display = 'block';
+        // Definir data/hora atual como default para inicio
+        var agora = new Date();
+        var agoraStr = agora.toISOString().slice(0, 16);
+        document.getElementById('kmlEventoInicio').value = agoraStr;
+    } else {
+        agendamentoDiv.style.display = 'none';
+    }
+}
+
+async function importarKML() {
+    if (!kmlArquivoSelecionado) {
+        showToast('Selecione um arquivo primeiro', 'error');
+        return;
+    }
+
+    var prefixo = document.getElementById('kmlPrefixo').value.trim();
+    var cor = document.getElementById('kmlCorPadrao').value;
+    var progressDiv = document.getElementById('kmlProgress');
+    var progressBar = document.getElementById('kmlProgressBar');
+    var progressText = document.getElementById('kmlProgressText');
+    var importBtn = document.getElementById('kmlImportBtn');
+
+    // Capturar tipo e agendamento
+    var tipoArea = document.querySelector('input[name="kmlTipoArea"]:checked').value;
+    var temporaria = tipoArea === 'temporaria';
+    var eventoInicio = document.getElementById('kmlEventoInicio').value;
+    var eventoFim = document.getElementById('kmlEventoFim').value;
+
+    // Mostrar progresso
+    progressDiv.style.display = 'block';
+    progressBar.style.width = '10%';
+    progressText.textContent = 'Enviando arquivo...';
+    importBtn.disabled = true;
+
+    try {
+        var formData = new FormData();
+        formData.append('file', kmlArquivoSelecionado);
+        if (prefixo) formData.append('prefixo', prefixo);
+        formData.append('cor', cor);
+
+        // Adicionar parâmetros de agendamento
+        formData.append('temporaria', temporaria);
+        if (temporaria && eventoInicio) {
+            formData.append('evento_inicio', eventoInicio);
+        }
+        if (temporaria && eventoFim) {
+            formData.append('evento_fim', eventoFim);
+        }
+
+        progressBar.style.width = '30%';
+        progressText.textContent = 'Processando KML...';
+
+        var response = await fetch('/integracity/api/areas/importar-kml/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        });
+
+        progressBar.style.width = '70%';
+        progressText.textContent = 'Criando areas...';
+
+        var data = await response.json();
+
+        progressBar.style.width = '100%';
+
+        if (data.success) {
+            var total = data.total || 0;
+            progressText.textContent = total + ' area(s) importada(s)!';
+
+            // Mostrar toast de sucesso
+            showToast(total + ' area(s) de observacao importada(s) com sucesso!', 'success');
+
+            // Recarregar areas no mapa
+            if (typeof carregarAreasExistentes === 'function') {
+                setTimeout(function() {
+                    carregarAreasExistentes();
+                }, 500);
+            }
+
+            // Fechar modal após um momento
+            setTimeout(function() {
+                fecharModalImportarKML();
+            }, 1500);
+
+            // Mostrar erros se houver
+            if (data.erros && data.erros.length > 0) {
+                console.warn('Erros durante importacao:', data.erros);
+                showToast('Alguns elementos nao puderam ser importados. Verifique o console.', 'warning');
+            }
+        } else {
+            throw new Error(data.error || 'Erro desconhecido');
+        }
+
+    } catch (error) {
+        console.error('Erro ao importar KML:', error);
+        progressDiv.style.display = 'none';
+        importBtn.disabled = false;
+        showToast('Erro ao importar: ' + error.message, 'error');
+    }
+}
+
+// ============================================
+// FUNÇÕES DE GERENCIAMENTO DE IMPORTAÇÕES
+// ============================================
+
+function abrirModalGerenciarImportacoes() {
+    document.getElementById('modalGerenciarImportacoes').style.display = 'flex';
+    carregarImportacoes();
+}
+
+function fecharModalGerenciarImportacoes() {
+    document.getElementById('modalGerenciarImportacoes').style.display = 'none';
+}
+
+async function carregarImportacoes() {
+    var loading = document.getElementById('importacoesLoading');
+    var lista = document.getElementById('importacoesLista');
+    var vazio = document.getElementById('importacoesVazio');
+
+    loading.style.display = 'block';
+    lista.style.display = 'none';
+    vazio.style.display = 'none';
+
+    try {
+        var response = await fetch('/integracity/api/areas/importacoes/', {
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+
+        var data = await response.json();
+        loading.style.display = 'none';
+
+        if (data.success && data.importacoes && data.importacoes.length > 0) {
+            renderizarImportacoes(data.importacoes);
+            lista.style.display = 'block';
+        } else {
+            vazio.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Erro ao carregar importacoes:', error);
+        loading.style.display = 'none';
+        vazio.style.display = 'block';
+    }
+}
+
+function recarregarImportacoes() {
+    carregarImportacoes();
+}
+
+function renderizarImportacoes(importacoes) {
+    var container = document.getElementById('importacoesLista');
+    container.innerHTML = '';
+
+    importacoes.forEach(function(imp) {
+        var tipoClass = imp.temporaria ? 'temporaria' : 'permanente';
+        var tipoBadge = imp.temporaria
+            ? '<span class="importacao-badge badge-temporaria"><i class="fas fa-hourglass-half"></i> Temporaria</span>'
+            : '<span class="importacao-badge badge-permanente"><i class="fas fa-infinity"></i> Permanente</span>';
+
+        var dataImport = imp.data_importacao ? new Date(imp.data_importacao).toLocaleString('pt-BR') : '-';
+        var dataInicio = imp.evento_inicio ? new Date(imp.evento_inicio).toLocaleString('pt-BR') : '-';
+        var dataFim = imp.evento_fim ? new Date(imp.evento_fim).toLocaleString('pt-BR') : '-';
+
+        var html = '<div class="importacao-item ' + tipoClass + (imp.ativa ? '' : ' inativa') + '">';
+        html += '<div class="importacao-header">';
+        html += '<span class="importacao-nome"><i class="fas fa-file-code"></i> ' + (imp.arquivo || 'Arquivo desconhecido') + '</span>';
+        html += '<div class="importacao-badges">';
+        html += tipoBadge;
+        html += '<span class="importacao-badge badge-areas">' + imp.total_areas + ' areas</span>';
+        if (!imp.ativa) {
+            html += '<span class="importacao-badge" style="background: rgba(244,67,54,0.2); color: #F44336;"><i class="fas fa-eye-slash"></i> Inativa</span>';
+        }
+        html += '</div></div>';
+
+        html += '<div class="importacao-info">';
+        html += '<span><i class="fas fa-calendar-plus"></i> Importado: ' + dataImport + '</span>';
+        if (imp.temporaria) {
+            html += '<span><i class="fas fa-play-circle"></i> Inicio: ' + dataInicio + '</span>';
+            html += '<span><i class="fas fa-stop-circle"></i> Fim: ' + dataFim + '</span>';
+        }
+        html += '</div>';
+
+        html += '<div class="importacao-acoes">';
+        html += '<button class="importacao-btn btn-toggle" onclick="toggleGrupoAtivo(\'' + imp.grupo_id + '\', ' + imp.ativa + ')" title="' + (imp.ativa ? 'Desativar' : 'Ativar') + '">';
+        html += '<i class="fas fa-' + (imp.ativa ? 'eye-slash' : 'eye') + '"></i> ' + (imp.ativa ? 'Desativar' : 'Ativar');
+        html += '</button>';
+        html += '<button class="importacao-btn btn-excluir" onclick="confirmarExcluirGrupo(\'' + imp.grupo_id + '\', \'' + (imp.arquivo || 'Arquivo') + '\', ' + imp.total_areas + ')" title="Excluir todas as areas">';
+        html += '<i class="fas fa-trash"></i> Excluir';
+        html += '</button>';
+        html += '</div>';
+
+        html += '</div>';
+
+        container.innerHTML += html;
+    });
+}
+
+async function toggleGrupoAtivo(grupoId, atualmenteAtivo) {
+    try {
+        // Buscar todas as áreas do grupo
+        var response = await fetch('/integracity/api/areas/listar/', {
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+        var data = await response.json();
+
+        if (data.success) {
+            // Filtrar áreas deste grupo
+            var areasDoGrupo = data.areas.filter(function(a) {
+                return a.grupo_importacao === grupoId;
+            });
+
+            // Toggle cada área
+            for (var area of areasDoGrupo) {
+                await fetch('/integracity/api/areas/' + area.id + '/toggle-ativa/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ ativa: !atualmenteAtivo })
+                });
+            }
+
+            showToast('Areas ' + (atualmenteAtivo ? 'desativadas' : 'ativadas') + ' com sucesso!', 'success');
+
+            // Recarregar lista
+            carregarImportacoes();
+
+            // Recarregar áreas no mapa
+            if (typeof carregarAreasExistentes === 'function') {
+                carregarAreasExistentes();
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao alternar estado:', error);
+        showToast('Erro ao alternar estado das areas', 'error');
+    }
+}
+
+function confirmarExcluirGrupo(grupoId, nomeArquivo, totalAreas) {
+    if (confirm('Tem certeza que deseja EXCLUIR permanentemente ' + totalAreas + ' areas do arquivo "' + nomeArquivo + '"?\n\nEsta acao nao pode ser desfeita!')) {
+        excluirGrupo(grupoId);
+    }
+}
+
+async function excluirGrupo(grupoId) {
+    try {
+        var response = await fetch('/integracity/api/areas/grupo/' + grupoId + '/excluir/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+
+        var data = await response.json();
+
+        if (data.success) {
+            showToast(data.mensagem || 'Areas excluidas com sucesso!', 'success');
+
+            // Recarregar lista
+            carregarImportacoes();
+
+            // Recarregar áreas no mapa
+            if (typeof carregarAreasExistentes === 'function') {
+                carregarAreasExistentes();
+            }
+        } else {
+            showToast(data.error || 'Erro ao excluir', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao excluir grupo:', error);
+        showToast('Erro ao excluir areas', 'error');
+    }
+}
+
+// DEBUG: Versão do template - 2025-12-30 19:25 BRT
+console.log('=== TEMPLATE ATUALIZADO: 2025-12-30 19:25 BRT ===');
+console.log('Funcoes disponiveis: abrirModalImportarKML, toggleAgendamentoKML, abrirModalGerenciarImportacoes');
+
+// Expor funções globalmente
+window.abrirModalImportarKML = abrirModalImportarKML;
+window.fecharModalImportarKML = fecharModalImportarKML;
+window.handleKMLFileSelect = handleKMLFileSelect;
+window.limparArquivoKML = limparArquivoKML;
+window.importarKML = importarKML;
+window.toggleAreasSubmenu = toggleAreasSubmenu;
+window.toggleAgendamentoKML = toggleAgendamentoKML;
+window.abrirModalGerenciarImportacoes = abrirModalGerenciarImportacoes;
+window.fecharModalGerenciarImportacoes = fecharModalGerenciarImportacoes;
+window.carregarImportacoes = carregarImportacoes;
+window.recarregarImportacoes = recarregarImportacoes;
+window.toggleGrupoAtivo = toggleGrupoAtivo;
+window.confirmarExcluirGrupo = confirmarExcluirGrupo;
+window.excluirGrupo = excluirGrupo;
+
 </script>
 
 {% endblock %}
