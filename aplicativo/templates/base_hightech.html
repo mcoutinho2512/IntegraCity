@@ -107,7 +107,7 @@
                 <i class="fas fa-cog"></i>
             </button>
 
-            <div class="user-info">
+            <div class="user-info" onclick="showProfile()" title="Editar Perfil" style="cursor: pointer;">
                 <div class="user-avatar">
                     {% if user.first_name %}
                         {{ user.first_name.0|upper }}{{ user.last_name.0|upper|default:"" }}
@@ -257,7 +257,7 @@
                     <div class="settings-section">
                         <h4><i class="fas fa-clock"></i> Tempo em Cada Ocorrencia</h4>
                         <div class="settings-slider-container">
-                            <input type="range" id="settingTourTimeOcorrencia" min="2" max="15" value="6" class="settings-slider">
+                            <input type="range" id="settingTourTimeOcorrencia" min="3" max="60" value="6" class="settings-slider">
                             <div class="settings-slider-value"><span id="tourTimeOcorrenciaValue">6</span> segundos</div>
                         </div>
                     </div>
@@ -265,7 +265,7 @@
                     <div class="settings-section">
                         <h4><i class="fas fa-home"></i> Tempo na Posicao Original</h4>
                         <div class="settings-slider-container">
-                            <input type="range" id="settingTourTimeOriginal" min="2" max="15" value="6" class="settings-slider">
+                            <input type="range" id="settingTourTimeOriginal" min="3" max="60" value="6" class="settings-slider">
                             <div class="settings-slider-value"><span id="tourTimeOriginalValue">6</span> segundos</div>
                         </div>
                     </div>
@@ -510,7 +510,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <!-- High-Tech JS -->
-    <script src="{% static 'js/hightech.js' %}?v={% now 'U' %}"></script>
+    <script src="{% static 'js/hightech.js' %}?v=20260101_profile"></script>
 
     {% block extra_js %}{% endblock %}
 

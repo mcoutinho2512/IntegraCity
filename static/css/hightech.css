@@ -3000,13 +3000,15 @@ h1, h2, h3, h4, h5, h6,
 
 /* Container do Video - WRAPPER RESPONSIVO */
 .camera-video-container {
-    flex: 1;
+    flex: 1 1 auto;
     background: #000;
     position: relative;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 0;
+    min-width: 0;
 }
 
 /* ====================================
@@ -3024,6 +3026,7 @@ h1, h2, h3, h4, h5, h6,
     height: 100% !important;
     background: #000 !important;
     overflow: hidden !important;
+    display: block !important;
 }
 
 /* Iframe preenche exatamente o wrapper */
@@ -3034,6 +3037,7 @@ h1, h2, h3, h4, h5, h6,
     width: 100% !important;
     height: 100% !important;
     border: none !important;
+    display: block !important;
 }
 
 /* Video e img */
@@ -5015,12 +5019,14 @@ h1, h2, h3, h4, h5, h6,
     flex-shrink: 0;
 }
 
-.notification-icon.ocorrencia {
+.notification-icon.ocorrencia,
+.notification-icon.ocorrencias {
     background: var(--red-glow);
     color: var(--red-alert);
 }
 
-.notification-icon.alerta {
+.notification-icon.alerta,
+.notification-icon.alertas {
     background: var(--yellow-glow);
     color: var(--yellow-warn);
 }

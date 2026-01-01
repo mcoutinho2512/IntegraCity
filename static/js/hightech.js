@@ -331,12 +331,18 @@ function loadNotifications() {
         list.innerHTML = '<div class="notifications-loading"><i class="fas fa-spinner fa-spin"></i> Carregando notificacoes...</div>';
     }
 
+    console.log('📢 loadNotifications() chamado');
+
     // Load notifications from multiple sources
     return Promise.all([
         loadOcorrenciasNotifications(),
         loadSystemNotifications()
     ]).then(([ocorrencias, sistema]) => {
+        console.log('📢 Ocorrencias carregadas:', ocorrencias.length, ocorrencias);
+        console.log('📢 Sistema carregadas:', sistema.length);
+
         notificationsData = [...ocorrencias, ...sistema];
+        console.log('📢 Total notificationsData:', notificationsData.length);
 
         // Sort by date (newest first)
         notificationsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -354,27 +360,36 @@ function loadNotifications() {
 }
 
 function loadOcorrenciasNotifications() {
-    return fetch('/integracity/api/ocorrencias/mapa/')
-        .then(response => response.json())
+    return fetch('/integracity/api/ocorrencias/mapa/', {
+        credentials: 'same-origin'
+    })
+        .then(response => {
+            if (!response.ok) {
+                console.log('Ocorrencias API response:', response.status);
+                return { data: [] };
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Ocorrencias API data:', data);
             const ocorrencias = data.data || data.ocorrencias || [];
 
             // Get last 10 recent occurrences
             return ocorrencias.slice(0, 10).map(oc => ({
                 id: oc.id,
-                type: 'ocorrencia',
-                title: oc.titulo || 'Nova Ocorrencia',
-                description: oc.categoria || oc.status || 'Ocorrencia registrada',
-                timestamp: oc.criado_em || new Date().toISOString(),
+                type: 'ocorrencias',
+                title: oc.titulo || oc.protocolo || 'Nova Ocorrencia',
+                description: oc.categoria || oc.status_display || oc.status || 'Ocorrencia registrada',
+                timestamp: oc.data_abertura || oc.criado_em || new Date().toISOString(),
                 read: false,
                 icon: 'fa-exclamation-circle',
-                iconClass: 'ocorrencia',
+                iconClass: 'ocorrencias',
                 latitude: oc.latitude,
                 longitude: oc.longitude
             }));
         })
         .catch(error => {
-            console.log('Ocorrencias API unavailable:', error);
+            console.log('Ocorrencias API error:', error);
             return [];
         });
 }
@@ -426,11 +441,17 @@ function renderNotifications() {
     const list = document.getElementById('notificationsList');
     if (!list) return;
 
+    console.log('📢 renderNotifications() - filtro:', currentNotificationFilter);
+    console.log('📢 Total em notificationsData:', notificationsData.length);
+    console.log('📢 Tipos disponíveis:', notificationsData.map(n => n.type));
+
     // Filter notifications based on current tab
     let filtered = notificationsData;
     if (currentNotificationFilter !== 'todas') {
         filtered = notificationsData.filter(n => n.type === currentNotificationFilter);
     }
+
+    console.log('📢 Após filtro:', filtered.length);
 
     if (filtered.length === 0) {
         list.innerHTML = `
@@ -624,6 +645,18 @@ function showSettings() {
         console.log('⚙️ Modal ativado');
     } else {
         console.error('❌ Modal de configurações não encontrado!');
+    }
+}
+
+// Show profile tab directly
+function showProfile() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+        loadSettings();
+        populateSettingsForm();
+        modal.classList.add('active');
+        // Switch to profile tab
+        switchSettingsTab('perfil');
     }
 }
 
@@ -1185,6 +1218,7 @@ window.IntegraCity = {
     addSystemNotification,
     updateNotificationBadge,
     showSettings,
+    showProfile,
     closeSettings,
     switchSettingsTab,
     saveSettings,
