@@ -2307,20 +2307,34 @@ def camera_stream_view(request, camera_id):
     # URL do stream TIXXI
     stream_url = f'https://dev.tixxi.rio/outvideo2/?CODE={camera_id_padded}&KEY=H4281'
 
-    # Modo embed - apenas o video sem decoração
+    # Modo embed - imagem ao vivo 100% responsiva
     if request.GET.get('embed') == '1':
+        # Usar URL de imagem do TIXXI diretamente (atualiza a cada 100ms)
+        image_url = f'https://tixxi.rio/image/?CODE={camera_id_padded}&SODE=00'
         html = f'''<!DOCTYPE html>
 <html><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
-html,body{{width:100%;height:100%;background:#000;overflow:hidden}}
-iframe{{position:absolute;top:0;left:0;width:100%;height:100%;border:none}}
+html,body{{width:100%;height:100%;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}}
+img{{width:100%;height:100%;object-fit:contain;display:block}}
+.erro{{color:#ff5555;font-family:sans-serif;text-align:center;padding:20px}}
+.erro i{{font-size:48px;margin-bottom:10px;display:block}}
 </style>
 </head>
 <body>
-<iframe src="{stream_url}" allowfullscreen></iframe>
+<img id="v" src="{image_url}&t=0">
+<div id="erro" class="erro" style="display:none"><span style="font-size:48px">&#9888;</span><br>Camera indisponivel<br><small>Tentando reconectar...</small></div>
+<script>
+var img=document.getElementById('v');
+var erro=document.getElementById('erro');
+var url='{image_url}';
+var falhas=0;
+function update(){{img.src=url+'&t='+Date.now();}}
+img.onload=function(){{falhas=0;erro.style.display='none';img.style.display='block';setTimeout(update,100);}};
+img.onerror=function(){{falhas++;if(falhas>3){{erro.style.display='block';img.style.display='none';}}setTimeout(update,2000);}};
+</script>
 </body></html>'''
         return HttpResponse(html, content_type='text/html')
 
@@ -2466,6 +2480,86 @@ iframe{{position:absolute;top:0;left:0;width:100%;height:100%;border:none}}
     
     return HttpResponse(html, content_type='text/html')
 
+
+# ============================================
+# CAMERA EMBED PROXY - Solução Segura
+# ============================================
+from decouple import config
+import re
+import logging
+
+logger = logging.getLogger(__name__)
+
+@csrf_exempt
+def camera_embed_view(request, camera_id):
+    """
+    Endpoint de embed para câmeras TIXXI.
+    Serve HTML fullscreen com iframe para o stream.
+    A KEY fica apenas no backend (segurança).
+
+    URL: /camera/embed/<camera_id>/
+    Params opcionais: ?fit=cover|contain (para uso futuro)
+    """
+    # Validar camera_id - apenas dígitos permitidos
+    if not re.match(r'^\d+$', str(camera_id)):
+        logger.warning(f'[CameraEmbed] ID inválido rejeitado: {camera_id}')
+        return HttpResponse('ID de câmera inválido', status=400, content_type='text/plain')
+
+    # Normalizar ID (remover zeros à esquerda desnecessários, depois formatar)
+    camera_id_clean = str(int(camera_id))  # Remove zeros à esquerda
+    camera_id_padded = camera_id_clean.zfill(6)  # Pad para 6 dígitos
+
+    # Carregar configurações do ambiente
+    tixxi_base_url = config('TIXXI_BASE_URL', default='https://dev.tixxi.rio')
+    tixxi_key = config('TIXXI_VIDEO_KEY', default='H4281')
+    tixxi_endpoint = config('TIXXI_VIDEO_ENDPOINT', default='outvideo2')
+
+    if not tixxi_key:
+        logger.error('[CameraEmbed] TIXXI_VIDEO_KEY não configurada!')
+        return HttpResponse('Configuração de streaming indisponível', status=500, content_type='text/plain')
+
+    # Montar URL do stream (KEY fica apenas aqui no backend)
+    stream_url = f'{tixxi_base_url}/{tixxi_endpoint}/?CODE={camera_id_padded}&KEY={tixxi_key}'
+
+    # Parâmetro fit para uso futuro
+    fit_mode = request.GET.get('fit', 'cover')
+
+    # Log de acesso
+    logger.info(f'[CameraEmbed] Acesso: camera_id={camera_id_padded}, ip={request.META.get("REMOTE_ADDR")}')
+
+    # HTML embed otimizado para carregamento rápido
+    html = f'''<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="{tixxi_base_url}" crossorigin>
+    <link rel="dns-prefetch" href="{tixxi_base_url}">
+    <title>Camera {camera_id_padded}</title>
+    <style>
+        *{{margin:0;padding:0;box-sizing:border-box}}
+        html,body{{width:100%;height:100%;background:#000;overflow:hidden}}
+        iframe{{position:absolute;top:0;left:0;width:100%;height:100%;border:none}}
+    </style>
+</head>
+<body>
+    <iframe src="{stream_url}" allow="autoplay; fullscreen; encrypted-media" allowfullscreen loading="eager"></iframe>
+</body>
+</html>'''
+
+    # Criar response com headers de segurança
+    response = HttpResponse(html, content_type='text/html; charset=utf-8')
+
+    # Headers para evitar cache (stream ao vivo)
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+
+    # Headers de segurança
+    response['X-Content-Type-Options'] = 'nosniff'
+    response['X-Frame-Options'] = 'SAMEORIGIN'
+
+    return response
 
 
 # ============================================

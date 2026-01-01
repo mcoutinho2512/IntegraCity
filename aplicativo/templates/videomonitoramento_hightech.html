@@ -355,22 +355,28 @@
     color: #000;
 }
 
-/* CAMERAS GRID */
+/* CAMERAS GRID - 5 cameras por linha */
 .video-cameras-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: 16px;
 }
 
-@media (min-width: 1600px) {
+@media (max-width: 1400px) {
     .video-cameras-grid {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(4, 1fr);
     }
 }
 
-@media (min-width: 1200px) and (max-width: 1599px) {
+@media (max-width: 1100px) {
     .video-cameras-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 800px) {
+    .video-cameras-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -624,14 +630,13 @@
     to { transform: rotate(360deg); }
 }
 
-/* MODAL */
+/* ============================================
+   MODAL DE PLAYER - SOLUÇÃO RESPONSIVA
+   ============================================ */
 .video-modal {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: rgba(0, 0, 0, 0.95);
     z-index: 10000;
     align-items: center;
@@ -645,20 +650,21 @@
 .video-modal-content {
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: 16px;
-    width: 95vw;
-    max-width: 1600px;
-    height: 90vh;
+    border-radius: 12px;
+    width: 90vw;
+    max-width: 1000px;
+    height: auto;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
 .video-modal-header {
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
+    padding: 12px 16px;
     background: var(--bg-card);
     border-bottom: 1px solid var(--border-color);
 }
@@ -668,18 +674,26 @@
     align-items: center;
     gap: 10px;
     color: var(--cyan);
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     font-family: 'Rajdhani', sans-serif;
+    flex: 1;
+    min-width: 0;
+}
+
+.video-modal-title span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .video-modal-close {
     background: rgba(255, 0, 85, 0.1);
     border: 1px solid rgba(255, 0, 85, 0.3);
     color: var(--red-alert);
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
@@ -693,29 +707,127 @@
 }
 
 .video-modal-body {
-    padding: 20px;
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background: #000;
+}
+
+/* PLAYER CONTAINER */
+#player-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
     overflow: hidden;
 }
 
-#player-container {
-    flex: 1;
-    width: 100%;
-    min-height: 0;
-    background: #000;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 #player-container iframe {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     border: none;
-    border-radius: 8px;
+    z-index: 1;
+}
+
+/* Overlay AO VIVO */
+#player-container .player-live-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(255, 0, 85, 0.9);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Rajdhani', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 5;
+    text-transform: uppercase;
+}
+
+#player-container .player-live-badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    animation: pulse-live 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-live {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Loading */
+#player-container .player-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.8);
+    color: var(--cyan);
+    font-size: 14px;
+    font-family: 'Rajdhani', sans-serif;
+    gap: 12px;
+    z-index: 10;
+}
+
+#player-container .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 212, 255, 0.2);
+    border-top-color: var(--cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Erro */
+#player-container .player-error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.9);
+    color: var(--red-alert);
+    font-family: 'Rajdhani', sans-serif;
+    gap: 10px;
+    z-index: 10;
+}
+
+#player-container .player-error i {
+    font-size: 48px;
+}
+
+#player-container .player-error button {
+    margin-top: 10px;
+    background: rgba(0, 212, 255, 0.2);
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+#player-container .player-error button:hover {
+    background: rgba(0, 212, 255, 0.3);
 }
 
 /* RESPONSIVE */
@@ -743,6 +855,114 @@
     .video-cameras-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* PAGINACAO */
+.paginacao-container {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.paginacao {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pag-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: var(--cyan, #00D4FF);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pag-btn:hover:not(.disabled):not(.active) {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: var(--cyan, #00D4FF);
+    transform: translateY(-2px);
+}
+
+.pag-btn.active {
+    background: var(--cyan, #00D4FF);
+    color: #000;
+    border-color: var(--cyan, #00D4FF);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+}
+
+.pag-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pag-ellipsis {
+    color: var(--text-muted, #6b6b6b);
+    padding: 0 8px;
+}
+
+.pag-info {
+    color: var(--text-muted, #6b6b6b);
+    font-size: 13px;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+/* Indicador AO VIVO melhorado */
+.video-camera-thumbnail .live-indicator {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 0, 85, 0.95);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(255, 0, 85, 0.4);
+}
+
+.video-camera-thumbnail .live-dot {
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    animation: livePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* Stream thumbnail */
+.video-camera-thumbnail .thumbnail-stream {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    z-index: 1;
 }
 </style>
 {% endblock %}
@@ -874,6 +1094,9 @@
         </div>
     </div>
 
+    <!-- PAGINACAO -->
+    <div id="paginacao-container" class="paginacao-container"></div>
+
     <!-- GRID FAVORITAS -->
     <div id="grid-favoritas" class="video-cameras-grid" style="display: none;">
         <div class="video-empty-state">
@@ -896,7 +1119,11 @@
         </div>
         <div class="video-modal-body">
             <div id="player-container">
-                <i class="bi bi-play-circle" style="font-size: 64px; color: var(--cyan);"></i>
+                <div class="player-live-badge">AO VIVO</div>
+                <div class="player-loading" id="player-loading" style="display:none;">
+                    <div class="loading-spinner"></div>
+                    <span>Conectando...</span>
+                </div>
             </div>
         </div>
     </div>
@@ -905,6 +1132,7 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="{% static 'js/cameras_thumbnails.js' %}?v={% now 'U' %}"></script>
 <script>
 // ========================================
 // VARIAVEIS GLOBAIS
@@ -1131,6 +1359,10 @@ function limparFiltros() {
 // ========================================
 // RENDERIZAR GRID
 // ========================================
+// Variaveis de paginacao
+let paginaAtual = 1;
+const CAMERAS_POR_PAGINA = 5;
+
 function renderizarGrid() {
     const grid = document.getElementById('grid-ao-vivo');
 
@@ -1142,21 +1374,137 @@ function renderizarGrid() {
                 <p>Nenhuma camera encontrada com os filtros atuais</p>
             </div>
         `;
+        renderizarPaginacao(0, 0);
         return;
     }
 
-    // Limitar a 16 cameras no grid principal
-    const camerasExibir = todasCameras.slice(0, 16);
+    // Calcular paginacao
+    const totalCameras = todasCameras.length;
+    const totalPaginas = Math.ceil(totalCameras / CAMERAS_POR_PAGINA);
+
+    // Garantir pagina valida
+    if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+    if (paginaAtual < 1) paginaAtual = 1;
+
+    const inicio = (paginaAtual - 1) * CAMERAS_POR_PAGINA;
+    const fim = Math.min(inicio + CAMERAS_POR_PAGINA, totalCameras);
+    const camerasExibir = todasCameras.slice(inicio, fim);
+
+    // Renderizar cards
     grid.innerHTML = camerasExibir.map(cam => criarCardCamera(cam)).join('');
 
-    // Mostrar info de quantas cameras estao sendo exibidas
-    const totalCameras = todasCameras.length;
-    if (totalCameras > 16) {
-        document.getElementById('search-results').textContent =
-            `Exibindo 16 de ${totalCameras} cameras. Use os filtros para refinar.`;
-    }
+    // Atualizar info de exibicao
+    document.getElementById('search-results').textContent =
+        `Exibindo ${inicio + 1}-${fim} de ${totalCameras} cameras`;
+
+    // Renderizar paginacao
+    renderizarPaginacao(totalPaginas, totalCameras);
 
     atualizarGridFavoritas();
+
+    // Inicializar/atualizar thumbnails ao vivo
+    setTimeout(() => {
+        try {
+            if (typeof ThumbnailManager !== 'undefined') {
+                if (!window.thumbnailManager) {
+                    console.log('Criando ThumbnailManager...');
+                    window.thumbnailManager = new ThumbnailManager();
+                    window.thumbnailManager.init();
+                } else {
+                    console.log('Atualizando ThumbnailManager...');
+                    window.thumbnailManager.refresh();
+                }
+            } else {
+                console.warn('ThumbnailManager nao carregado');
+            }
+        } catch (e) {
+            console.error('Erro ao inicializar thumbnails:', e);
+        }
+    }, 500);
+}
+
+function renderizarPaginacao(totalPaginas, totalCameras) {
+    const paginacaoContainer = document.getElementById('paginacao-container');
+    if (!paginacaoContainer) {
+        console.error('Container de paginacao nao encontrado');
+        return;
+    }
+
+    if (totalPaginas <= 1) {
+        paginacaoContainer.innerHTML = '';
+        return;
+    }
+
+    let html = '<div class="paginacao">';
+
+    // Botao anterior
+    html += `<button class="pag-btn ${paginaAtual === 1 ? 'disabled' : ''}"
+                     onclick="mudarPagina(${paginaAtual - 1})"
+                     ${paginaAtual === 1 ? 'disabled' : ''}>
+                <i class="bi bi-chevron-left"></i>
+            </button>`;
+
+    // Numeros das paginas
+    const maxBotoes = 5;
+    let inicio = Math.max(1, paginaAtual - Math.floor(maxBotoes / 2));
+    let fim = Math.min(totalPaginas, inicio + maxBotoes - 1);
+
+    if (fim - inicio < maxBotoes - 1) {
+        inicio = Math.max(1, fim - maxBotoes + 1);
+    }
+
+    if (inicio > 1) {
+        html += `<button class="pag-btn" onclick="mudarPagina(1)">1</button>`;
+        if (inicio > 2) {
+            html += `<span class="pag-ellipsis">...</span>`;
+        }
+    }
+
+    for (let i = inicio; i <= fim; i++) {
+        html += `<button class="pag-btn ${i === paginaAtual ? 'active' : ''}"
+                         onclick="mudarPagina(${i})">${i}</button>`;
+    }
+
+    if (fim < totalPaginas) {
+        if (fim < totalPaginas - 1) {
+            html += `<span class="pag-ellipsis">...</span>`;
+        }
+        html += `<button class="pag-btn" onclick="mudarPagina(${totalPaginas})">${totalPaginas}</button>`;
+    }
+
+    // Botao proximo
+    html += `<button class="pag-btn ${paginaAtual === totalPaginas ? 'disabled' : ''}"
+                     onclick="mudarPagina(${paginaAtual + 1})"
+                     ${paginaAtual === totalPaginas ? 'disabled' : ''}>
+                <i class="bi bi-chevron-right"></i>
+            </button>`;
+
+    html += '</div>';
+
+    // Info de paginas
+    html += `<div class="pag-info">Pagina ${paginaAtual} de ${totalPaginas} (${totalCameras} cameras)</div>`;
+
+    paginacaoContainer.innerHTML = html;
+}
+
+function mudarPagina(novaPagina) {
+    const totalPaginas = Math.ceil(todasCameras.length / CAMERAS_POR_PAGINA);
+    if (novaPagina < 1 || novaPagina > totalPaginas) return;
+
+    paginaAtual = novaPagina;
+
+    // Parar thumbnails antes de mudar
+    if (typeof thumbnailManager !== 'undefined' && thumbnailManager) {
+        thumbnailManager.stopAllStreams();
+    }
+
+    renderizarGrid();
+
+    // Scroll para o topo da grid
+    const grid = document.getElementById('grid-ao-vivo');
+    if (grid) {
+        grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 function criarCardCamera(cam) {
@@ -1165,11 +1513,13 @@ function criarCardCamera(cam) {
     const tipoLabel = cam.tipo === 'movel' ? 'MOVEL' : 'FIXA';
     const isOnline = cam.status === 'online';
 
+    // Formatar ID para 6 digitos (padrao TIXXI)
+    const cameraIdPadded = String(cam.id).padStart(6, '0');
+
     return `
-        <div class="video-camera-card" onclick="abrirPlayer('${cam.id}')">
+        <div class="video-camera-card" data-camera-id="${cameraIdPadded}" onclick="abrirPlayer('${cam.id}')">
             <div class="video-camera-thumbnail">
                 <i class="bi bi-camera-video video-camera-placeholder"></i>
-                ${isOnline ? '<div class="live-indicator"><span class="live-dot"></span>AO VIVO</div>' : ''}
                 <div class="video-camera-status ${statusClass}">
                     <span class="video-status-dot"></span>
                     ${cam.status.toUpperCase()}
@@ -1185,7 +1535,7 @@ function criarCardCamera(cam) {
             <div class="video-camera-info">
                 <div class="video-camera-name">
                     <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">
-                        ${cam.nome}
+                        ${cameraIdPadded} - ${cam.nome}
                     </span>
                     <span class="video-camera-type">${tipoLabel}</span>
                 </div>
@@ -1251,43 +1601,127 @@ function trocarTab(tab) {
 }
 
 // ========================================
-// PLAYER
+// PLAYER - SOLUÇÃO RESPONSIVA COMPLETA
 // ========================================
+
+let currentPlayerIframe = null;
+
 function abrirPlayer(id) {
-    // Converter para string para comparacao segura
     const idStr = String(id);
     const camera = camerasOriginais.find(c => String(c.id) === idStr);
 
     if (!camera) {
-        console.error('Camera nao encontrada:', id);
+        console.error('[Player] Camera nao encontrada:', id);
         return;
     }
 
-    // Formatar ID para 6 digitos (padrao TIXXI)
-    const cameraId = String(camera.id).padStart(6, '0');
+    // Formatar ID para 6 dígitos
+    const cameraIdPadded = String(camera.id).padStart(6, '0');
 
-    console.log('Abrindo camera:', camera.nome, 'ID original:', camera.id, 'ID formatado:', cameraId);
+    // URL via backend (proxy seguro)
+    const streamUrl = `/integracity/api/camera/${cameraIdPadded}/stream/?embed=1`;
 
+    console.log('[Player] Abrindo:', camera.nome);
+
+    // Atualizar título
     document.getElementById('player-camera-name').textContent = camera.nome;
 
     const container = document.getElementById('player-container');
+    const modal = document.getElementById('modal-player');
 
-    // Abrir stream no modal
-    const streamUrl = `/integracity/api/camera/${cameraId}/stream/?embed=1`;
-    console.log('Stream URL:', streamUrl);
+    // Limpar player anterior
+    clearPlayer();
 
-    container.innerHTML = `
-        <iframe src="${streamUrl}" allowfullscreen></iframe>
+    // Abrir modal
+    modal.classList.add('active');
+
+    // Mostrar loading
+    const loadingEl = document.getElementById('player-loading');
+    if (loadingEl) loadingEl.style.display = 'flex';
+
+    // Criar iframe
+    const iframe = document.createElement('iframe');
+    iframe.src = streamUrl;
+    iframe.allowFullscreen = true;
+    iframe.allow = 'autoplay; fullscreen; encrypted-media';
+
+    iframe.onload = function() {
+        if (loadingEl) loadingEl.style.display = 'none';
+        console.log('[Player] Carregado');
+    };
+
+    iframe.onerror = function() {
+        if (loadingEl) loadingEl.style.display = 'none';
+        showPlayerError();
+    };
+
+    container.appendChild(iframe);
+    currentPlayerIframe = iframe;
+
+    // Timeout de segurança
+    setTimeout(() => {
+        if (loadingEl) loadingEl.style.display = 'none';
+    }, 5000);
+}
+
+function clearPlayer() {
+    const container = document.getElementById('player-container');
+    if (!container) return;
+
+    // Remover iframe existente
+    const existingIframe = container.querySelector('iframe');
+    if (existingIframe) {
+        existingIframe.src = '';
+        existingIframe.remove();
+    }
+
+    // Remover erro se houver
+    const errorEl = container.querySelector('.player-error');
+    if (errorEl) errorEl.remove();
+
+    currentPlayerIframe = null;
+}
+
+function showPlayerError() {
+    const container = document.getElementById('player-container');
+    if (!container) return;
+
+    // Remover erro anterior
+    const oldError = container.querySelector('.player-error');
+    if (oldError) oldError.remove();
+
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'player-error';
+    errorDiv.innerHTML = `
+        <i class="bi bi-exclamation-triangle"></i>
+        <span>Erro ao carregar stream</span>
+        <button onclick="retryPlayer()">Tentar novamente</button>
     `;
+    container.appendChild(errorDiv);
+}
 
-    document.getElementById('modal-player').classList.add('active');
+function retryPlayer() {
+    const title = document.getElementById('player-camera-name').textContent;
+    const camera = camerasOriginais.find(c => c.nome === title);
+    if (camera) {
+        abrirPlayer(camera.id);
+    }
 }
 
 function fecharPlayer() {
-    document.getElementById('modal-player').classList.remove('active');
-    document.getElementById('player-container').innerHTML = `
-        <i class="bi bi-play-circle" style="font-size: 64px; color: var(--cyan);"></i>
-    `;
+    const modal = document.getElementById('modal-player');
+
+    // Fechar modal
+    modal.classList.remove('active');
+
+    // Limpar player
+    clearPlayer();
+
+    // Resetar loading
+    const loadingEl = document.getElementById('player-loading');
+    if (loadingEl) loadingEl.style.display = 'none';
+
+    console.log('[Player] Fechado');
 }
 
 // ========================================

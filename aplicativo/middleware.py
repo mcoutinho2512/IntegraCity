@@ -19,6 +19,9 @@ class SecurityMiddleware(MiddlewareMixin):
         '/api/estagio/',
         '/api/estagio-atual/',
         '/api/estagio-externo/',
+        # Camera embed proxy (usado dentro de iframe no modal)
+        '/camera/embed/',
+        '/api/camera/',
     ])
 
     # APIs que gerenciam sua própria autenticação (retornam JSON 401 em vez de redirect)
@@ -52,6 +55,12 @@ class SecurityMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         """Adicionar headers de segurança"""
         path = getattr(request, 'path_info', request.path)
+
+        # Permitir iframe para endpoints de embed
+        if path.startswith('/camera/embed/'):
+            response['X-Frame-Options'] = 'SAMEORIGIN'
+            return response
+
         if path.startswith('/api/camera/') and path.endswith('/stream/') and request.GET.get('embed') == '1':
             response['X-Frame-Options'] = 'SAMEORIGIN'
             return response
