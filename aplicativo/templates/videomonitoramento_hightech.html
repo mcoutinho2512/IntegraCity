@@ -964,6 +964,72 @@
     border: none;
     z-index: 1;
 }
+
+/* MOSAICO */
+.mosaico-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.mosaico-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--cyan);
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Rajdhani', sans-serif;
+    margin-bottom: 16px;
+}
+
+.mosaico-header i {
+    font-size: 24px;
+}
+
+.mosaico-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.mosaico-btn {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(181, 55, 242, 0.1) 100%);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: var(--cyan);
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.mosaico-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(181, 55, 242, 0.2) 100%);
+    border-color: var(--cyan);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+}
+
+.mosaico-btn i {
+    font-size: 18px;
+}
+
+.mosaico-hint {
+    margin-top: 12px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
 </style>
 {% endblock %}
 
@@ -1096,6 +1162,29 @@
 
     <!-- PAGINACAO -->
     <div id="paginacao-container" class="paginacao-container"></div>
+
+    <!-- MOSAICO -->
+    <div class="mosaico-container">
+        <div class="mosaico-header">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+            <span>Abrir em Mosaico</span>
+        </div>
+        <div class="mosaico-buttons">
+            <button class="mosaico-btn" onclick="abrirMosaico(4)">
+                <i class="bi bi-grid"></i> 2x2
+            </button>
+            <button class="mosaico-btn" onclick="abrirMosaico(8)">
+                <i class="bi bi-grid-3x2"></i> 2x4
+            </button>
+            <button class="mosaico-btn" onclick="abrirMosaico(16)">
+                <i class="bi bi-grid-3x3"></i> 4x4
+            </button>
+            <button class="mosaico-btn" onclick="abrirMosaico(24)">
+                <i class="bi bi-grid-3x3-gap"></i> 4x6
+            </button>
+        </div>
+        <p class="mosaico-hint">Abre as câmeras da página atual em visualização mosaico</p>
+    </div>
 
     <!-- GRID FAVORITAS -->
     <div id="grid-favoritas" class="video-cameras-grid" style="display: none;">
@@ -1777,6 +1866,54 @@ function verCamerasInvalidas() {
         </div>
     `;
     document.body.appendChild(modal);
+}
+
+// ========================================
+// MOSAICO
+// ========================================
+function abrirMosaico(layout) {
+    // Pegar cameras da pagina atual
+    const inicio = (paginaAtual - 1) * CAMERAS_POR_PAGINA;
+    const fim = Math.min(inicio + CAMERAS_POR_PAGINA, todasCameras.length);
+    const camerasPagina = todasCameras.slice(inicio, fim);
+
+    if (camerasPagina.length === 0) {
+        alert('Nenhuma camera disponivel na pagina atual');
+        return;
+    }
+
+    // Limitar ao numero do layout solicitado
+    const camerasParaMosaico = camerasPagina.slice(0, layout);
+
+    // Construir lista de IDs formatados (6 digitos)
+    const cameraIds = camerasParaMosaico.map(cam => String(cam.id).padStart(6, '0')).join(',');
+
+    // Determinar layout grid (colunas x linhas)
+    let gridLayout;
+    switch(layout) {
+        case 4:
+            gridLayout = '2x2';
+            break;
+        case 8:
+            gridLayout = '2x4';
+            break;
+        case 16:
+            gridLayout = '4x4';
+            break;
+        case 24:
+            gridLayout = '4x6';
+            break;
+        default:
+            gridLayout = '2x2';
+    }
+
+    // Abrir em nova janela para melhor visualizacao
+    const url = `/integracity/cor-hightech/?mosaic=true&cameras=${cameraIds}&layout=${gridLayout}`;
+
+    console.log('[Mosaico] Abrindo:', url);
+    console.log('[Mosaico] Cameras:', camerasParaMosaico.map(c => c.nome).join(', '));
+
+    window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no');
 }
 
 // Fechar modal com ESC
