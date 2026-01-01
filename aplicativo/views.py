@@ -2307,33 +2307,43 @@ def camera_stream_view(request, camera_id):
     # URL do stream TIXXI
     stream_url = f'https://dev.tixxi.rio/outvideo2/?CODE={camera_id_padded}&KEY=H4281'
 
-    # Modo embed - imagem ao vivo 100% responsiva
+    # Modo embed - usa outvideo3 com KEY G5325 (endpoint correto do TIXXI)
     if request.GET.get('embed') == '1':
-        # Usar URL de imagem do TIXXI diretamente (atualiza a cada 100ms)
-        image_url = f'https://tixxi.rio/image/?CODE={camera_id_padded}&SODE=00'
+        # URL do stream TIXXI - outvideo3 com KEY G5325
+        video_url = f'https://dev.tixxi.rio/outvideo3/?CODE={camera_id_padded}&KEY=G5325'
+        # O outvideo3 tem tamanho fixo 1920x1080, usamos transform scale para ajustar
         html = f'''<!DOCTYPE html>
 <html><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
-html,body{{width:100%;height:100%;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}}
-img{{width:100%;height:100%;object-fit:contain;display:block}}
-.erro{{color:#ff5555;font-family:sans-serif;text-align:center;padding:20px}}
-.erro i{{font-size:48px;margin-bottom:10px;display:block}}
+html,body{{width:100%;height:100%;overflow:hidden;background:#000}}
+.container{{width:100%;height:100%;position:relative;overflow:hidden}}
+iframe{{
+    position:absolute;
+    top:50%;left:50%;
+    width:1920px;height:1080px;
+    border:none;
+    transform-origin:center center;
+}}
 </style>
 </head>
 <body>
-<img id="v" src="{image_url}&t=0">
-<div id="erro" class="erro" style="display:none"><span style="font-size:48px">&#9888;</span><br>Camera indisponivel<br><small>Tentando reconectar...</small></div>
+<div class="container">
+<iframe id="stream" src="{video_url}" allowfullscreen allow="autoplay"></iframe>
+</div>
 <script>
-var img=document.getElementById('v');
-var erro=document.getElementById('erro');
-var url='{image_url}';
-var falhas=0;
-function update(){{img.src=url+'&t='+Date.now();}}
-img.onload=function(){{falhas=0;erro.style.display='none';img.style.display='block';setTimeout(update,100);}};
-img.onerror=function(){{falhas++;if(falhas>3){{erro.style.display='block';img.style.display='none';}}setTimeout(update,2000);}};
+function resize(){{
+    var c=document.querySelector('.container');
+    var f=document.getElementById('stream');
+    var sw=c.offsetWidth/1920;
+    var sh=c.offsetHeight/1080;
+    var s=Math.min(sw,sh);
+    f.style.transform='translate(-50%,-50%) scale('+s+')';
+}}
+window.onresize=resize;
+resize();
 </script>
 </body></html>'''
         return HttpResponse(html, content_type='text/html')
