@@ -12,6 +12,35 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+
+    <!-- THEME: Apply immediately -->
+    <script>
+    (function() {
+        var theme = 'dark';
+        try {
+            // Check old key first
+            var old = localStorage.getItem('integracity-theme');
+            if (old) {
+                theme = old;
+                var s = localStorage.getItem('integracity_settings');
+                var p = s ? JSON.parse(s) : {};
+                p.theme = old;
+                localStorage.setItem('integracity_settings', JSON.stringify(p));
+                localStorage.removeItem('integracity-theme');
+            } else {
+                var s = localStorage.getItem('integracity_settings');
+                if (s) {
+                    var p = JSON.parse(s);
+                    if (p.theme) theme = p.theme;
+                }
+            }
+        } catch(e) {}
+        if (theme === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    })();
+    </script>
+
     <title>{% block title %}IntegraCity - Command Center{% endblock %}</title>
 
     <!-- Font Awesome -->
@@ -21,11 +50,124 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <!-- High-Tech CSS -->
-    <link rel="stylesheet" href="{% static 'css/hightech.css' %}?v={% now 'U' %}">
+    <link rel="stylesheet" href="{% static 'css/hightech.css' %}?v=1767307043">
+
+    <!-- LIGHT THEME GLOBAL OVERRIDE - Garantia de funcionamento em todas as páginas -->
+    <style id="light-theme-override">
+    /* Tema claro global - estilos críticos com !important */
+    html.light-theme,
+    body.light-theme,
+    html.light-theme body {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+        color: #0f172a !important;
+    }
+
+    html.light-theme .map-wrapper,
+    body.light-theme .map-wrapper {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+    }
+
+    html.light-theme .top-header,
+    body.light-theme .top-header {
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2) !important;
+    }
+
+    html.light-theme .sidebar,
+    body.light-theme .sidebar {
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border-right: 1px solid rgba(148, 163, 184, 0.2) !important;
+    }
+
+    html.light-theme .logo-text,
+    body.light-theme .logo-text {
+        background: linear-gradient(135deg, #0891b2 0%, #8b5cf6 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+    }
+
+    html.light-theme .sidebar-section-title,
+    body.light-theme .sidebar-section-title {
+        color: #0f172a !important;
+    }
+
+    html.light-theme .mini-card,
+    body.light-theme .mini-card {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid rgba(148, 163, 184, 0.15) !important;
+    }
+
+    html.light-theme .mini-card-label,
+    body.light-theme .mini-card-label {
+        color: #64748b !important;
+    }
+
+    html.light-theme .mini-card-value,
+    body.light-theme .mini-card-value {
+        color: #0f172a !important;
+    }
+
+    html.light-theme .nav-link,
+    body.light-theme .nav-link {
+        color: #475569 !important;
+    }
+
+    html.light-theme .nav-link:hover,
+    body.light-theme .nav-link:hover {
+        background: rgba(8, 145, 178, 0.1) !important;
+        color: #0891b2 !important;
+    }
+
+    html.light-theme .nav-link.active,
+    body.light-theme .nav-link.active {
+        background: linear-gradient(135deg, #0891b2 0%, #8b5cf6 100%) !important;
+        color: #ffffff !important;
+    }
+
+    html.light-theme .monitoring-card,
+    body.light-theme .monitoring-card {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid rgba(148, 163, 184, 0.15) !important;
+    }
+
+    html.light-theme .card-header,
+    body.light-theme .card-header {
+        background: linear-gradient(135deg, rgba(8, 145, 178, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%) !important;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.1) !important;
+    }
+
+    html.light-theme .card-title,
+    body.light-theme .card-title {
+        color: #0f172a !important;
+    }
+
+    html.light-theme .header-btn,
+    body.light-theme .header-btn {
+        background: rgba(8, 145, 178, 0.08) !important;
+        border: 1px solid rgba(8, 145, 178, 0.15) !important;
+        color: #475569 !important;
+    }
+
+    html.light-theme .header-btn:hover,
+    body.light-theme .header-btn:hover {
+        background: linear-gradient(135deg, #0891b2 0%, #8b5cf6 100%) !important;
+        color: #ffffff !important;
+    }
+
+    html.light-theme .text-muted,
+    body.light-theme .text-muted {
+        color: #64748b !important;
+    }
+    </style>
 
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body><script>try{var t='dark',o=localStorage.getItem('integracity-theme');if(o){t=o;}else{var s=localStorage.getItem('integracity_settings');if(s){var p=JSON.parse(s);if(p.theme)t=p.theme;}}if(t==='light')document.body.classList.add('light-theme');}catch(e){}</script>
     <!-- ============================================
          HEADER
          ============================================ -->
@@ -510,7 +652,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <!-- High-Tech JS -->
-    <script src="{% static 'js/hightech.js' %}?v=20260101_profile"></script>
+    <script src="{% static 'js/hightech.js' %}?v=1767307043"></script>
 
     {% block extra_js %}{% endblock %}
 

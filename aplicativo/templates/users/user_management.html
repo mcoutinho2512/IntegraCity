@@ -524,6 +524,334 @@
     .btn-modal.confirm:hover {
         background: #cc0044;
     }
+
+    /* ============================================ */
+    /* TEMA CLARO - DESIGN MODERNO & ELEGANTE      */
+    /* Sistema de Design Padronizado IntegraCity   */
+    /* ============================================ */
+
+    /* === CSS Custom Properties para Light Theme === */
+    body.light-theme,
+    html.light-theme body {
+        --bg-card: #ffffff;
+        --bg-surface: #f8fafc;
+        --border-color: rgba(148, 163, 184, 0.25);
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --cyan: #0891b2;
+        --purple-neon: #8b5cf6;
+    }
+
+    body.light-theme .users-container,
+    html.light-theme .users-container {
+        background: transparent;
+    }
+
+    body.light-theme .page-title,
+    html.light-theme .page-title {
+        background: linear-gradient(135deg, #0891b2 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 700;
+    }
+
+    body.light-theme .page-header,
+    html.light-theme .page-header {
+        border-bottom-color: rgba(148, 163, 184, 0.2);
+    }
+
+    /* === Cards de Estatísticas === */
+    body.light-theme .stat-card,
+    html.light-theme .stat-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body.light-theme .stat-card:hover,
+    html.light-theme .stat-card:hover {
+        border-color: rgba(8, 145, 178, 0.3);
+        box-shadow: 0 8px 30px rgba(8, 145, 178, 0.15);
+        transform: translateY(-3px);
+    }
+
+    body.light-theme .stat-card .stat-value,
+    html.light-theme .stat-card .stat-value {
+        background: linear-gradient(135deg, #0891b2 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800;
+    }
+
+    body.light-theme .stat-card .stat-label,
+    html.light-theme .stat-card .stat-label {
+        color: #64748b;
+    }
+
+    /* === Seção de Filtros === */
+    body.light-theme .filters-section,
+    html.light-theme .filters-section {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    body.light-theme .filter-group label,
+    html.light-theme .filter-group label {
+        color: #64748b;
+    }
+
+    body.light-theme .filter-group input,
+    body.light-theme .filter-group select,
+    html.light-theme .filter-group input,
+    html.light-theme .filter-group select {
+        background: #ffffff;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 10px;
+        color: #0f172a;
+        transition: all 0.2s ease;
+    }
+
+    body.light-theme .filter-group input:focus,
+    body.light-theme .filter-group select:focus,
+    html.light-theme .filter-group input:focus {
+        border-color: #0891b2;
+        box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
+        outline: none;
+    }
+
+    body.light-theme .filter-group input::placeholder,
+    html.light-theme .filter-group input::placeholder {
+        color: #94a3b8;
+    }
+
+    /* === Tabela de Usuários === */
+    body.light-theme .users-table-container,
+    html.light-theme .users-table-container {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+    }
+
+    body.light-theme .users-table th,
+    html.light-theme .users-table th {
+        background: linear-gradient(135deg, #0891b2 0%, #8b5cf6 100%);
+        color: #ffffff;
+        font-weight: 600;
+        border-bottom-color: transparent;
+    }
+
+    body.light-theme .users-table td,
+    html.light-theme .users-table td {
+        border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+        color: #0f172a;
+    }
+
+    body.light-theme .users-table tr:hover,
+    html.light-theme .users-table tr:hover {
+        background: rgba(8, 145, 178, 0.05);
+    }
+
+    body.light-theme .user-details .user-name,
+    html.light-theme .user-details .user-name {
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    body.light-theme .user-details .user-email,
+    html.light-theme .user-details .user-email {
+        color: #64748b;
+    }
+
+    /* === Botões de Ação === */
+    body.light-theme .btn-action.edit,
+    html.light-theme .btn-action.edit {
+        background: rgba(8, 145, 178, 0.1);
+        color: #0891b2;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    body.light-theme .btn-action.edit:hover,
+    html.light-theme .btn-action.edit:hover {
+        background: #0891b2;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+    }
+
+    body.light-theme .btn-action.view,
+    html.light-theme .btn-action.view {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    body.light-theme .btn-action.view:hover,
+    html.light-theme .btn-action.view:hover {
+        background: #8b5cf6;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    body.light-theme .btn-action.delete,
+    html.light-theme .btn-action.delete {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    body.light-theme .btn-action.delete:hover,
+    html.light-theme .btn-action.delete:hover {
+        background: #ef4444;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    /* === Paginação === */
+    body.light-theme .pagination-container a,
+    body.light-theme .pagination-container span,
+    html.light-theme .pagination-container a,
+    html.light-theme .pagination-container span {
+        background: #ffffff;
+        color: #475569;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+
+    body.light-theme .pagination-container a:hover,
+    html.light-theme .pagination-container a:hover {
+        background: rgba(8, 145, 178, 0.08);
+        color: #0891b2;
+        border-color: rgba(8, 145, 178, 0.3);
+    }
+
+    body.light-theme .pagination-container .current,
+    html.light-theme .pagination-container .current {
+        background: linear-gradient(135deg, #0891b2 0%, #8b5cf6 100%);
+        color: #ffffff;
+        border-color: transparent;
+        box-shadow: 0 4px 15px rgba(8, 145, 178, 0.3);
+    }
+
+    /* === Empty State === */
+    body.light-theme .empty-state,
+    html.light-theme .empty-state {
+        color: #64748b;
+    }
+
+    body.light-theme .empty-state i,
+    html.light-theme .empty-state i {
+        color: #94a3b8;
+    }
+
+    body.light-theme .empty-state h3,
+    html.light-theme .empty-state h3 {
+        color: #0f172a;
+    }
+
+    /* === Modais === */
+    body.light-theme .modal-content,
+    html.light-theme .modal-content {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 20px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    body.light-theme .modal-header,
+    html.light-theme .modal-header {
+        background: linear-gradient(135deg, #0891b2 0%, #8b5cf6 100%);
+        border-radius: 20px 20px 0 0;
+    }
+
+    body.light-theme .modal-header h3,
+    body.light-theme .modal-header h4,
+    html.light-theme .modal-header h3 {
+        color: #ffffff;
+    }
+
+    body.light-theme .modal-body p,
+    html.light-theme .modal-body p {
+        color: #0f172a;
+    }
+
+    body.light-theme .modal-body,
+    html.light-theme .modal-body {
+        color: #0f172a;
+    }
+
+    body.light-theme .modal-footer,
+    html.light-theme .modal-footer {
+        background: rgba(241, 245, 249, 0.5);
+        border-top: 1px solid rgba(148, 163, 184, 0.15);
+        border-radius: 0 0 20px 20px;
+    }
+
+    /* === Scrollbar Elegante === */
+    body.light-theme ::-webkit-scrollbar,
+    html.light-theme ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    body.light-theme ::-webkit-scrollbar-track,
+    html.light-theme ::-webkit-scrollbar-track {
+        background: rgba(148, 163, 184, 0.1);
+        border-radius: 4px;
+    }
+
+    body.light-theme ::-webkit-scrollbar-thumb,
+    html.light-theme ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #0891b2 0%, #8b5cf6 100%);
+        border-radius: 4px;
+    }
+
+    body.light-theme ::-webkit-scrollbar-thumb:hover,
+    html.light-theme ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #0e7490 0%, #7c3aed 100%);
+    }
+
+    /* === Mini Cards no Sidebar === */
+    body.light-theme .mini-card,
+    html.light-theme .mini-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        border-radius: 12px;
+    }
+
+    body.light-theme .mini-card:hover,
+    html.light-theme .mini-card:hover {
+        border-color: rgba(8, 145, 178, 0.3);
+        box-shadow: 0 4px 15px rgba(8, 145, 178, 0.12);
+    }
+
+    body.light-theme .mini-card-value,
+    html.light-theme .mini-card-value {
+        color: #0f172a;
+        font-weight: 700;
+    }
+
+    body.light-theme .mini-card-label,
+    html.light-theme .mini-card-label {
+        color: #64748b;
+    }
 </style>
 {% endblock %}
 
