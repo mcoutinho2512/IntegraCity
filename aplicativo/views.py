@@ -304,6 +304,169 @@ def api_hospitais(request):
     return JsonResponse({'success': True, 'count': 0, 'data': []})
 
 
+def api_edificacoes(request):
+    """API de edificações com dispositivos IoT"""
+    try:
+        from aplicativo.models import Edificacao
+
+        edificacoes = Edificacao.objects.filter(ativo=True)
+        data = []
+
+        for e in edificacoes:
+            data.append({
+                'id': e.id,
+                'nome': e.nome,
+                'tipo': e.tipo,
+                'tipo_display': e.get_tipo_display(),
+                'endereco': e.endereco or '',
+                'latitude': float(e.latitude),
+                'longitude': float(e.longitude),
+                'escola_municipal_id': e.escola_municipal_id,
+                'responsavel': e.responsavel or '',
+                'telefone': e.telefone or '',
+                'total_dispositivos': e.total_dispositivos,
+                'cameras_count': e.cameras_count,
+            })
+
+        return JsonResponse({'success': True, 'count': len(data), 'data': data})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+def api_edificacao_detalhe(request, edificacao_id):
+    """API de detalhes de uma edificação com seus dispositivos"""
+    try:
+        from aplicativo.models import Edificacao, DispositivoEdificacao
+
+        edificacao = Edificacao.objects.get(id=edificacao_id)
+
+        dispositivos = []
+        for d in edificacao.dispositivos.filter(ativo=True):
+            dispositivos.append({
+                'id': d.id,
+                'nome': d.nome,
+                'tipo': d.tipo,
+                'tipo_display': d.get_tipo_display(),
+                'descricao': d.descricao or '',
+                'url_rtsp': d.url_rtsp or '',
+                'url_snapshot': d.url_snapshot or '',
+                'status': d.status,
+                'status_display': d.get_status_display(),
+                'ip_endereco': d.ip_endereco or '',
+                'porta': d.porta,
+                'unidade_medida': d.unidade_medida or '',
+                'valor_atual': float(d.valor_atual) if d.valor_atual else None,
+            })
+
+        data = {
+            'id': edificacao.id,
+            'nome': edificacao.nome,
+            'tipo': edificacao.tipo,
+            'tipo_display': edificacao.get_tipo_display(),
+            'endereco': edificacao.endereco or '',
+            'latitude': float(edificacao.latitude),
+            'longitude': float(edificacao.longitude),
+            'responsavel': edificacao.responsavel or '',
+            'telefone': edificacao.telefone or '',
+            'email': edificacao.email or '',
+            'dispositivos': dispositivos,
+        }
+
+        return JsonResponse({'success': True, 'data': data})
+    except Edificacao.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Edificação não encontrada'}, status=404)
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+def api_escola_dispositivos(request, escola_id):
+    """API de dispositivos de uma escola municipal (busca por escola_municipal_id)"""
+    try:
+        from aplicativo.models import Edificacao
+
+        edificacao = Edificacao.objects.filter(escola_municipal_id=escola_id).first()
+
+        if not edificacao:
+            return JsonResponse({'success': True, 'data': None, 'message': 'Escola sem edificação cadastrada'})
+
+        dispositivos = []
+        for d in edificacao.dispositivos.filter(ativo=True):
+            dispositivos.append({
+                'id': d.id,
+                'nome': d.nome,
+                'tipo': d.tipo,
+                'tipo_display': d.get_tipo_display(),
+                'url_rtsp': d.url_rtsp or '',
+                'status': d.status,
+                'ip_endereco': d.ip_endereco or '',
+            })
+
+        data = {
+            'edificacao_id': edificacao.id,
+            'nome': edificacao.nome,
+            'dispositivos': dispositivos,
+            'total_cameras': edificacao.cameras_count,
+        }
+
+        return JsonResponse({'success': True, 'data': data})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+def api_dispositivo_snapshot(request, dispositivo_id):
+    """Proxy para snapshot de câmera interna (Hikvision ISAPI)"""
+    try:
+        from aplicativo.models import DispositivoEdificacao
+        from requests.auth import HTTPDigestAuth
+
+        dispositivo = DispositivoEdificacao.objects.get(id=dispositivo_id, tipo='camera')
+
+        if not dispositivo.ip_endereco:
+            return HttpResponse('IP não configurado', status=400)
+
+        # Extrair credenciais da URL RTSP
+        # rtsp://admin:7lanmstr@10.52.156.4:554/...
+        rtsp_url = dispositivo.url_rtsp or ''
+        usuario = 'admin'
+        senha = '7lanmstr'
+
+        if rtsp_url and '@' in rtsp_url:
+            try:
+                # Extrair user:pass do RTSP
+                creds_part = rtsp_url.split('://')[1].split('@')[0]
+                if ':' in creds_part:
+                    usuario, senha = creds_part.split(':', 1)
+            except:
+                pass
+
+        # URL do snapshot Hikvision
+        snapshot_url = f"http://{dispositivo.ip_endereco}/ISAPI/Streaming/channels/101/picture"
+
+        # Buscar snapshot com autenticação digest
+        response = requests.get(
+            snapshot_url,
+            auth=HTTPDigestAuth(usuario, senha),
+            timeout=10,
+            verify=False
+        )
+
+        if response.status_code == 200 and response.content:
+            return HttpResponse(
+                response.content,
+                content_type='image/jpeg'
+            )
+        else:
+            return HttpResponse(f'Erro ao buscar snapshot: {response.status_code}', status=502)
+
+    except DispositivoEdificacao.DoesNotExist:
+        return HttpResponse('Dispositivo não encontrado', status=404)
+    except requests.Timeout:
+        return HttpResponse('Timeout ao conectar câmera', status=504)
+    except Exception as ex:
+        logger.error(f"Erro snapshot dispositivo {dispositivo_id}: {ex}")
+        return HttpResponse(f'Erro: {str(ex)}', status=500)
+
+
 def waze_dashboard_completo(request):
     """Dashboard completo com todas as estatísticas"""
     context = {

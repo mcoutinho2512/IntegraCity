@@ -107,6 +107,12 @@ urlpatterns = [
     path('api/escolas/', views.escolas_view, name='escolas'),
     path('api/hospitais/', views.api_hospitais, name='api_hospitais'),
     path('api/pluviometros/', views.api_pluviometros, name='pluviometros'),
+
+    # APIs - Edificações e Dispositivos IoT
+    path('api/edificacoes/', views.api_edificacoes, name='api_edificacoes'),
+    path('api/edificacoes/<int:edificacao_id>/', views.api_edificacao_detalhe, name='api_edificacao_detalhe'),
+    path('api/escolas/<int:escola_id>/dispositivos/', views.api_escola_dispositivos, name='api_escola_dispositivos'),
+    path('api/dispositivo/<int:dispositivo_id>/snapshot/', views.api_dispositivo_snapshot, name='api_dispositivo_snapshot'),
     path('api/ventos/', views.estacoes_vento_view, name='ventos'),
     path('api/bens-tombados/', views.bens_tombados_view, name='bens_tombados'),
 

@@ -7214,3 +7214,124 @@ class AlertaUsuarioConfirmado(models.Model):
 
     def __str__(self):
         return f"{self.usuario.username} - {self.alerta_id} ({self.tipo})"
+
+
+# ============================================
+# GESTÃO DE EDIFICAÇÕES E DISPOSITIVOS IoT
+# ============================================
+
+class Edificacao(models.Model):
+    """Edificação georeferenciada (escola, hospital, prédio público, etc.)"""
+
+    TIPO_CHOICES = [
+        ('escola', 'Escola'),
+        ('hospital', 'Hospital'),
+        ('predio_publico', 'Prédio Público'),
+        ('predio_privado', 'Prédio Privado'),
+        ('terminal', 'Terminal'),
+        ('estacao', 'Estação'),
+        ('outro', 'Outro'),
+    ]
+
+    nome = models.CharField(max_length=255)
+    tipo = models.CharField(max_length=50, choices=TIPO_CHOICES, default='outro')
+    endereco = models.CharField(max_length=500, blank=True, null=True)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+
+    # Relacionamento opcional com escola municipal
+    escola_municipal = models.ForeignKey(
+        'EscolasMunicipais',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='edificacao_vinculada'
+    )
+
+    responsavel = models.CharField(max_length=255, blank=True, null=True)
+    telefone = models.CharField(max_length=50, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'edificacoes'
+        verbose_name = 'Edificação'
+        verbose_name_plural = 'Edificações'
+        ordering = ['nome']
+
+    def __str__(self):
+        return f"{self.nome} ({self.get_tipo_display()})"
+
+    @property
+    def total_dispositivos(self):
+        return self.dispositivos.count()
+
+    @property
+    def cameras_count(self):
+        return self.dispositivos.filter(tipo='camera').count()
+
+
+class DispositivoEdificacao(models.Model):
+    """Dispositivo IoT vinculado a uma edificação (câmera, sensor, catraca, etc.)"""
+
+    TIPO_CHOICES = [
+        ('camera', 'Câmera'),
+        ('sensor_nivel', 'Sensor de Nível'),
+        ('sensor_temp', 'Sensor de Temperatura'),
+        ('sensor_umidade', 'Sensor de Umidade'),
+        ('catraca', 'Catraca'),
+        ('controle_acesso', 'Controle de Acesso'),
+        ('medidor_energia', 'Medidor de Energia'),
+        ('medidor_agua', 'Medidor de Água'),
+        ('automacao', 'Automação'),
+        ('outro', 'Outro'),
+    ]
+
+    STATUS_CHOICES = [
+        ('online', 'Online'),
+        ('offline', 'Offline'),
+        ('manutencao', 'Em Manutenção'),
+        ('desativado', 'Desativado'),
+    ]
+
+    edificacao = models.ForeignKey(
+        Edificacao,
+        on_delete=models.CASCADE,
+        related_name='dispositivos'
+    )
+
+    nome = models.CharField(max_length=255)
+    tipo = models.CharField(max_length=50, choices=TIPO_CHOICES)
+    descricao = models.TextField(blank=True, null=True)
+
+    # Campos para câmeras
+    url_rtsp = models.CharField(max_length=500, blank=True, null=True, verbose_name='URL RTSP')
+    url_snapshot = models.CharField(max_length=500, blank=True, null=True, verbose_name='URL Snapshot')
+
+    # Campos para sensores
+    unidade_medida = models.CharField(max_length=20, blank=True, null=True)
+    valor_atual = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    valor_minimo = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    valor_maximo = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    # Status e metadados
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='offline')
+    ip_endereco = models.GenericIPAddressField(blank=True, null=True)
+    porta = models.IntegerField(blank=True, null=True)
+
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    ultima_leitura = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'dispositivos_edificacao'
+        verbose_name = 'Dispositivo de Edificação'
+        verbose_name_plural = 'Dispositivos de Edificações'
+        ordering = ['edificacao', 'tipo', 'nome']
+
+    def __str__(self):
+        return f"{self.nome} ({self.get_tipo_display()}) - {self.edificacao.nome}"

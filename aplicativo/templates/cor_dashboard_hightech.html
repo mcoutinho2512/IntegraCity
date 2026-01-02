@@ -264,24 +264,68 @@
     </div>
 </div>
 
-<!-- Card 8: Sirenes -->
-<div class="compact-card" onclick="toggleCard(this)">
+<!-- Card 8: Pluviômetros -->
+<div class="compact-card" onclick="toggleCard(this)" id="cardPluviometros">
     <div class="card-header">
         <div class="card-header-left">
-            <div class="card-icon {% if sirenes_acionadas > 0 %}red{% else %}green{% endif %}">
+            <div class="card-icon cyan" id="pluvioIcon">
+                <i class="fas fa-cloud-rain"></i>
+            </div>
+            <div class="card-main-info">
+                <div class="card-value cyan" id="pluvioChovendo">--</div>
+                <div class="card-label">Pluviômetros<br>Com Chuva</div>
+            </div>
+        </div>
+        <div class="card-header-right">
+            <div class="status-badge normal" id="pluvioBadge">
+                <div class="status-dot"></div>
+                <span id="pluvioStatus">--</span>
+            </div>
+            <i class="fas fa-chevron-down expand-icon"></i>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="card-content">
+            <div class="card-detail-row">
+                <span class="detail-label">Total de estações</span>
+                <span class="detail-value" id="pluvioTotal">--</span>
+            </div>
+            <div class="card-detail-row">
+                <span class="detail-label"><i class="fas fa-tint" style="color: #FFB800;"></i> Chuva fraca</span>
+                <span class="detail-value" style="color: #FFB800;" id="pluvioFraca">--</span>
+            </div>
+            <div class="card-detail-row">
+                <span class="detail-label"><i class="fas fa-tint" style="color: #FF6B00;"></i> Chuva moderada</span>
+                <span class="detail-value" style="color: #FF6B00;" id="pluvioModerada">--</span>
+            </div>
+            <div class="card-detail-row">
+                <span class="detail-label"><i class="fas fa-tint" style="color: #ff0055;"></i> Chuva forte</span>
+                <span class="detail-value" style="color: #ff0055;" id="pluvioForte">--</span>
+            </div>
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                Dados em tempo real
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Card 9: Sirenes -->
+<div class="compact-card" onclick="toggleCard(this)" id="cardSirenes">
+    <div class="card-header">
+        <div class="card-header-left">
+            <div class="card-icon green" id="sireneIcon">
                 <i class="fas fa-bullhorn"></i>
             </div>
             <div class="card-main-info">
-                <div class="card-value {% if sirenes_acionadas > 0 %}red{% else %}green{% endif %}">
-                    {{ sirenes_acionadas|default:"0" }}
-                </div>
+                <div class="card-value green" id="sireneAcionadas">--</div>
                 <div class="card-label">Sirenes<br>Acionadas</div>
             </div>
         </div>
         <div class="card-header-right">
-            <div class="status-badge {% if sirenes_acionadas > 0 %}critical{% else %}normal{% endif %}">
+            <div class="status-badge normal" id="sireneBadge">
                 <div class="status-dot"></div>
-                {% if sirenes_acionadas > 0 %}ACIONADAS{% else %}STAND-BY{% endif %}
+                <span id="sireneStatus">STAND-BY</span>
             </div>
             <i class="fas fa-chevron-down expand-icon"></i>
         </div>
@@ -290,11 +334,19 @@
         <div class="card-content">
             <div class="card-detail-row">
                 <span class="detail-label">Total de sirenes</span>
-                <span class="detail-value">{{ sirenes_total|default:"0" }}</span>
+                <span class="detail-value" id="sireneTotal">--</span>
             </div>
             <div class="card-detail-row">
-                <span class="detail-label">Operantes</span>
-                <span class="detail-value" style="color: var(--green-neon);">{{ sirenes_operantes|default:"0" }}</span>
+                <span class="detail-label"><i class="fas fa-power-off" style="color: var(--green-neon);"></i> Online</span>
+                <span class="detail-value" style="color: var(--green-neon);" id="sireneOnline">--</span>
+            </div>
+            <div class="card-detail-row">
+                <span class="detail-label"><i class="fas fa-power-off" style="color: #888;"></i> Offline</span>
+                <span class="detail-value" style="color: #888;" id="sireneOffline">--</span>
+            </div>
+            <div class="card-detail-row">
+                <span class="detail-label"><i class="fas fa-cloud-rain" style="color: #00D4FF;"></i> Com chuva</span>
+                <span class="detail-value" style="color: #00D4FF;" id="sireneComChuva">--</span>
             </div>
             <div class="live-indicator">
                 <div class="live-dot"></div>
@@ -1132,6 +1184,554 @@
         background: rgba(255, 255, 255, 0.95);
         color: #0077cc;
         border: 1px solid #d0d0d0;
+    }
+
+    /* ============================================
+       PAINEL DE EDIFICAÇÃO (ESCOLAS COM CÂMERAS)
+       ============================================ */
+    .edificacao-panel {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        width: 400px;
+        max-height: calc(100vh - 100px);
+        background: linear-gradient(145deg, rgba(20, 20, 35, 0.98), rgba(30, 30, 50, 0.98));
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 212, 255, 0.1);
+        z-index: 2000;
+        overflow: hidden;
+        backdrop-filter: blur(20px);
+    }
+
+    .edificacao-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(183, 55, 242, 0.15));
+        border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .edificacao-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+        color: #00D4FF;
+        font-weight: 600;
+    }
+
+    .edificacao-title i {
+        font-size: 1.3rem;
+    }
+
+    .edificacao-close {
+        background: rgba(255, 85, 85, 0.2);
+        border: 1px solid rgba(255, 85, 85, 0.4);
+        color: #ff5555;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+
+    .edificacao-close:hover {
+        background: rgba(255, 85, 85, 0.4);
+        transform: scale(1.1);
+    }
+
+    .edificacao-header-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .edificacao-maximize {
+        background: rgba(0, 212, 255, 0.2);
+        border: 1px solid rgba(0, 212, 255, 0.4);
+        color: #00D4FF;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+
+    .edificacao-maximize:hover {
+        background: rgba(0, 212, 255, 0.4);
+        transform: scale(1.1);
+    }
+
+    /* Estado maximizado do painel */
+    .edificacao-panel.maximized {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+        max-height: none;
+        z-index: 2500;
+    }
+
+    .edificacao-panel.maximized .edificacao-content {
+        max-height: calc(100vh - 120px);
+    }
+
+    .edificacao-panel.maximized .edificacao-mosaic {
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+    }
+
+    /* Visualização expandida da câmera */
+    .camera-expand-view {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80vw;
+        max-width: 1200px;
+        height: 80vh;
+        max-height: 800px;
+        background: linear-gradient(145deg, rgba(20, 20, 35, 0.98), rgba(30, 30, 50, 0.98));
+        border: 2px solid rgba(0, 212, 255, 0.4);
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 212, 255, 0.2);
+        z-index: 3000;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        backdrop-filter: blur(20px);
+    }
+
+    .camera-expand-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, rgba(183, 55, 242, 0.2), rgba(0, 212, 255, 0.1));
+        border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .camera-expand-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: 'Orbitron', monospace;
+        font-size: 1.1rem;
+        color: #B537F2;
+    }
+
+    .camera-expand-title i {
+        font-size: 1.3rem;
+    }
+
+    .camera-expand-ip {
+        font-size: 0.8rem;
+        color: #888;
+        font-family: 'Courier New', monospace;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 4px 10px;
+        border-radius: 6px;
+    }
+
+    .camera-expand-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .camera-expand-btn {
+        background: rgba(0, 212, 255, 0.15);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        color: #00D4FF;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s;
+    }
+
+    .camera-expand-btn:hover {
+        background: rgba(0, 212, 255, 0.3);
+    }
+
+    .camera-expand-close {
+        background: rgba(183, 55, 242, 0.2);
+        border: 1px solid rgba(183, 55, 242, 0.4);
+        color: #B537F2;
+        padding: 8px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .camera-expand-close:hover {
+        background: rgba(183, 55, 242, 0.4);
+    }
+
+    .camera-expand-content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        position: relative;
+    }
+
+    .camera-expand-content img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .camera-expand-loading {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        color: #888;
+    }
+
+    .camera-expand-loading i {
+        font-size: 2rem;
+        color: #00D4FF;
+    }
+
+    /* Animação de piscar para marcador selecionado */
+    @keyframes markerBlink {
+        0%, 100% {
+            transform: scale(1);
+            filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.8));
+        }
+        50% {
+            transform: scale(1.3);
+            filter: drop-shadow(0 0 20px rgba(0, 212, 255, 1)) drop-shadow(0 0 40px rgba(183, 55, 242, 0.8));
+        }
+    }
+
+    .marker-blinking {
+        animation: markerBlink 0.8s ease-in-out infinite;
+        z-index: 1000 !important;
+    }
+
+    .edificacao-content {
+        padding: 20px;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+
+    .edificacao-info {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .edificacao-info .info-item {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 10px;
+    }
+
+    .edificacao-info .info-item i {
+        color: #00D4FF;
+        font-size: 1.2rem;
+    }
+
+    .edificacao-info .info-item strong {
+        color: #00D4FF;
+        font-size: 1.3rem;
+        font-family: 'Orbitron', monospace;
+    }
+
+    .edificacao-section {
+        margin-top: 16px;
+    }
+
+    .edificacao-section h4 {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.9rem;
+        color: #B537F2;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .edificacao-section .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .edificacao-section .page-indicator {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.8rem;
+        color: #00D4FF;
+        background: rgba(0, 212, 255, 0.1);
+        padding: 4px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+
+    .edificacao-section .section-hint {
+        font-size: 0.75rem;
+        color: #888;
+        margin-top: 12px;
+        text-align: center;
+    }
+
+    /* Mosaico 2x2 de câmeras */
+    .edificacao-mosaic {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .mosaic-camera-tile {
+        position: relative;
+        aspect-ratio: 16/9;
+        background: linear-gradient(145deg, rgba(30, 30, 50, 0.9), rgba(20, 20, 35, 0.9));
+        border: 2px solid rgba(183, 55, 242, 0.3);
+        border-radius: 12px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .mosaic-camera-tile:hover {
+        border-color: rgba(0, 212, 255, 0.8);
+        transform: scale(1.02);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+    }
+
+    .mosaic-camera-tile.empty {
+        opacity: 0.3;
+        cursor: default;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .mosaic-camera-tile.empty:hover {
+        transform: none;
+        box-shadow: none;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .mosaic-camera-tile .tile-preview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(183, 55, 242, 0.2), rgba(156, 39, 176, 0.1));
+    }
+
+    .mosaic-camera-tile .tile-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .mosaic-camera-tile .tile-preview i,
+    .mosaic-camera-tile .tile-fallback i {
+        font-size: 2rem;
+        color: rgba(183, 55, 242, 0.6);
+    }
+
+    .mosaic-camera-tile .tile-fallback {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(183, 55, 242, 0.2), rgba(156, 39, 176, 0.1));
+    }
+
+    .mosaic-camera-tile:hover .tile-preview i,
+    .mosaic-camera-tile:hover .tile-fallback i {
+        color: #00D4FF;
+    }
+
+    .mosaic-camera-tile .tile-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 8px 10px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .mosaic-camera-tile .tile-name {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #fff;
+    }
+
+    .mosaic-camera-tile .tile-status {
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    .mosaic-camera-tile .tile-ip {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-family: 'Courier New', monospace;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    /* Paginação */
+    .mosaic-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .pagination-btn {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        color: #00D4FF;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+        background: rgba(0, 212, 255, 0.25);
+        border-color: rgba(0, 212, 255, 0.6);
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .pagination-dots {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .pagination-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .pagination-dot:hover {
+        background: rgba(0, 212, 255, 0.5);
+    }
+
+    .pagination-dot.active {
+        background: #00D4FF;
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    }
+
+    /* Light theme */
+    body.light-theme .edificacao-panel {
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(245, 245, 250, 0.98));
+        border-color: rgba(0, 119, 204, 0.3);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    body.light-theme .edificacao-header {
+        background: linear-gradient(135deg, rgba(0, 119, 204, 0.1), rgba(156, 39, 176, 0.1));
+    }
+
+    body.light-theme .edificacao-title {
+        color: #0077cc;
+    }
+
+    body.light-theme .edificacao-info .info-item {
+        background: rgba(0, 119, 204, 0.08);
+        border-color: rgba(0, 119, 204, 0.2);
+    }
+
+    body.light-theme .mosaic-camera-tile {
+        background: linear-gradient(145deg, rgba(245, 245, 250, 0.95), rgba(255, 255, 255, 0.95));
+        border-color: rgba(156, 39, 176, 0.3);
+    }
+
+    body.light-theme .mosaic-camera-tile:hover {
+        border-color: rgba(0, 119, 204, 0.6);
+        box-shadow: 0 8px 25px rgba(0, 119, 204, 0.2);
+    }
+
+    body.light-theme .mosaic-camera-tile .tile-name {
+        color: #333;
+    }
+
+    body.light-theme .mosaic-camera-tile .tile-overlay {
+        background: linear-gradient(to top, rgba(255, 255, 255, 0.95), transparent);
+    }
+
+    body.light-theme .pagination-btn {
+        background: rgba(0, 119, 204, 0.1);
+        border-color: rgba(0, 119, 204, 0.3);
+        color: #0077cc;
+    }
+
+    body.light-theme .pagination-dot {
+        background: rgba(0, 0, 0, 0.15);
+    }
+
+    body.light-theme .pagination-dot.active {
+        background: #0077cc;
+    }
+
+    body.light-theme .page-indicator {
+        color: #0077cc;
+        background: rgba(0, 119, 204, 0.1);
+        border-color: rgba(0, 119, 204, 0.3);
     }
 </style>
 {% endblock %}
@@ -2979,6 +3579,9 @@
                 details = '<p>' + (item.endereco || item.bairro || '--') + '</p>';
                 if (item.telefone) details += '<p>Tel: ' + item.telefone + '</p>';
                 if (item.tipo) details += '<p>Tipo: ' + item.tipo + '</p>';
+                // Botão para ver detalhes/câmeras da edificação
+                var escolaId = item.id || '';
+                details += '<button onclick="openEdificacaoPanel(' + escolaId + ')" style="margin-top: 10px; padding: 8px 16px; background: linear-gradient(135deg, #00D4FF, #0077cc); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Rajdhani, sans-serif; font-weight: 600; display: flex; align-items: center; gap: 6px; width: 100%;"><i class="fas fa-building"></i> Ver Detalhes / Câmeras</button>';
                 break;
             case 'hospitais':
                 details = '<p>' + (item.endereco || item.bairro || '--') + '</p>';
@@ -3681,6 +4284,347 @@
     function handleCameraEsc(e) {
         if (e.key === 'Escape') {
             closeCameraPlayer();
+            closeEdificacaoPanel();
+        }
+    }
+
+    // ============================================
+    // PAINEL DE EDIFICAÇÃO (ESCOLAS COM CÂMERAS)
+    // ============================================
+
+    var edificacaoCameras = [];
+    var edificacaoCurrentPage = 0;
+    var CAMERAS_PER_PAGE = 4;
+    var edificacaoPanelMaximized = false;
+    var selectedSchoolMarker = null;
+
+    function openEdificacaoPanel(escolaId) {
+        // Fechar painel existente
+        closeEdificacaoPanel();
+
+        showToast('Carregando dados da edificação...', 'info');
+
+        // Buscar dados da API
+        fetch(window.location.origin + '/integracity/api/escolas/' + escolaId + '/dispositivos/')
+            .then(function(response) { return response.json(); })
+            .then(function(result) {
+                if (!result.success || !result.data) {
+                    showToast('Escola sem dispositivos cadastrados', 'warning');
+                    return;
+                }
+
+                var data = result.data;
+                edificacaoCameras = data.dispositivos.filter(function(d) { return d.tipo === 'camera'; });
+                edificacaoCurrentPage = 0;
+                edificacaoPanelMaximized = false;
+
+                var totalPages = Math.ceil(edificacaoCameras.length / CAMERAS_PER_PAGE);
+
+                var modalHtml = `
+                    <div id="edificacaoPanel" class="edificacao-panel">
+                        <div class="edificacao-header">
+                            <div class="edificacao-title">
+                                <i class="fas fa-school"></i>
+                                <span>${data.nome}</span>
+                            </div>
+                            <div class="edificacao-header-buttons">
+                                <button onclick="toggleEdificacaoMaximize()" class="edificacao-maximize" id="btnMaximize" title="Maximizar">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                                <button onclick="closeEdificacaoPanel()" class="edificacao-close" title="Fechar">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="edificacao-content">
+                            <div class="edificacao-info">
+                                <div class="info-item">
+                                    <i class="fas fa-video"></i>
+                                    <span><strong>${data.total_cameras}</strong> Câmeras</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-microchip"></i>
+                                    <span><strong>${data.dispositivos.length}</strong> Dispositivos</span>
+                                </div>
+                            </div>
+
+                            <div class="edificacao-section">
+                                <div class="section-header">
+                                    <h4><i class="fas fa-th-large"></i> Mosaico de Câmeras</h4>
+                                    <span class="page-indicator" id="pageIndicator">1 / ${totalPages}</span>
+                                </div>
+
+                                <div class="edificacao-mosaic" id="cameraMosaic">
+                                    <!-- Cameras renderizadas via JS -->
+                                </div>
+
+                                <div class="mosaic-pagination">
+                                    <button onclick="edificacaoPrevPage()" id="btnPrevPage" class="pagination-btn" disabled>
+                                        <i class="fas fa-chevron-left"></i> Anterior
+                                    </button>
+                                    <div class="pagination-dots" id="paginationDots">
+                                        <!-- Dots renderizados via JS -->
+                                    </div>
+                                    <button onclick="edificacaoNextPage()" id="btnNextPage" class="pagination-btn">
+                                        Próxima <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+
+                                <p class="section-hint"><i class="fas fa-mouse-pointer"></i> Clique em uma câmera para copiar a URL RTSP</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                renderEdificacaoCameras();
+                showToast('Edificação carregada: ' + data.total_cameras + ' câmeras', 'success');
+            })
+            .catch(function(error) {
+                console.error('Erro ao carregar edificação:', error);
+                showToast('Erro ao carregar edificação', 'error');
+            });
+    }
+
+    function renderEdificacaoCameras() {
+        var mosaic = document.getElementById('cameraMosaic');
+        if (!mosaic) return;
+
+        var start = edificacaoCurrentPage * CAMERAS_PER_PAGE;
+        var end = Math.min(start + CAMERAS_PER_PAGE, edificacaoCameras.length);
+        var pageCameras = edificacaoCameras.slice(start, end);
+
+        var html = '';
+        var baseUrl = window.location.origin + '/integracity';
+        pageCameras.forEach(function(cam) {
+            var statusColor = cam.status === 'online' ? '#4CAF50' : '#ff5555';
+            var statusIcon = cam.status === 'online' ? 'fa-circle' : 'fa-exclamation-circle';
+            var snapshotUrl = baseUrl + '/api/dispositivo/' + cam.id + '/snapshot/?t=' + Date.now();
+            var camData = JSON.stringify({id: cam.id, nome: cam.nome, url_rtsp: cam.url_rtsp, ip: cam.ip_endereco}).replace(/'/g, "\\'");
+            html += `
+                <div class="mosaic-camera-tile" onclick='expandCamera(${JSON.stringify({id: cam.id, nome: cam.nome, url_rtsp: cam.url_rtsp, ip: cam.ip_endereco})})'>
+                    <div class="tile-preview">
+                        <img src="${snapshotUrl}"
+                             alt="${cam.nome}"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                             onload="this.style.display='block'; this.nextElementSibling.style.display='none';">
+                        <div class="tile-fallback" style="display:none;">
+                            <i class="fas fa-video-slash"></i>
+                        </div>
+                    </div>
+                    <div class="tile-overlay">
+                        <span class="tile-name">${cam.nome}</span>
+                        <span class="tile-status" style="color: ${statusColor};">
+                            <i class="fas ${statusIcon}"></i> ${cam.status}
+                        </span>
+                    </div>
+                    <div class="tile-ip">${cam.ip_endereco || '--'}</div>
+                </div>
+            `;
+        });
+
+        // Preencher tiles vazios se necessário
+        var emptyTiles = CAMERAS_PER_PAGE - pageCameras.length;
+        for (var i = 0; i < emptyTiles; i++) {
+            html += `<div class="mosaic-camera-tile empty"><div class="tile-preview"><i class="fas fa-video-slash"></i></div></div>`;
+        }
+
+        mosaic.innerHTML = html;
+
+        // Atualizar controles de paginação
+        var totalPages = Math.ceil(edificacaoCameras.length / CAMERAS_PER_PAGE);
+        var pageIndicator = document.getElementById('pageIndicator');
+        if (pageIndicator) {
+            pageIndicator.textContent = (edificacaoCurrentPage + 1) + ' / ' + totalPages;
+        }
+
+        var btnPrev = document.getElementById('btnPrevPage');
+        var btnNext = document.getElementById('btnNextPage');
+        if (btnPrev) btnPrev.disabled = edificacaoCurrentPage === 0;
+        if (btnNext) btnNext.disabled = edificacaoCurrentPage >= totalPages - 1;
+
+        // Renderizar dots
+        var dotsContainer = document.getElementById('paginationDots');
+        if (dotsContainer) {
+            var dotsHtml = '';
+            for (var p = 0; p < totalPages; p++) {
+                var activeClass = p === edificacaoCurrentPage ? 'active' : '';
+                dotsHtml += '<span class="pagination-dot ' + activeClass + '" onclick="edificacaoGoToPage(' + p + ')"></span>';
+            }
+            dotsContainer.innerHTML = dotsHtml;
+        }
+    }
+
+    function edificacaoPrevPage() {
+        if (edificacaoCurrentPage > 0) {
+            edificacaoCurrentPage--;
+            renderEdificacaoCameras();
+        }
+    }
+
+    function edificacaoNextPage() {
+        var totalPages = Math.ceil(edificacaoCameras.length / CAMERAS_PER_PAGE);
+        if (edificacaoCurrentPage < totalPages - 1) {
+            edificacaoCurrentPage++;
+            renderEdificacaoCameras();
+        }
+    }
+
+    function edificacaoGoToPage(page) {
+        edificacaoCurrentPage = page;
+        renderEdificacaoCameras();
+    }
+
+    function closeEdificacaoPanel() {
+        var panel = document.getElementById('edificacaoPanel');
+        if (panel) {
+            panel.remove();
+        }
+        edificacaoCameras = [];
+        edificacaoCurrentPage = 0;
+        edificacaoPanelMaximized = false;
+        // Limpar marcador piscando
+        clearBlinkingMarker();
+    }
+
+    function toggleEdificacaoMaximize() {
+        var panel = document.getElementById('edificacaoPanel');
+        var btn = document.getElementById('btnMaximize');
+        if (!panel) return;
+
+        edificacaoPanelMaximized = !edificacaoPanelMaximized;
+
+        if (edificacaoPanelMaximized) {
+            panel.classList.add('maximized');
+            btn.innerHTML = '<i class="fas fa-compress"></i>';
+            btn.title = 'Minimizar';
+        } else {
+            panel.classList.remove('maximized');
+            btn.innerHTML = '<i class="fas fa-expand"></i>';
+            btn.title = 'Maximizar';
+        }
+    }
+
+    function expandCamera(cam) {
+        // Esconder o painel da escola temporariamente
+        var panel = document.getElementById('edificacaoPanel');
+        if (panel) {
+            panel.style.display = 'none';
+        }
+
+        var baseUrl = window.location.origin + '/integracity';
+        var snapshotUrl = baseUrl + '/api/dispositivo/' + cam.id + '/snapshot/?t=' + Date.now();
+
+        var expandHtml = `
+            <div id="cameraExpandView" class="camera-expand-view">
+                <div class="camera-expand-header">
+                    <div class="camera-expand-title">
+                        <i class="fas fa-video"></i>
+                        <span>${cam.nome}</span>
+                        <span class="camera-expand-ip">${cam.ip || '--'}</span>
+                    </div>
+                    <div class="camera-expand-buttons">
+                        <button onclick="copyRtspUrl('${cam.url_rtsp}', '${cam.nome}')" class="camera-expand-btn" title="Copiar URL RTSP">
+                            <i class="fas fa-copy"></i> RTSP
+                        </button>
+                        <button onclick="refreshExpandedCamera(${cam.id})" class="camera-expand-btn" title="Atualizar">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button onclick="closeExpandedCamera()" class="camera-expand-close" title="Voltar">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </button>
+                    </div>
+                </div>
+                <div class="camera-expand-content">
+                    <div class="camera-expand-loading" id="expandLoading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Carregando imagem...</span>
+                    </div>
+                    <img id="expandedCameraImg"
+                         src="${snapshotUrl}"
+                         alt="${cam.nome}"
+                         onload="document.getElementById('expandLoading').style.display='none';"
+                         onerror="document.getElementById('expandLoading').innerHTML='<i class=\\'fas fa-video-slash\\'></i><span>Câmera offline</span>';">
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', expandHtml);
+    }
+
+    function refreshExpandedCamera(camId) {
+        var img = document.getElementById('expandedCameraImg');
+        var loading = document.getElementById('expandLoading');
+        if (img && loading) {
+            loading.style.display = 'flex';
+            loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Carregando imagem...</span>';
+            var baseUrl = window.location.origin + '/integracity';
+            img.src = baseUrl + '/api/dispositivo/' + camId + '/snapshot/?t=' + Date.now();
+        }
+    }
+
+    function closeExpandedCamera() {
+        var expandView = document.getElementById('cameraExpandView');
+        if (expandView) {
+            expandView.remove();
+        }
+        // Mostrar o painel da escola novamente
+        var panel = document.getElementById('edificacaoPanel');
+        if (panel) {
+            panel.style.display = 'block';
+        }
+    }
+
+    // Função para fazer marcador piscar
+    function setBlinkingMarker(lat, lng) {
+        clearBlinkingMarker();
+
+        // Encontrar o marcador da escola nas camadas
+        if (mapLayers.escolas) {
+            mapLayers.escolas.eachLayer(function(layer) {
+                var latLng = layer.getLatLng();
+                if (Math.abs(latLng.lat - lat) < 0.0001 && Math.abs(latLng.lng - lng) < 0.0001) {
+                    selectedSchoolMarker = layer;
+                    var icon = layer.getElement();
+                    if (icon) {
+                        icon.classList.add('marker-blinking');
+                    }
+                }
+            });
+        }
+    }
+
+    function clearBlinkingMarker() {
+        if (selectedSchoolMarker) {
+            var icon = selectedSchoolMarker.getElement();
+            if (icon) {
+                icon.classList.remove('marker-blinking');
+            }
+            selectedSchoolMarker = null;
+        }
+        // Limpar todos marcadores piscando (segurança)
+        document.querySelectorAll('.marker-blinking').forEach(function(el) {
+            el.classList.remove('marker-blinking');
+        });
+    }
+
+    function copyRtspUrl(url, nome) {
+        if (navigator.clipboard && url) {
+            navigator.clipboard.writeText(url).then(function() {
+                showToast('URL RTSP copiada: ' + nome, 'success');
+            }).catch(function() {
+                showToast('Erro ao copiar URL', 'error');
+            });
+        } else {
+            // Fallback para navegadores antigos
+            var temp = document.createElement('textarea');
+            temp.value = url;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast('URL RTSP copiada: ' + nome, 'success');
         }
     }
 
@@ -4424,6 +5368,11 @@
                 map.flyTo([escola.lat, escola.lng], 18, {
                     duration: 1.5
                 });
+
+                // Fazer marcador piscar
+                setTimeout(function() {
+                    setBlinkingMarker(escola.lat, escola.lng);
+                }, 500);
 
                 // Encontrar e abrir popup do marcador
                 mapLayers.escolas.eachLayer(function(layer) {
@@ -6995,6 +7944,176 @@ window.recarregarImportacoes = recarregarImportacoes;
 window.toggleGrupoAtivo = toggleGrupoAtivo;
 window.confirmarExcluirGrupo = confirmarExcluirGrupo;
 window.excluirGrupo = excluirGrupo;
+
+// ============================================
+// ATUALIZAÇÃO DOS CARDS DE SIDEBAR
+// ============================================
+
+// Atualizar card de Pluviômetros
+async function updatePluviometrosCard() {
+    try {
+        var baseUrl = window.location.protocol + '//' + window.location.host + '/';
+        var response = await fetch(baseUrl + 'integracity/api/pluviometros-defesa-civil/');
+        var result = await response.json();
+
+        if (!result.success) {
+            console.warn('[PLUVIOMETROS] Erro na API:', result.error);
+            return;
+        }
+
+        var data = result.data || [];
+        var total = data.length;
+        var comChuva = data.filter(p => p.dados && p.dados.h01 > 0).length;
+        var fraca = data.filter(p => p.nivel === 'fraca').length;
+        var moderada = data.filter(p => p.nivel === 'moderada').length;
+        var forte = data.filter(p => p.nivel === 'forte' || p.nivel === 'muito_forte').length;
+
+        // Atualizar elementos do card
+        var elChovendo = document.getElementById('pluvioChovendo');
+        var elTotal = document.getElementById('pluvioTotal');
+        var elFraca = document.getElementById('pluvioFraca');
+        var elModerada = document.getElementById('pluvioModerada');
+        var elForte = document.getElementById('pluvioForte');
+        var elStatus = document.getElementById('pluvioStatus');
+        var elBadge = document.getElementById('pluvioBadge');
+        var elIcon = document.getElementById('pluvioIcon');
+
+        if (elChovendo) elChovendo.textContent = comChuva;
+        if (elTotal) elTotal.textContent = total;
+        if (elFraca) elFraca.textContent = fraca;
+        if (elModerada) elModerada.textContent = moderada;
+        if (elForte) elForte.textContent = forte;
+
+        // Definir status e cores baseado na chuva
+        if (forte > 0) {
+            if (elStatus) elStatus.textContent = 'ALERTA';
+            if (elBadge) {
+                elBadge.className = 'status-badge alert';
+                elBadge.style.cssText = 'background: rgba(255, 0, 85, 0.2); color: #ff0055; border-color: #ff0055;';
+            }
+            if (elIcon) elIcon.className = 'card-icon red';
+            if (elChovendo) elChovendo.className = 'card-value red';
+        } else if (moderada > 0) {
+            if (elStatus) elStatus.textContent = 'ATENÇÃO';
+            if (elBadge) {
+                elBadge.className = 'status-badge warning';
+                elBadge.style.cssText = 'background: rgba(255, 107, 0, 0.2); color: #FF6B00; border-color: #FF6B00;';
+            }
+            if (elIcon) elIcon.className = 'card-icon orange';
+            if (elChovendo) elChovendo.className = 'card-value orange';
+        } else if (comChuva > 0) {
+            if (elStatus) elStatus.textContent = 'CHUVA';
+            if (elBadge) {
+                elBadge.className = 'status-badge';
+                elBadge.style.cssText = 'background: rgba(0, 212, 255, 0.2); color: #00D4FF; border-color: #00D4FF;';
+            }
+            if (elIcon) elIcon.className = 'card-icon cyan';
+            if (elChovendo) elChovendo.className = 'card-value cyan';
+        } else {
+            if (elStatus) elStatus.textContent = 'SEM CHUVA';
+            if (elBadge) {
+                elBadge.className = 'status-badge normal';
+                elBadge.style.cssText = '';
+            }
+            if (elIcon) elIcon.className = 'card-icon green';
+            if (elChovendo) elChovendo.className = 'card-value green';
+        }
+
+        console.log('[PLUVIOMETROS] Atualizado: ' + comChuva + '/' + total + ' com chuva');
+    } catch (error) {
+        console.error('[PLUVIOMETROS] Erro ao atualizar card:', error);
+    }
+}
+
+// Atualizar card de Sirenes
+async function updateSirenesCard() {
+    try {
+        var baseUrl = window.location.protocol + '//' + window.location.host + '/';
+        var response = await fetch(baseUrl + 'integracity/api/sirenes-chuvas/');
+        var result = await response.json();
+
+        if (!result.success) {
+            console.warn('[SIRENES] Erro na API:', result.error);
+            return;
+        }
+
+        var data = result.data || [];
+        var total = data.length;
+        var online = data.filter(s => s.sirene && s.sirene.online).length;
+        var offline = total - online;
+        var acionadas = data.filter(s => s.sirene && s.sirene.status && s.sirene.status.toLowerCase() === 'acionada').length;
+        var comChuva = data.filter(s => s.chuva && s.chuva.h01 > 0).length;
+
+        // Atualizar elementos do card
+        var elAcionadas = document.getElementById('sireneAcionadas');
+        var elTotal = document.getElementById('sireneTotal');
+        var elOnline = document.getElementById('sireneOnline');
+        var elOffline = document.getElementById('sireneOffline');
+        var elComChuva = document.getElementById('sireneComChuva');
+        var elStatus = document.getElementById('sireneStatus');
+        var elBadge = document.getElementById('sireneBadge');
+        var elIcon = document.getElementById('sireneIcon');
+
+        if (elAcionadas) elAcionadas.textContent = acionadas;
+        if (elTotal) elTotal.textContent = total;
+        if (elOnline) elOnline.textContent = online;
+        if (elOffline) elOffline.textContent = offline;
+        if (elComChuva) elComChuva.textContent = comChuva;
+
+        // Definir status e cores baseado nas sirenes acionadas
+        if (acionadas > 0) {
+            if (elStatus) elStatus.textContent = 'ACIONADAS';
+            if (elBadge) {
+                elBadge.className = 'status-badge alert';
+                elBadge.style.cssText = 'background: rgba(255, 0, 85, 0.2); color: #ff0055; border-color: #ff0055;';
+            }
+            if (elIcon) elIcon.className = 'card-icon red';
+            if (elAcionadas) elAcionadas.className = 'card-value red';
+        } else if (comChuva > 5) {
+            if (elStatus) elStatus.textContent = 'CHUVA';
+            if (elBadge) {
+                elBadge.className = 'status-badge warning';
+                elBadge.style.cssText = 'background: rgba(255, 184, 0, 0.2); color: #FFB800; border-color: #FFB800;';
+            }
+            if (elIcon) elIcon.className = 'card-icon yellow';
+            if (elAcionadas) elAcionadas.className = 'card-value yellow';
+        } else {
+            if (elStatus) elStatus.textContent = 'STAND-BY';
+            if (elBadge) {
+                elBadge.className = 'status-badge normal';
+                elBadge.style.cssText = '';
+            }
+            if (elIcon) elIcon.className = 'card-icon green';
+            if (elAcionadas) elAcionadas.className = 'card-value green';
+        }
+
+        console.log('[SIRENES] Atualizado: ' + online + '/' + total + ' online, ' + acionadas + ' acionadas, ' + comChuva + ' com chuva');
+    } catch (error) {
+        console.error('[SIRENES] Erro ao atualizar card:', error);
+    }
+}
+
+// Inicializar cards ao carregar a página
+function initSidebarCards() {
+    console.log('[CARDS] Inicializando cards da sidebar...');
+
+    // Atualizar imediatamente
+    updatePluviometrosCard();
+    updateSirenesCard();
+
+    // Atualizar a cada 60 segundos
+    setInterval(updatePluviometrosCard, 60000);
+    setInterval(updateSirenesCard, 60000);
+}
+
+// Chamar quando DOM estiver pronto
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initSidebarCards, 2000);
+});
+
+// Expor funções
+window.updatePluviometrosCard = updatePluviometrosCard;
+window.updateSirenesCard = updateSirenesCard;
 
 </script>
 
