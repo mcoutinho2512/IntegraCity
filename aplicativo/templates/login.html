@@ -12,26 +12,45 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background: url("{% static 'login_background.png' %}") no-repeat center center fixed;
+            background-size: cover;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.85) 100%);
+            z-index: 0;
         }
         .login-container {
             width: 100%;
             max-width: 450px;
-            background: #1e293b;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 25px 40px 40px 40px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            z-index: 1;
         }
-        .logo { text-align: center; margin-bottom: 40px; }
-        .logo i { font-size: 64px; color: #3b82f6; margin-bottom: 16px; }
-        .logo h1 { font-size: 32px; font-weight: 700; color: #f8fafc; margin-bottom: 8px; }
-        .logo p { font-size: 14px; color: #94a3b8; }
+        .logo { text-align: center; margin-bottom: -30px; }
+        .logo img {
+            width: 320px;
+            height: auto;
+            margin-bottom: 0;
+        }
         .form-group { margin-bottom: 24px; }
         .form-label { display: block; font-size: 14px; font-weight: 600; color: #cbd5e1; margin-bottom: 8px; }
         .form-input {
@@ -115,9 +134,7 @@
 <body>
     <div class="login-container">
         <div class="logo">
-            <i class="bi bi-globe"></i>
-            <h1>IntegraCity</h1>
-            <p>Sistema Integrado de Gestao de Crises</p>
+            <img src="{% static 'logo_login.png' %}?v=20260102_003000" alt="IntegraCity Logo">
         </div>
 
         {% if messages %}
