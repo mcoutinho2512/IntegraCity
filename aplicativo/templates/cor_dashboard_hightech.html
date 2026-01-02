@@ -1759,6 +1759,9 @@
 
     // Renderizar todos os dados do Waze
     function renderWazeCompleto(data) {
+        // === VERSAO 2.0 - CONGESTIONAMENTOS SEM ICONES - SOMENTE LINHAS ===
+        console.log('=== renderWazeCompleto v2.0 - Congestionamentos como LINHAS ===');
+
         // Limpar camadas existentes
         mapLayers.wazeCongestionamentos.clearLayers();
         mapLayers.wazeInterdicoes.clearLayers();
@@ -1780,7 +1783,7 @@
             5: '#990000'   // Vermelho escuro - parado
         };
 
-        // 1. CONGESTIONAMENTOS
+        // 1. CONGESTIONAMENTOS - Exibidos como linhas coloridas nas vias
         var congestionamentos = data.congestionamentos || [];
         congestionamentos.forEach(function(jam) {
             if (!jam.coordinates || jam.coordinates.length < 2) return;
@@ -1791,40 +1794,52 @@
 
             var color = jamColors[jam.level] || '#ffa500';
 
-            // Polyline para mostrar extensao
+            // Peso da linha baseado no nivel de congestionamento
+            var weight = jam.level >= 4 ? 8 : (jam.level >= 2 ? 6 : 5);
+
+            // Linha de borda (sombra) para destaque
+            var polylineBorder = L.polyline(latlngs, {
+                color: '#000000',
+                weight: weight + 3,
+                opacity: 0.4,
+                lineCap: 'round',
+                lineJoin: 'round'
+            });
+
+            // Linha principal colorida por nivel de trafego
             var polyline = L.polyline(latlngs, {
                 color: color,
-                weight: 6,
-                opacity: 0.8
+                weight: weight,
+                opacity: 0.9,
+                lineCap: 'round',
+                lineJoin: 'round'
             });
 
-            var popupContent = '<div style="font-family: Rajdhani, sans-serif;">' +
-                '<div style="font-weight: 600; color: ' + color + '; margin-bottom: 5px;">' +
-                '<i class="fas fa-car-side"></i> Congestionamento</div>' +
-                '<div><strong>Via:</strong> ' + (jam.street || 'Via nao identificada') + '</div>' +
-                '<div><strong>Nivel:</strong> ' + jam.level + '/5</div>' +
-                '<div><strong>Velocidade:</strong> ' + jam.speed + ' km/h</div>' +
-                '<div><strong>Extensao:</strong> ' + Math.round(jam.length / 1000 * 10) / 10 + ' km</div>' +
-                '</div>';
+            // Texto descritivo do nivel
+            var nivelTexto = {
+                1: 'Lento',
+                2: 'Moderado',
+                3: 'Congestionado',
+                4: 'Muito Congestionado',
+                5: 'Parado'
+            };
+
+            var popupContent = '<div style="font-family: Rajdhani, sans-serif; min-width: 180px;">' +
+                '<div style="font-weight: 600; color: ' + color + '; margin-bottom: 8px; font-size: 1rem;">' +
+                '<i class="fas fa-road"></i> ' + (nivelTexto[jam.level] || 'Trânsito') + '</div>' +
+                '<div style="font-size: 0.85rem; color: #ccc;">' +
+                '<p><i class="fas fa-map-signs"></i> ' + (jam.street || 'Via não identificada') + '</p>' +
+                '<p><i class="fas fa-tachometer-alt"></i> ' + jam.speed + ' km/h</p>' +
+                '<p><i class="fas fa-ruler-horizontal"></i> ' + Math.round(jam.length / 1000 * 10) / 10 + ' km</p>' +
+                '</div></div>';
 
             polyline.bindPopup(popupContent);
-            mapLayers.wazeCongestionamentos.addLayer(polyline);
-            mapLayers.waze.addLayer(polyline);
 
-            // Marcador circular no ponto medio da linha
-            var midIndex = Math.floor(latlngs.length / 2);
-            var midPoint = latlngs[midIndex];
-            var marker = L.marker(midPoint, {
-                icon: L.divIcon({
-                    className: 'waze-congestionamento-marker',
-                    html: '<div style="background: ' + color + '; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"><i class="fas fa-car-side" style="color: white; font-size: 12px;"></i></div>',
-                    iconSize: [28, 28],
-                    iconAnchor: [14, 14]
-                })
-            });
-            marker.bindPopup(popupContent);
-            mapLayers.wazeCongestionamentos.addLayer(marker);
-            mapLayers.waze.addLayer(marker);
+            // Adicionar borda primeiro, depois linha principal
+            mapLayers.wazeCongestionamentos.addLayer(polylineBorder);
+            mapLayers.wazeCongestionamentos.addLayer(polyline);
+            mapLayers.waze.addLayer(polylineBorder);
+            mapLayers.waze.addLayer(polyline);
         });
 
         // 2. INTERDICOES
@@ -1925,7 +1940,7 @@
             'ACCIDENT': { icon: 'fa-car-crash', color: '#FF0055', layer: 'wazeAcidentes' },
             'HAZARD': { icon: 'fa-exclamation-triangle', color: '#FFC107', layer: 'wazePerigos' },
             'ROAD_CLOSED': { icon: 'fa-road-barrier', color: '#FF5722', layer: 'wazeInterdicoes' },
-            'JAM': { icon: 'fa-traffic-light', color: '#ff6600', layer: 'wazeCongestionamentos' },
+            // JAM removido - congestionamentos são exibidos como LINHAS, não ícones
             'POLICE': { icon: 'fa-shield-halved', color: '#007bff', layer: 'wazePolicia' },
             'CONSTRUCTION': { icon: 'fa-hard-hat', color: '#FF9800', layer: 'wazeOutros' }
         };
@@ -1946,6 +1961,10 @@
             // Determinar tipo e camada
             var tipo = alerta.type || '';
             var subtipo = alerta.subtype || '';
+
+            // IGNORAR alertas de congestionamento - já são exibidos como LINHAS
+            if (tipo === 'JAM') return;
+
             var layerName = 'wazeOutros';
             var config = { icon: 'fa-info-circle', color: '#808080' };
             var tipoTraduzido = 'Alerta';
