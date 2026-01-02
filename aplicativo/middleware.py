@@ -19,6 +19,11 @@ class SecurityMiddleware(MiddlewareMixin):
         '/api/estagio/',
         '/api/estagio-atual/',
         '/api/estagio-externo/',
+        # APIs de sirenes, chuvas e pluviômetros (Defesa Civil RJ - dados públicos)
+        '/api/chuvas-defesa-civil/',
+        '/api/sirenes-defesa-civil/',
+        '/api/sirenes-chuvas/',
+        '/api/pluviometros-defesa-civil/',
         # Camera embed proxy (usado dentro de iframe no modal)
         '/camera/embed/',
         '/api/camera/',

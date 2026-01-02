@@ -615,7 +615,8 @@ function loadSettings() {
     try {
         const saved = localStorage.getItem('integracity_settings');
         if (saved) {
-            appSettings = { ...defaultSettings, ...JSON.parse(saved) };
+            const parsed = JSON.parse(saved);
+            appSettings = { ...defaultSettings, ...parsed };
         }
     } catch (e) {
         console.error('Error loading settings:', e);
@@ -797,8 +798,24 @@ function applySettings() {
     // Apply font size
     document.documentElement.style.fontSize = `${appSettings.fontSize}%`;
 
-    // Apply theme
-    document.body.classList.toggle('light-theme', appSettings.theme === 'light');
+    // Check if light-theme was already applied by inline script
+    var alreadyLight = document.body.classList.contains('light-theme') ||
+                       document.documentElement.classList.contains('light-theme');
+
+    // Sync: if inline applied light but appSettings doesn't have it, update appSettings
+    if (alreadyLight && appSettings.theme !== 'light') {
+        appSettings.theme = 'light';
+        saveSettingsToStorage();
+    }
+
+    // Apply theme based on final appSettings
+    if (appSettings.theme === 'light' || alreadyLight) {
+        document.documentElement.classList.add('light-theme');
+        document.body.classList.add('light-theme');
+    } else {
+        document.documentElement.classList.remove('light-theme');
+        document.body.classList.remove('light-theme');
+    }
 
     // Apply animations
     document.body.classList.toggle('no-animations', !appSettings.animations);

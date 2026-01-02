@@ -3101,3 +3101,433 @@ def api_tixxi_bolsoes(request):
     except Exception as e:
         logger.error(f"api_tixxi_bolsoes error: {e}")
         return Response({'success': False, 'error': str(e)}, status=500)
+
+
+# ============================================
+# APIs - SIRENES E CHUVAS (Defesa Civil RJ)
+# ============================================
+import xml.etree.ElementTree as ET
+
+def _get_nivel_chuva(mm_h):
+    """
+    Classifica o nível de chuva baseado na intensidade (mm/h)
+    Legenda oficial:
+    - Verde: Sem Chuva (0)
+    - Azul: Chuva Fraca (0.2 a 5.0 mm/h)
+    - Amarelo: Chuva Moderada (5.1 a 25.0 mm/h)
+    - Laranja: Chuva Forte (25.1 a 50.0 mm/h)
+    - Vermelho: Chuva Muito Forte (acima de 50.0 mm/h)
+    """
+    if mm_h <= 0:
+        return {'nivel': 'sem_chuva', 'cor': '#22c55e', 'texto': 'Sem Chuva'}
+    elif mm_h <= 5.0:
+        return {'nivel': 'fraca', 'cor': '#3b82f6', 'texto': 'Chuva Fraca'}
+    elif mm_h <= 25.0:
+        return {'nivel': 'moderada', 'cor': '#eab308', 'texto': 'Chuva Moderada'}
+    elif mm_h <= 50.0:
+        return {'nivel': 'forte', 'cor': '#f97316', 'texto': 'Chuva Forte'}
+    else:
+        return {'nivel': 'muito_forte', 'cor': '#ef4444', 'texto': 'Chuva Muito Forte'}
+
+
+@never_cache
+def api_chuvas_defesa_civil(request):
+    """
+    API de dados de chuva da Defesa Civil RJ
+    Fonte: http://websirene.rio.rj.gov.br/xml/chuvas.xml
+    """
+    try:
+        response = requests.get(
+            'http://websirene.rio.rj.gov.br/xml/chuvas.xml',
+            timeout=10
+        )
+        response.raise_for_status()
+
+        # Parse XML
+        root = ET.fromstring(response.content)
+        hora_atualizacao = root.get('hora', '')
+
+        estacoes = []
+        for estacao in root.findall('estacao'):
+            est_id = estacao.get('id')
+            est_nome = estacao.get('nome')
+            est_type = estacao.get('type', 'plv')
+
+            # Localização
+            loc = estacao.find('localizacao')
+            lat = float(loc.get('latitude', 0)) if loc is not None else 0
+            lng = float(loc.get('longitude', 0)) if loc is not None else 0
+            bacia = loc.get('bacia', '-') if loc is not None else '-'
+
+            # Dados de chuva
+            chuvas = estacao.find('chuvas')
+            if chuvas is not None:
+                m5 = float(chuvas.get('m5', 0))
+                m15 = float(chuvas.get('m15', 0))
+                h01 = float(chuvas.get('h01', 0))
+                h04 = float(chuvas.get('h04', 0))
+                h24 = float(chuvas.get('h24', 0))
+                h96 = float(chuvas.get('h96', 0))
+                mes = float(chuvas.get('mes', 0))
+                hora_dados = chuvas.get('hora', '')
+            else:
+                m5 = m15 = h01 = h04 = h24 = h96 = mes = 0
+                hora_dados = ''
+
+            # Calcular nível baseado na chuva da última hora
+            nivel_info = _get_nivel_chuva(h01)
+
+            estacoes.append({
+                'id': int(est_id) if est_id else 0,
+                'nome': est_nome,
+                'tipo': est_type,
+                'lat': lat,
+                'lng': lng,
+                'bacia': bacia,
+                'chuva': {
+                    'm5': m5,
+                    'm15': m15,
+                    'h01': h01,
+                    'h04': h04,
+                    'h24': h24,
+                    'h96': h96,
+                    'mes': mes
+                },
+                'nivel': nivel_info['nivel'],
+                'cor': nivel_info['cor'],
+                'nivel_texto': nivel_info['texto'],
+                'hora_dados': hora_dados
+            })
+
+        # Estatísticas
+        total = len(estacoes)
+        com_chuva = len([e for e in estacoes if e['chuva']['h01'] > 0])
+        chuva_forte = len([e for e in estacoes if e['chuva']['h01'] > 25])
+
+        return JsonResponse({
+            'success': True,
+            'hora_atualizacao': hora_atualizacao,
+            'total': total,
+            'com_chuva': com_chuva,
+            'chuva_forte': chuva_forte,
+            'data': estacoes,
+            'legenda': [
+                {'nivel': 'sem_chuva', 'cor': '#22c55e', 'texto': 'Sem Chuva', 'range': '0 mm/h'},
+                {'nivel': 'fraca', 'cor': '#3b82f6', 'texto': 'Chuva Fraca', 'range': '0.2 a 5.0 mm/h'},
+                {'nivel': 'moderada', 'cor': '#eab308', 'texto': 'Chuva Moderada', 'range': '5.1 a 25.0 mm/h'},
+                {'nivel': 'forte', 'cor': '#f97316', 'texto': 'Chuva Forte', 'range': '25.1 a 50.0 mm/h'},
+                {'nivel': 'muito_forte', 'cor': '#ef4444', 'texto': 'Chuva Muito Forte', 'range': 'acima de 50.0 mm/h'}
+            ]
+        })
+
+    except requests.RequestException as e:
+        logger.error(f"Erro ao buscar dados de chuva: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': f'Erro na conexão: {str(e)}',
+            'data': []
+        }, status=500)
+    except ET.ParseError as e:
+        logger.error(f"Erro ao parsear XML de chuvas: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Erro ao processar dados',
+            'data': []
+        }, status=500)
+
+
+@never_cache
+def api_sirenes_defesa_civil(request):
+    """
+    API de status das sirenes da Defesa Civil RJ
+    Fonte: https://aplicativo.cocr.com.br/sirene_api
+    """
+    try:
+        response = requests.get(
+            'https://aplicativo.cocr.com.br/sirene_api',
+            timeout=10,
+            verify=True
+        )
+        response.raise_for_status()
+
+        sirenes = []
+        linhas = response.text.strip().split('\n')
+
+        for linha in linhas:
+            if not linha.strip():
+                continue
+
+            partes = linha.split(';')
+            if len(partes) >= 7:
+                try:
+                    lat = float(partes[0])
+                    lng = float(partes[1])
+                    nome = partes[2]
+                    cidade = partes[3]
+                    # partes[4] é vazio
+                    online = partes[5].lower() == 'true'
+                    status = partes[6]
+                    info = partes[7] if len(partes) > 7 else None
+
+                    sirenes.append({
+                        'nome': nome,
+                        'lat': lat,
+                        'lng': lng,
+                        'cidade': cidade,
+                        'online': online,
+                        'status': status,
+                        'info': info if info != 'None' else None,
+                        'cor': '#22c55e' if online else '#ef4444'
+                    })
+                except (ValueError, IndexError) as e:
+                    logger.warning(f"Erro ao parsear linha sirene: {linha[:50]}...")
+                    continue
+
+        # Estatísticas
+        total = len(sirenes)
+        online_count = len([s for s in sirenes if s['online']])
+        offline_count = total - online_count
+
+        return JsonResponse({
+            'success': True,
+            'total': total,
+            'online': online_count,
+            'offline': offline_count,
+            'data': sirenes
+        })
+
+    except requests.RequestException as e:
+        logger.error(f"Erro ao buscar status das sirenes: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': f'Erro na conexão: {str(e)}',
+            'data': []
+        }, status=500)
+
+
+@never_cache
+def api_sirenes_chuvas_combinado(request):
+    """
+    API combinada: Sirenes + Chuvas em um único endpoint
+    Combina dados de ambas as fontes por localização
+    """
+    try:
+        # Buscar dados de chuva
+        chuvas_response = requests.get(
+            'http://websirene.rio.rj.gov.br/xml/chuvas.xml',
+            timeout=10
+        )
+
+        # Buscar status das sirenes
+        sirenes_response = requests.get(
+            'https://aplicativo.cocr.com.br/sirene_api',
+            timeout=10,
+            verify=True
+        )
+
+        # Parse chuvas (XML)
+        chuvas_dict = {}
+        if chuvas_response.ok:
+            root = ET.fromstring(chuvas_response.content)
+            for estacao in root.findall('estacao'):
+                nome = estacao.get('nome', '').strip()
+                chuvas = estacao.find('chuvas')
+                if chuvas is not None:
+                    h01 = float(chuvas.get('h01', 0))
+                    chuvas_dict[nome] = {
+                        'm5': float(chuvas.get('m5', 0)),
+                        'm15': float(chuvas.get('m15', 0)),
+                        'h01': h01,
+                        'h04': float(chuvas.get('h04', 0)),
+                        'h24': float(chuvas.get('h24', 0)),
+                        'h96': float(chuvas.get('h96', 0)),
+                        'nivel': _get_nivel_chuva(h01)
+                    }
+
+        # Parse sirenes (CSV)
+        dados_combinados = []
+        if sirenes_response.ok:
+            for linha in sirenes_response.text.strip().split('\n'):
+                if not linha.strip():
+                    continue
+
+                partes = linha.split(';')
+                if len(partes) >= 7:
+                    try:
+                        nome = partes[2].strip()
+                        lat = float(partes[0])
+                        lng = float(partes[1])
+                        online = partes[5].lower() == 'true'
+                        status = partes[6]
+
+                        # Buscar dados de chuva para esta localização
+                        chuva_data = chuvas_dict.get(nome, {})
+                        nivel_info = chuva_data.get('nivel', _get_nivel_chuva(0))
+
+                        dados_combinados.append({
+                            'nome': nome,
+                            'lat': lat,
+                            'lng': lng,
+                            'cidade': partes[3],
+                            'sirene': {
+                                'online': online,
+                                'status': status
+                            },
+                            'chuva': {
+                                'm5': chuva_data.get('m5', 0),
+                                'm15': chuva_data.get('m15', 0),
+                                'h01': chuva_data.get('h01', 0),
+                                'h04': chuva_data.get('h04', 0),
+                                'h24': chuva_data.get('h24', 0),
+                                'h96': chuva_data.get('h96', 0)
+                            },
+                            'nivel': nivel_info['nivel'],
+                            'cor': nivel_info['cor'],
+                            'nivel_texto': nivel_info['texto']
+                        })
+                    except (ValueError, IndexError):
+                        continue
+
+        # Estatísticas
+        total = len(dados_combinados)
+        sirenes_online = len([d for d in dados_combinados if d['sirene']['online']])
+        com_chuva = len([d for d in dados_combinados if d['chuva']['h01'] > 0])
+        chuva_forte = len([d for d in dados_combinados if d['chuva']['h01'] > 25])
+
+        return JsonResponse({
+            'success': True,
+            'total': total,
+            'sirenes_online': sirenes_online,
+            'sirenes_offline': total - sirenes_online,
+            'com_chuva': com_chuva,
+            'chuva_forte': chuva_forte,
+            'data': dados_combinados,
+            'legenda': [
+                {'nivel': 'sem_chuva', 'cor': '#22c55e', 'texto': 'Sem Chuva', 'range': '0 mm/h'},
+                {'nivel': 'fraca', 'cor': '#3b82f6', 'texto': 'Chuva Fraca', 'range': '0.2 a 5.0 mm/h'},
+                {'nivel': 'moderada', 'cor': '#eab308', 'texto': 'Chuva Moderada', 'range': '5.1 a 25.0 mm/h'},
+                {'nivel': 'forte', 'cor': '#f97316', 'texto': 'Chuva Forte', 'range': '25.1 a 50.0 mm/h'},
+                {'nivel': 'muito_forte', 'cor': '#ef4444', 'texto': 'Chuva Muito Forte', 'range': 'acima de 50.0 mm/h'}
+            ]
+        })
+
+    except Exception as e:
+        logger.error(f"Erro na API combinada sirenes/chuvas: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'data': []
+        }, status=500)
+
+
+@never_cache
+def api_pluviometros_defesa_civil(request):
+    """
+    API de pluviômetros - Dados da Defesa Civil RJ
+    Fonte: https://websempre.rio.rj.gov.br/json/dados_pluviometricos
+    """
+    try:
+        response = requests.get(
+            'https://websempre.rio.rj.gov.br/json/dados_pluviometricos',
+            timeout=15,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        )
+
+        if not response.ok:
+            return JsonResponse({
+                'success': False,
+                'error': f'Erro ao buscar dados: HTTP {response.status_code}',
+                'data': []
+            }, status=502)
+
+        geojson = response.json()
+        features = geojson.get('features', [])
+
+        pluviometros = []
+        for feature in features:
+            try:
+                geometry = feature.get('geometry', {})
+                properties = feature.get('properties', {})
+                station = properties.get('station', {})
+                data = properties.get('data', {})
+
+                coords = geometry.get('coordinates', [])
+                if len(coords) < 2:
+                    continue
+
+                # Converter valores (formato brasileiro com vírgula para float)
+                def parse_br_float(val):
+                    if isinstance(val, (int, float)):
+                        return float(val)
+                    if isinstance(val, str):
+                        return float(val.replace(',', '.'))
+                    return 0.0
+
+                m15 = parse_br_float(data.get('m15', '0'))
+                h01 = parse_br_float(data.get('h01', '0'))
+                h24 = parse_br_float(data.get('h24', '0'))
+
+                # Classificar nível de chuva pela última hora
+                nivel_info = _get_nivel_chuva(h01)
+
+                pluviometros.append({
+                    'id': station.get('id'),
+                    'nome': station.get('name', 'Sem nome'),
+                    'lat': coords[1],  # GeoJSON: [lng, lat]
+                    'lng': coords[0],
+                    'dados': {
+                        'm05': parse_br_float(data.get('m05', '0')),
+                        'm15': m15,
+                        'h01': h01,
+                        'h02': parse_br_float(data.get('h02', '0')),
+                        'h03': parse_br_float(data.get('h03', '0')),
+                        'h04': parse_br_float(data.get('h04', '0')),
+                        'h12': parse_br_float(data.get('h12', '0')),
+                        'h24': h24,
+                        'h96': parse_br_float(data.get('h96', '0')),
+                        'mes': parse_br_float(data.get('mes', '0'))
+                    },
+                    'leitura': properties.get('read_at', ''),
+                    'nivel': nivel_info['nivel'],
+                    'cor': nivel_info['cor'],
+                    'nivel_texto': nivel_info['texto']
+                })
+            except (ValueError, KeyError, TypeError) as e:
+                logger.warning(f"Erro ao processar pluviômetro: {e}")
+                continue
+
+        # Estatísticas
+        total = len(pluviometros)
+        com_chuva = len([p for p in pluviometros if p['dados']['h01'] > 0])
+        chuva_forte = len([p for p in pluviometros if p['dados']['h01'] > 25])
+
+        return JsonResponse({
+            'success': True,
+            'total': total,
+            'com_chuva': com_chuva,
+            'chuva_forte': chuva_forte,
+            'data': pluviometros,
+            'legenda': [
+                {'nivel': 'sem_chuva', 'cor': '#22c55e', 'texto': 'Sem Chuva', 'range': '0 mm/h'},
+                {'nivel': 'fraca', 'cor': '#3b82f6', 'texto': 'Chuva Fraca', 'range': '0.2 a 5.0 mm/h'},
+                {'nivel': 'moderada', 'cor': '#eab308', 'texto': 'Chuva Moderada', 'range': '5.1 a 25.0 mm/h'},
+                {'nivel': 'forte', 'cor': '#f97316', 'texto': 'Chuva Forte', 'range': '25.1 a 50.0 mm/h'},
+                {'nivel': 'muito_forte', 'cor': '#ef4444', 'texto': 'Chuva Muito Forte', 'range': 'acima de 50.0 mm/h'}
+            ]
+        })
+
+    except requests.exceptions.Timeout:
+        return JsonResponse({
+            'success': False,
+            'error': 'Timeout ao buscar dados dos pluviômetros',
+            'data': []
+        }, status=504)
+    except Exception as e:
+        logger.error(f"Erro ao buscar pluviômetros: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'data': []
+        }, status=500)

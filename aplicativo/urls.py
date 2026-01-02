@@ -79,6 +79,12 @@ urlpatterns = [
 
     # APIs - Sirenes
     path('api/sirenes/', views.sirene_api, name='sirene_api'),
+
+    # APIs - Sirenes e Chuvas (Defesa Civil RJ - APIs externas)
+    path('api/chuvas-defesa-civil/', views.api_chuvas_defesa_civil, name='api_chuvas_defesa_civil'),
+    path('api/sirenes-defesa-civil/', views.api_sirenes_defesa_civil, name='api_sirenes_defesa_civil'),
+    path('api/sirenes-chuvas/', views.api_sirenes_chuvas_combinado, name='api_sirenes_chuvas'),
+    path('api/pluviometros-defesa-civil/', views.api_pluviometros_defesa_civil, name='api_pluviometros_defesa_civil'),
     # REMOVIDO: path('api/test/', ...) - API de teste removida por seguranca
     path('api/mobilidade/', views.mobilidade_api, name='api_mobilidade'),
 
@@ -118,6 +124,9 @@ urlpatterns = [
     # APIs de Câmeras
     path('api/camera/<str:camera_id>/snapshot/', views.camera_snapshot, name='camera_snapshot'),
     path('api/camera/<str:camera_id>/stream/', views.camera_stream_view, name='camera_stream_view'),
+
+    # Camera Embed Proxy (KEY segura no backend)
+    path('camera/embed/<str:camera_id>/', views.camera_embed_view, name='camera_embed'),
 
     # APIs - Mobile
     path('api/waze/', views.waze_data_view, name='waze_data'),

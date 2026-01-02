@@ -353,6 +353,9 @@
         <button class="map-control-btn" id="layersToggleBtn" onclick="toggleLayersSidebar()" title="Camadas do Mapa">
             <i class="fas fa-layer-group"></i>
         </button>
+        <button class="map-control-btn theme-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Alternar Tema Claro/Escuro">
+            <i class="fas fa-sun" id="themeIcon"></i>
+        </button>
         <button class="map-control-btn tour-btn" id="tourControlBtn" onclick="toggleTourOcorrencias()" title="Tour Automatico de Ocorrencias">
             <i class="fas fa-route" id="tourIcon"></i>
         </button>
@@ -365,6 +368,40 @@
         <button class="map-control-btn areas-btn" id="btnCriarArea" onclick="iniciarDesenhoArea()" title="Criar Area de Observacao">
             <i class="fas fa-draw-polygon"></i>
         </button>
+    </div>
+
+    <!-- ============================================
+         LEGENDA DE CHUVAS (BOTTOM LEFT)
+         ============================================ -->
+    <div class="rainfall-legend" id="rainfallLegend" style="display: none;">
+        <div class="legend-header">
+            <i class="fas fa-cloud-rain"></i> Intensidade de Chuva
+        </div>
+        <div class="legend-items">
+            <div class="legend-item">
+                <span class="legend-color" style="background: #22c55e;"></span>
+                <span class="legend-label">Sem Chuva</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #3b82f6;"></span>
+                <span class="legend-label">Fraca (0.2-5 mm/h)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #eab308;"></span>
+                <span class="legend-label">Moderada (5.1-25 mm/h)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #f97316;"></span>
+                <span class="legend-label">Forte (25.1-50 mm/h)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #ef4444;"></span>
+                <span class="legend-label">Muito Forte (&gt;50 mm/h)</span>
+            </div>
+        </div>
+        <div class="legend-footer">
+            <i class="fas fa-info-circle"></i> Dados: Defesa Civil RJ
+        </div>
     </div>
 
     <!-- ============================================
@@ -450,7 +487,7 @@
                     </div>
                 </div>
 
-                <!-- Sirenes -->
+                <!-- Sirenes + Chuvas -->
                 <div class="layer-item" onclick="toggleLayerByClick('sirenes', event)">
                     <label class="layer-checkbox" onclick="event.stopPropagation()">
                         <input type="checkbox" id="layerSirenes" onchange="toggleMapLayer('sirenes')">
@@ -460,7 +497,7 @@
                         <i class="fas fa-bullhorn"></i>
                     </div>
                     <div class="layer-info">
-                        <span class="layer-name">Sirenes</span>
+                        <span class="layer-name">Sirenes <i class="fas fa-cloud-rain" style="font-size: 0.7rem; color: #3b82f6; margin-left: 4px;" title="Inclui dados de chuva"></i></span>
                         <span class="layer-count" id="countSirenes">--</span>
                     </div>
                 </div>
@@ -546,18 +583,65 @@
                     </div>
                 </div>
 
-                <!-- Metro -->
-                <div class="layer-item" onclick="toggleLayerByClick('metro', event)">
-                    <label class="layer-checkbox" onclick="event.stopPropagation()">
-                        <input type="checkbox" id="layerMetro" onchange="toggleMapLayer('metro')">
-                        <span class="checkmark"></span>
-                    </label>
-                    <div class="layer-icon" style="background: rgba(255, 87, 34, 0.2); color: #FF5722;">
-                        <i class="fas fa-subway"></i>
+                <!-- Metro - Com Submenu de Linhas -->
+                <div class="layer-item-group">
+                    <div class="layer-item has-submenu" onclick="toggleMetroSubmenu(event)">
+                        <label class="layer-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="layerMetro" onchange="toggleAllMetro()">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="layer-icon" style="background: rgba(255, 87, 34, 0.2); color: #FF5722;">
+                            <i class="fas fa-subway"></i>
+                        </div>
+                        <div class="layer-info">
+                            <span class="layer-name">Metro</span>
+                            <span class="layer-count" id="countMetro">--</span>
+                        </div>
+                        <div class="submenu-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
                     </div>
-                    <div class="layer-info">
-                        <span class="layer-name">Metro</span>
-                        <span class="layer-count" id="countMetro">--</span>
+
+                    <!-- Submenu Metro -->
+                    <div class="layer-submenu" id="metroSubmenu">
+                        <!-- Linha 1 - Laranja -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerMetroL1" onchange="toggleMetroLine('L1')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(255, 152, 0, 0.2); color: #FF9800; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-weight: bold; font-size: 11px;">L1</span>
+                            </div>
+                            <span class="submenu-label">Linha 1 - Laranja</span>
+                            <span class="submenu-badge" id="countMetroL1">--</span>
+                        </div>
+
+                        <!-- Linha 2 - Verde -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerMetroL2" onchange="toggleMetroLine('L2')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(76, 175, 80, 0.2); color: #4CAF50; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-weight: bold; font-size: 11px;">L2</span>
+                            </div>
+                            <span class="submenu-label">Linha 2 - Verde</span>
+                            <span class="submenu-badge" id="countMetroL2">--</span>
+                        </div>
+
+                        <!-- Linha 4 - Amarela -->
+                        <div class="submenu-item" onclick="event.stopPropagation()">
+                            <label class="submenu-checkbox">
+                                <input type="checkbox" id="layerMetroL4" onchange="toggleMetroLine('L4')" checked>
+                                <span class="submenu-checkmark"></span>
+                            </label>
+                            <div class="submenu-icon" style="background: rgba(255, 235, 59, 0.2); color: #FDD835; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-weight: bold; font-size: 11px;">L4</span>
+                            </div>
+                            <span class="submenu-label">Linha 4 - Amarela</span>
+                            <span class="submenu-badge" id="countMetroL4">--</span>
+                        </div>
                     </div>
                 </div>
 
@@ -576,11 +660,26 @@
                     </div>
                 </div>
 
+                <!-- Pontos Turisticos -->
+                <div class="layer-item" onclick="toggleLayerByClick('pontosTuristicos', event)">
+                    <label class="layer-checkbox" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="layerPontosTuristicos" onchange="toggleMapLayer('pontosTuristicos')">
+                        <span class="checkmark"></span>
+                    </label>
+                    <div class="layer-icon" style="background: rgba(233, 30, 99, 0.2); color: #E91E63;">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <div class="layer-info">
+                        <span class="layer-name">Pontos Turisticos</span>
+                        <span class="layer-count" id="countPontosTuristicos">--</span>
+                    </div>
+                </div>
+
                 <!-- Waze - Com Submenu de Filtros -->
                 <div class="layer-item-group">
                     <div class="layer-item has-submenu" onclick="toggleWazeSubmenu(event)">
                         <label class="layer-checkbox" onclick="event.stopPropagation()">
-                            <input type="checkbox" id="layerWaze" onchange="toggleAllWaze()">
+                            <input type="checkbox" id="layerWaze" onchange="toggleAllWaze()" checked>
                             <span class="checkmark"></span>
                         </label>
                         <div class="layer-icon" style="background: rgba(0, 212, 255, 0.2); color: #00d4ff;">
@@ -600,7 +699,7 @@
                         <!-- Congestionamentos -->
                         <div class="submenu-item" onclick="event.stopPropagation()">
                             <label class="submenu-checkbox">
-                                <input type="checkbox" id="layerWazeCongestionamentos" onchange="toggleWazeFilter('congestionamentos')" checked>
+                                <input type="checkbox" id="layerWazeCongestionamentos" onchange="toggleWazeFilter('congestionamentos')">
                                 <span class="submenu-checkmark"></span>
                             </label>
                             <div class="submenu-icon" style="background: rgba(255, 165, 0, 0.2); color: #ffa500; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -626,7 +725,7 @@
                         <!-- Eventos Especiais -->
                         <div class="submenu-item" onclick="event.stopPropagation()">
                             <label class="submenu-checkbox">
-                                <input type="checkbox" id="layerWazeEventos" onchange="toggleWazeFilter('eventos')" checked>
+                                <input type="checkbox" id="layerWazeEventos" onchange="toggleWazeFilter('eventos')">
                                 <span class="submenu-checkmark"></span>
                             </label>
                             <div class="submenu-icon" style="background: rgba(156, 39, 176, 0.2); color: #9C27B0; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -652,7 +751,7 @@
                         <!-- Buracos -->
                         <div class="submenu-item" onclick="event.stopPropagation()">
                             <label class="submenu-checkbox">
-                                <input type="checkbox" id="layerWazeBuracos" onchange="toggleWazeFilter('buracos')" checked>
+                                <input type="checkbox" id="layerWazeBuracos" onchange="toggleWazeFilter('buracos')">
                                 <span class="submenu-checkmark"></span>
                             </label>
                             <div class="submenu-icon" style="background: rgba(139, 69, 19, 0.2); color: #8B4513; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -678,7 +777,7 @@
                         <!-- Carro Parado -->
                         <div class="submenu-item" onclick="event.stopPropagation()">
                             <label class="submenu-checkbox">
-                                <input type="checkbox" id="layerWazeCarroParado" onchange="toggleWazeFilter('carroParado')" checked>
+                                <input type="checkbox" id="layerWazeCarroParado" onchange="toggleWazeFilter('carroParado')">
                                 <span class="submenu-checkmark"></span>
                             </label>
                             <div class="submenu-icon" style="background: rgba(100, 100, 100, 0.2); color: #888; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -691,7 +790,7 @@
                         <!-- Policia -->
                         <div class="submenu-item" onclick="event.stopPropagation()">
                             <label class="submenu-checkbox">
-                                <input type="checkbox" id="layerWazePolicia" onchange="toggleWazeFilter('policia')" checked>
+                                <input type="checkbox" id="layerWazePolicia" onchange="toggleWazeFilter('policia')">
                                 <span class="submenu-checkmark"></span>
                             </label>
                             <div class="submenu-icon" style="background: rgba(0, 123, 255, 0.2); color: #007bff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -704,7 +803,7 @@
                         <!-- Outros Alertas -->
                         <div class="submenu-item" onclick="event.stopPropagation()">
                             <label class="submenu-checkbox">
-                                <input type="checkbox" id="layerWazeOutros" onchange="toggleWazeFilter('outros')" checked>
+                                <input type="checkbox" id="layerWazeOutros" onchange="toggleWazeFilter('outros')">
                                 <span class="submenu-checkmark"></span>
                             </label>
                             <div class="submenu-icon" style="background: rgba(128, 128, 128, 0.2); color: #808080; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -870,6 +969,169 @@
         margin-top: 10px;
         padding: 6px 12px;
         font-size: 0.85rem;
+    }
+
+    /* Marcador triangular de ocorrencias */
+    .oc-marker-triangle {
+        transition: filter 0.4s ease, transform 0.4s ease;
+        transform-origin: center bottom;
+    }
+    .ocorrencia-marker {
+        z-index: 1000 !important;
+    }
+
+    /* Botao de Tema */
+    .map-control-btn.theme-btn {
+        border-color: #FFC107;
+        color: #FFC107;
+    }
+    .map-control-btn.theme-btn:hover {
+        background: #FFC107;
+        color: #000;
+        box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
+    }
+
+    /* ============================================ */
+    /* TEMA CLARO (Light Theme)                    */
+    /* ============================================ */
+    body.light-theme {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f5f5f5;
+        --bg-tertiary: #e8e8e8;
+        --text-primary: #1a1a2e;
+        --text-secondary: #555555;
+        --border-color: #d0d0d0;
+        --primary-color: #0077cc;
+        background: #f0f2f5 !important;
+        color: #1a1a2e !important;
+    }
+
+    body.light-theme .sidebar {
+        background: linear-gradient(180deg, #ffffff 0%, #f5f7fa 100%);
+        border-right: 1px solid #d0d0d0;
+    }
+
+    body.light-theme .sidebar-section {
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+    }
+
+    body.light-theme .sidebar-header,
+    body.light-theme .sidebar-title {
+        color: #1a1a2e;
+    }
+
+    body.light-theme .sidebar-subtitle {
+        color: #666;
+    }
+
+    body.light-theme .metric-item {
+        background: #f8f9fa;
+        border: 1px solid #e0e0e0;
+    }
+
+    body.light-theme .metric-item:hover {
+        background: #e8f4fc;
+        border-color: #0077cc;
+    }
+
+    body.light-theme .metric-label {
+        color: #555;
+    }
+
+    body.light-theme .metric-sublabel {
+        color: #888;
+    }
+
+    body.light-theme .status-badge {
+        background: rgba(0, 119, 204, 0.1);
+        color: #0077cc;
+    }
+
+    body.light-theme .topbar {
+        background: linear-gradient(90deg, #0077cc 0%, #00a8e8 50%, #0077cc 100%);
+    }
+
+    body.light-theme .weather-widget {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid #d0d0d0;
+    }
+
+    body.light-theme .weather-temp,
+    body.light-theme .weather-humidity,
+    body.light-theme .weather-rain {
+        color: #1a1a2e;
+    }
+
+    body.light-theme .map-control-btn {
+        background: rgba(255, 255, 255, 0.95);
+        color: #0077cc;
+        border: 1px solid #d0d0d0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    body.light-theme .map-control-btn:hover {
+        background: #0077cc;
+        color: #fff;
+    }
+
+    body.light-theme .layers-sidebar {
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid #d0d0d0;
+    }
+
+    body.light-theme .layers-header {
+        background: linear-gradient(135deg, #0077cc 0%, #00a8e8 100%);
+    }
+
+    body.light-theme .layer-item {
+        background: #f5f7fa;
+        border: 1px solid #e0e0e0;
+        color: #1a1a2e;
+    }
+
+    body.light-theme .layer-item:hover {
+        background: #e8f4fc;
+        border-color: #0077cc;
+    }
+
+    body.light-theme .layer-selector {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid #d0d0d0;
+    }
+
+    body.light-theme .layer-btn {
+        color: #1a1a2e;
+    }
+
+    body.light-theme .layer-btn.active {
+        background: #0077cc;
+        color: #fff;
+    }
+
+    body.light-theme .submenu-arrow {
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid #d0d0d0;
+    }
+
+    body.light-theme .submenu-arrow h6 {
+        color: #1a1a2e;
+    }
+
+    body.light-theme .submenu-arrow p {
+        color: #666;
+    }
+
+    body.light-theme #toast-container .toast {
+        background: rgba(255, 255, 255, 0.98);
+        color: #1a1a2e;
+        border: 1px solid #d0d0d0;
+    }
+
+    body.light-theme .sidebar-toggle {
+        background: rgba(255, 255, 255, 0.95);
+        color: #0077cc;
+        border: 1px solid #d0d0d0;
     }
 </style>
 {% endblock %}
@@ -1062,8 +1324,14 @@
         wazeOutros: L.layerGroup(),
         bolsoes: L.layerGroup(),
         ocorrencias: L.layerGroup(),
-        areasObservacao: L.featureGroup()  // FeatureGroup para Leaflet.draw
+        areasObservacao: L.featureGroup(),  // FeatureGroup para Leaflet.draw
+        alertasChuva: L.layerGroup(),  // Camada automatica de alertas de chuva
+        pontosTuristicos: L.layerGroup(),  // Pontos turisticos do Rio
+        metroLinhas: L.layerGroup()  // Linhas do metro (polylines)
     };
+
+    // Adicionar camada de alertas de chuva ao mapa (sempre visivel)
+    mapLayers.alertasChuva.addTo(map);
 
     // Cache dos dados carregados
     var layerDataCache = {
@@ -1088,15 +1356,15 @@
 
     // Estado dos filtros de Waze
     var wazeFilters = {
-        congestionamentos: true,
+        congestionamentos: false,
         interdicoes: true,
-        eventos: true,
+        eventos: false,
         acidentes: true,
-        buracos: true,
+        buracos: false,
         perigos: true,
-        carroParado: true,
-        policia: true,
-        outros: true
+        carroParado: false,
+        policia: false,
+        outros: false
     };
 
     // Icones customizados para cada tipo
@@ -1113,7 +1381,8 @@
         waze: { icon: 'fa-car', color: '#00d4ff' },
         bolsoes: { icon: 'fa-water', color: '#06b6d4' },
         ocorrencias: { icon: 'fa-exclamation-triangle', color: '#FF0055' },
-        areasObservacao: { icon: 'fa-draw-polygon', color: '#00D4FF' }
+        areasObservacao: { icon: 'fa-draw-polygon', color: '#00D4FF' },
+        pontosTuristicos: { icon: 'fa-camera', color: '#E91E63' }
     };
 
     // Cores por prioridade de ocorrencia
@@ -1773,6 +2042,82 @@
         }
     }
 
+    // ============================================
+    // ALTERNAR TEMA CLARO/ESCURO (unificado com integracity_settings)
+    // ============================================
+    function getCurrentTheme() {
+        try {
+            var settings = localStorage.getItem('integracity_settings');
+            if (settings) {
+                var parsed = JSON.parse(settings);
+                return parsed.theme || 'dark';
+            }
+        } catch(e) {}
+        return 'dark';
+    }
+
+    function setThemeInSettings(theme) {
+        try {
+            var settings = localStorage.getItem('integracity_settings');
+            var parsed = settings ? JSON.parse(settings) : {};
+            parsed.theme = theme;
+            localStorage.setItem('integracity_settings', JSON.stringify(parsed));
+        } catch(e) {
+            console.error('Erro ao salvar tema:', e);
+        }
+    }
+
+    var currentTheme = getCurrentTheme();
+
+    function toggleTheme() {
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(currentTheme);
+        setThemeInSettings(currentTheme);
+        showToast('Tema alterado para ' + (currentTheme === 'dark' ? 'escuro' : 'claro'), 'info');
+    }
+
+    function applyTheme(theme) {
+        var body = document.body;
+        var html = document.documentElement;
+        var icon = document.getElementById('themeIcon');
+        var btn = document.getElementById('themeToggleBtn');
+
+        if (theme === 'light') {
+            html.classList.add('light-theme');
+            body.classList.add('light-theme');
+            if (icon) {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+            if (btn) btn.title = 'Alternar para Tema Escuro';
+            // Mudar tiles do mapa para modo claro
+            switchLayer(document.querySelector('.layer-btn[onclick*="street"]'), 'street');
+        } else {
+            html.classList.remove('light-theme');
+            body.classList.remove('light-theme');
+            if (icon) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
+            if (btn) btn.title = 'Alternar para Tema Claro';
+            // Mudar tiles do mapa para modo escuro
+            switchLayer(document.querySelector('.layer-btn[onclick*="dark"]'), 'dark');
+        }
+    }
+
+    // Aplicar tema salvo ao carregar
+    (function() {
+        // Aplicar imediatamente para evitar flash
+        if (currentTheme === 'light') {
+            document.documentElement.classList.add('light-theme');
+            document.body.classList.add('light-theme');
+        }
+        // Atualizar icone quando DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', function() {
+            applyTheme(currentTheme);
+        });
+    })();
+
     // Criar icone de marcador
     function createLayerIcon(type) {
         var config = layerIcons[type] || { icon: 'fa-map-marker', color: '#00d4ff' };
@@ -1827,6 +2172,26 @@
                 }
             }
 
+            // Mostrar legenda de chuvas para sirenes e pluviometros
+            if (layerName === 'sirenes' || layerName === 'pluviometros') {
+                var legend = document.getElementById('rainfallLegend');
+                if (legend) {
+                    legend.style.display = 'block';
+                }
+            }
+
+            // Tratamento especial para Metro (usa funcoes proprias)
+            if (layerName === 'metro') {
+                loadMetroData();
+                return;
+            }
+
+            // Tratamento especial para Pontos Turisticos
+            if (layerName === 'pontosTuristicos') {
+                loadPontosTuristicosData();
+                return;
+            }
+
             showToast('Camada ' + layerName + ' ativada', 'success');
         } else {
             // Remover camada do mapa
@@ -1851,6 +2216,31 @@
                 }
             }
 
+            // Esconder legenda de chuvas (apenas se nenhuma camada relacionada estiver ativa)
+            if (layerName === 'sirenes' || layerName === 'pluviometros') {
+                var sirenesCheck = document.getElementById('layerSirenes');
+                var pluvioCheck = document.getElementById('layerPluviometros');
+                var sirenesAtivo = sirenesCheck && sirenesCheck.checked;
+                var pluvioAtivo = pluvioCheck && pluvioCheck.checked;
+
+                // So esconder se nenhuma das duas estiver ativa
+                if (!sirenesAtivo && !pluvioAtivo) {
+                    var legend = document.getElementById('rainfallLegend');
+                    if (legend) {
+                        legend.style.display = 'none';
+                    }
+                }
+            }
+
+            // Remover camada de linhas do metro tambem
+            if (layerName === 'metro') {
+                if (map.hasLayer(mapLayers.metroLinhas)) {
+                    map.removeLayer(mapLayers.metroLinhas);
+                }
+                mapLayers.metro.clearLayers();
+                mapLayers.metroLinhas.clearLayers();
+            }
+
             showToast('Camada ' + layerName + ' desativada', 'info');
         }
     }
@@ -1870,8 +2260,8 @@
         var apiUrls = {
             escolas: baseUrl + 'integracity/api/escolas/',
             hospitais: baseUrl + 'integracity/api/hospitais/',
-            pluviometros: baseUrl + 'integracity/api/pluviometros/',
-            sirenes: baseUrl + 'integracity/api/sirenes/',
+            pluviometros: baseUrl + 'integracity/api/pluviometros-defesa-civil/',
+            sirenes: baseUrl + 'integracity/api/sirenes-chuvas/',
             cameras: baseUrl + 'integracity/api/cameras/',
             metro: baseUrl + 'integracity/api/metro/',
             brt: baseUrl + 'integracity/api/brt/',
@@ -1908,6 +2298,14 @@
                     renderOcorrenciasMarkers(data);
                     updateLayerCount(layerName, data);
                     showToast('Ocorrencias carregadas com sucesso', 'success');
+                } else if (layerName === 'sirenes') {
+                    renderSirenesMarkers(data);
+                    // Contagem e tratada dentro de renderSirenesMarkers
+                    showToast('Sirenes carregadas com sucesso', 'success');
+                } else if (layerName === 'pluviometros') {
+                    renderPluviometrosMarkers(data);
+                    // Contagem e tratada dentro de renderPluviometrosMarkers
+                    showToast('Pluviometros carregados com sucesso', 'success');
                 } else {
                     renderLayerMarkers(layerName, data);
                     updateLayerCount(layerName, data);
@@ -1988,6 +2386,487 @@
         });
 
         console.log('Camada ' + layerName + ': ' + mapLayers[layerName].getLayers().length + ' marcadores');
+    }
+
+    // Renderizar marcadores de sirenes com cores de chuva
+    function renderSirenesMarkers(data) {
+        mapLayers.sirenes.clearLayers();
+
+        var sirenes = data.data || data.sirenes || data;
+        if (!Array.isArray(sirenes)) {
+            console.warn('Dados de sirenes invalidos:', data);
+            return;
+        }
+
+        console.log('Renderizando ' + sirenes.length + ' sirenes com dados de chuva');
+
+        sirenes.forEach(function(item) {
+            var lat = item.lat || item.latitude;
+            var lng = item.lng || item.longitude || item.lon;
+
+            if (lat && lng) {
+                // Dados da sirene e chuva
+                var sireneInfo = item.sirene || {};
+                var chuvaInfo = item.chuva || {};
+                var corChuva = item.cor || '#FF9800';
+                var nivelChuva = item.nivel_texto || 'Sem dados';
+                var isOnline = sireneInfo.online !== false;
+
+                // Criar icone com cor da chuva
+                var icon = L.divIcon({
+                    className: 'sirene-marker',
+                    html: '<div style="background: ' + corChuva + '; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid ' + (isOnline ? 'white' : '#666') + '; box-shadow: 0 2px 10px rgba(0,0,0,0.5); position: relative;">' +
+                          '<i class="fas fa-bullhorn" style="color: white; font-size: 14px;"></i>' +
+                          (isOnline ? '' : '<div style="position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; border: 1px solid white;"></div>') +
+                          '</div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16],
+                    popupAnchor: [0, -16]
+                });
+
+                var marker = L.marker([lat, lng], { icon: icon });
+
+                // Criar popup com informacoes da sirene e chuva
+                var statusText = isOnline ? '<span style="color:#00ff88">Online</span>' : '<span style="color:#ef4444">Offline</span>';
+                var popupHtml = '<div style="font-family: Rajdhani, sans-serif; min-width: 200px;">' +
+                    '<h4 style="margin: 0 0 8px 0; color: ' + corChuva + '; font-family: Orbitron, monospace; font-size: 0.9rem;">' +
+                    '<i class="fas fa-bullhorn"></i> ' + (item.nome || 'Sirene') + '</h4>' +
+                    '<div style="font-size: 0.85rem; color: #ccc;">' +
+                    '<p><i class="fas fa-wifi"></i> Status: ' + statusText + '</p>' +
+                    '<p><i class="fas fa-map-marker-alt"></i> Cidade: ' + (item.cidade || '--') + '</p>' +
+                    '<hr style="border: none; border-top: 1px solid #444; margin: 8px 0;">' +
+                    '<p style="color: ' + corChuva + '; font-weight: 600;"><i class="fas fa-cloud-rain"></i> ' + nivelChuva + '</p>' +
+                    (chuvaInfo.m15 !== undefined ? '<p>15 min: ' + Number(chuvaInfo.m15).toFixed(1) + ' mm</p>' : '') +
+                    (chuvaInfo.h01 !== undefined ? '<p>1 hora: ' + Number(chuvaInfo.h01).toFixed(1) + ' mm</p>' : '') +
+                    (chuvaInfo.h24 !== undefined ? '<p>24 horas: ' + Number(chuvaInfo.h24).toFixed(1) + ' mm</p>' : '') +
+                    '</div></div>';
+
+                marker.bindPopup(popupHtml);
+                mapLayers.sirenes.addLayer(marker);
+            }
+        });
+
+        console.log('Sirenes renderizadas: ' + mapLayers.sirenes.getLayers().length);
+
+        // Atualizar contador na sidebar com estatisticas
+        var countEl = document.getElementById('countSirenes');
+        if (countEl) {
+            var onlineCount = data.sirenes_online || sirenes.filter(s => s.sirene && s.sirene.online).length;
+            countEl.textContent = onlineCount + '/' + sirenes.length;
+            countEl.title = onlineCount + ' online de ' + sirenes.length + ' total';
+        }
+    }
+
+    // Renderizar marcadores de pluviometros com cores de chuva
+    function renderPluviometrosMarkers(data) {
+        mapLayers.pluviometros.clearLayers();
+
+        var pluviometros = data.data || data.pluviometros || data;
+        if (!Array.isArray(pluviometros)) {
+            console.warn('Dados de pluviometros invalidos:', data);
+            return;
+        }
+
+        console.log('Renderizando ' + pluviometros.length + ' pluviometros');
+
+        pluviometros.forEach(function(item) {
+            var lat = item.lat || item.latitude;
+            var lng = item.lng || item.longitude;
+
+            if (lat && lng) {
+                // Dados do pluviometro
+                var dadosChuva = item.dados || {};
+                var corChuva = item.cor || '#2196F3';
+                var nivelChuva = item.nivel_texto || 'Sem dados';
+
+                // Criar icone com cor da chuva
+                var icon = L.divIcon({
+                    className: 'pluviometro-marker',
+                    html: '<div style="background: ' + corChuva + '; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">' +
+                          '<i class="fas fa-cloud-rain" style="color: white; font-size: 13px;"></i>' +
+                          '</div>',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15],
+                    popupAnchor: [0, -15]
+                });
+
+                var marker = L.marker([lat, lng], { icon: icon });
+
+                // Criar popup com informacoes do pluviometro
+                var popupHtml = '<div style="font-family: Rajdhani, sans-serif; min-width: 220px;">' +
+                    '<h4 style="margin: 0 0 8px 0; color: ' + corChuva + '; font-family: Orbitron, monospace; font-size: 0.9rem;">' +
+                    '<i class="fas fa-cloud-rain"></i> ' + (item.nome || 'Pluviometro') + '</h4>' +
+                    '<div style="font-size: 0.85rem; color: #ccc;">' +
+                    '<p style="color: ' + corChuva + '; font-weight: 600;"><i class="fas fa-tint"></i> ' + nivelChuva + '</p>' +
+                    '<hr style="border: none; border-top: 1px solid #444; margin: 8px 0;">' +
+                    '<table style="width: 100%; font-size: 0.8rem;">' +
+                    '<tr><td>5 min:</td><td style="text-align:right;">' + Number(dadosChuva.m05 || 0).toFixed(1) + ' mm</td></tr>' +
+                    '<tr><td>15 min:</td><td style="text-align:right;">' + Number(dadosChuva.m15 || 0).toFixed(1) + ' mm</td></tr>' +
+                    '<tr><td>1 hora:</td><td style="text-align:right;">' + Number(dadosChuva.h01 || 0).toFixed(1) + ' mm</td></tr>' +
+                    '<tr><td>4 horas:</td><td style="text-align:right;">' + Number(dadosChuva.h04 || 0).toFixed(1) + ' mm</td></tr>' +
+                    '<tr><td>24 horas:</td><td style="text-align:right;">' + Number(dadosChuva.h24 || 0).toFixed(1) + ' mm</td></tr>' +
+                    '<tr><td>96 horas:</td><td style="text-align:right;">' + Number(dadosChuva.h96 || 0).toFixed(1) + ' mm</td></tr>' +
+                    '</table>' +
+                    '</div></div>';
+
+                marker.bindPopup(popupHtml);
+                mapLayers.pluviometros.addLayer(marker);
+            }
+        });
+
+        console.log('Pluviometros renderizados: ' + mapLayers.pluviometros.getLayers().length);
+
+        // Atualizar contador na sidebar
+        var countEl = document.getElementById('countPluviometros');
+        if (countEl) {
+            var comChuva = data.com_chuva || pluviometros.filter(p => p.dados && p.dados.h01 > 0).length;
+            countEl.textContent = pluviometros.length;
+            countEl.title = comChuva + ' com chuva de ' + pluviometros.length + ' total';
+        }
+    }
+
+    // ============================================
+    // DADOS ESTATICOS DO METRO RIO
+    // ============================================
+    var metroData = {
+        linhas: {
+            L1: { nome: 'Linha 1 - Laranja', cor: '#FF9800', corHex: '#FF9800' },
+            L2: { nome: 'Linha 2 - Verde', cor: '#4CAF50', corHex: '#4CAF50' },
+            L4: { nome: 'Linha 4 - Amarela', cor: '#FDD835', corHex: '#FDD835' }
+        },
+        estacoes: [
+            // LINHA 1 - LARANJA (Uruguai → General Osorio)
+            { id: 1, nome: 'Uruguai', linha: 'L1', lat: -22.9064, lng: -43.2389, integracao: null },
+            { id: 2, nome: 'Saenz Pena', linha: 'L1', lat: -22.9028, lng: -43.2353, integracao: null },
+            { id: 3, nome: 'Sao Francisco Xavier', linha: 'L1', lat: -22.8992, lng: -43.2278, integracao: null },
+            { id: 4, nome: 'Afonso Pena', linha: 'L1', lat: -22.8925, lng: -43.2275, integracao: null },
+            { id: 5, nome: 'Estacio', linha: 'L1', lat: -22.8985, lng: -43.2139, integracao: 'L2', pontoTuristico: 'Sambodromo' },
+            { id: 6, nome: 'Praca Onze', linha: 'L1', lat: -22.9058, lng: -43.2083, integracao: null, pontoTuristico: 'Sambodromo' },
+            { id: 7, nome: 'Central', linha: 'L1', lat: -22.9029, lng: -43.1712, integracao: 'SuperVia', pontoTuristico: 'Central do Brasil' },
+            { id: 8, nome: 'Presidente Vargas', linha: 'L1', lat: -22.9042, lng: -43.1872, integracao: null },
+            { id: 9, nome: 'Uruguaiana', linha: 'L1', lat: -22.9038, lng: -43.1794, integracao: null, pontoTuristico: 'SAARA/Centro' },
+            { id: 10, nome: 'Carioca', linha: 'L1', lat: -22.9066, lng: -43.1761, integracao: 'L2', pontoTuristico: 'Arcos da Lapa' },
+            { id: 11, nome: 'Cinelandia', linha: 'L1', lat: -22.9102, lng: -43.1759, integracao: null, pontoTuristico: 'Theatro Municipal' },
+            { id: 12, nome: 'Gloria', linha: 'L1', lat: -22.9182, lng: -43.1764, integracao: null, pontoTuristico: 'Igreja da Gloria' },
+            { id: 13, nome: 'Catete', linha: 'L1', lat: -22.9264, lng: -43.1769, integracao: null, pontoTuristico: 'Palacio do Catete' },
+            { id: 14, nome: 'Largo do Machado', linha: 'L1', lat: -22.9315, lng: -43.1777, integracao: null },
+            { id: 15, nome: 'Flamengo', linha: 'L1', lat: -22.9396, lng: -43.1736, integracao: null, pontoTuristico: 'Aterro do Flamengo' },
+            { id: 16, nome: 'Botafogo', linha: 'L1', lat: -22.9515, lng: -43.1869, integracao: 'L2', pontoTuristico: 'Pao de Acucar' },
+            { id: 17, nome: 'Cardeal Arcoverde', linha: 'L1', lat: -22.9672, lng: -43.1857, integracao: null, pontoTuristico: 'Copacabana' },
+            { id: 18, nome: 'Siqueira Campos', linha: 'L1', lat: -22.9706, lng: -43.1859, integracao: null, pontoTuristico: 'Copacabana' },
+            { id: 19, nome: 'Cantagalo', linha: 'L1', lat: -22.9710, lng: -43.1909, integracao: null, pontoTuristico: 'Ipanema' },
+            { id: 20, nome: 'General Osorio', linha: 'L1', lat: -22.9864, lng: -43.1901, integracao: 'L4', pontoTuristico: 'Ipanema' },
+
+            // LINHA 2 - VERDE (Pavuna → Botafogo)
+            { id: 21, nome: 'Pavuna', linha: 'L2', lat: -22.8239, lng: -43.3657, integracao: 'SuperVia' },
+            { id: 22, nome: 'Engenheiro Rubens Paiva', linha: 'L2', lat: -22.8325, lng: -43.3512, integracao: null },
+            { id: 23, nome: 'Acari/Fazenda Botafogo', linha: 'L2', lat: -22.8369, lng: -43.3300, integracao: null },
+            { id: 24, nome: 'Coelho Neto', linha: 'L2', lat: -22.8442, lng: -43.3131, integracao: 'SuperVia' },
+            { id: 25, nome: 'Colégio', linha: 'L2', lat: -22.8461, lng: -43.2969, integracao: null },
+            { id: 26, nome: 'Irajá', linha: 'L2', lat: -22.8335, lng: -43.2875, integracao: null },
+            { id: 27, nome: 'Vicente de Carvalho', linha: 'L2', lat: -22.8350, lng: -43.2769, integracao: null },
+            { id: 28, nome: 'Thomaz Coelho', linha: 'L2', lat: -22.8429, lng: -43.2640, integracao: null },
+            { id: 29, nome: 'Engenho da Rainha', linha: 'L2', lat: -22.8510, lng: -43.2543, integracao: null },
+            { id: 30, nome: 'Inhaúma', linha: 'L2', lat: -22.8558, lng: -43.2414, integracao: null },
+            { id: 31, nome: 'Del Castilho', linha: 'L2', lat: -22.8625, lng: -43.2284, integracao: null },
+            { id: 32, nome: 'Maria da Graca', linha: 'L2', lat: -22.8734, lng: -43.2277, integracao: null },
+            { id: 33, nome: 'Triagem', linha: 'L2', lat: -22.8800, lng: -43.2180, integracao: null },
+            { id: 34, nome: 'Maracanã', linha: 'L2', lat: -22.8897, lng: -43.2288, integracao: 'SuperVia', pontoTuristico: 'Estadio Maracana' },
+            { id: 35, nome: 'Sao Cristovao', linha: 'L2', lat: -22.8973, lng: -43.2202, integracao: 'SuperVia', pontoTuristico: 'Quinta da Boa Vista' },
+            { id: 36, nome: 'Estacio', linha: 'L2', lat: -22.8985, lng: -43.2139, integracao: 'L1' },
+            { id: 37, nome: 'Carioca', linha: 'L2', lat: -22.9066, lng: -43.1761, integracao: 'L1' },
+            { id: 38, nome: 'Botafogo', linha: 'L2', lat: -22.9515, lng: -43.1869, integracao: 'L1' },
+
+            // LINHA 4 - AMARELA (General Osório → Jardim Oceânico)
+            { id: 39, nome: 'General Osório', linha: 'L4', lat: -22.9864, lng: -43.1901, integracao: 'L1' },
+            { id: 40, nome: 'Nossa Senhora da Paz', linha: 'L4', lat: -22.9839, lng: -43.1984, integracao: null, pontoTuristico: 'Ipanema' },
+            { id: 41, nome: 'Jardim de Alah', linha: 'L4', lat: -22.9872, lng: -43.2100, integracao: null, pontoTuristico: 'Lagoa' },
+            { id: 42, nome: 'Antero de Quental', linha: 'L4', lat: -22.9817, lng: -43.2202, integracao: null, pontoTuristico: 'Leblon' },
+            { id: 43, nome: 'São Conrado', linha: 'L4', lat: -22.9995, lng: -43.2556, integracao: null, pontoTuristico: 'Pedra da Gávea' },
+            { id: 44, nome: 'Jardim Oceânico', linha: 'L4', lat: -23.0062, lng: -43.3058, integracao: 'BRT', pontoTuristico: 'Barra da Tijuca' }
+        ],
+        trajetos: {
+            L1: [
+                [-22.9064, -43.2389], [-22.9028, -43.2353], [-22.8992, -43.2278], [-22.8925, -43.2275],
+                [-22.8985, -43.2139], [-22.9058, -43.2083], [-22.9029, -43.1712], [-22.9042, -43.1872],
+                [-22.9038, -43.1794], [-22.9066, -43.1761], [-22.9102, -43.1759], [-22.9182, -43.1764],
+                [-22.9264, -43.1769], [-22.9315, -43.1777], [-22.9396, -43.1736], [-22.9515, -43.1869],
+                [-22.9672, -43.1857], [-22.9706, -43.1859], [-22.9710, -43.1909], [-22.9864, -43.1901]
+            ],
+            L2: [
+                [-22.8239, -43.3657], [-22.8325, -43.3512], [-22.8369, -43.3300], [-22.8442, -43.3131],
+                [-22.8461, -43.2969], [-22.8335, -43.2875], [-22.8350, -43.2769], [-22.8429, -43.2640],
+                [-22.8510, -43.2543], [-22.8558, -43.2414], [-22.8625, -43.2284], [-22.8734, -43.2277],
+                [-22.8800, -43.2180], [-22.8897, -43.2288], [-22.8973, -43.2202], [-22.8985, -43.2139],
+                [-22.9066, -43.1761], [-22.9515, -43.1869]
+            ],
+            L4: [
+                [-22.9864, -43.1901], [-22.9839, -43.1984], [-22.9872, -43.2100], [-22.9817, -43.2202],
+                [-22.9995, -43.2556], [-23.0062, -43.3058]
+            ]
+        }
+    };
+
+    // ============================================
+    // DADOS ESTATICOS DOS PONTOS TURISTICOS
+    // ============================================
+    var pontosTuristicosData = [
+        { id: 1, nome: 'Cristo Redentor', lat: -22.9519, lng: -43.2105, categoria: 'Monumento', icone: 'fa-church', cor: '#00ff88', descricao: 'Uma das 7 Maravilhas do Mundo Moderno', bairro: 'Alto da Boa Vista' },
+        { id: 2, nome: 'Pão de Açúcar', lat: -22.9492, lng: -43.1545, categoria: 'Natureza', icone: 'fa-mountain', cor: '#00D4FF', descricao: 'Bondinho com vista panorâmica da cidade', bairro: 'Urca' },
+        { id: 3, nome: 'Estádio Maracanã', lat: -22.9122, lng: -43.2302, categoria: 'Esporte', icone: 'fa-futbol', cor: '#FFB800', descricao: 'Templo do futebol mundial', bairro: 'Maracanã', metroProximo: 'Maracanã' },
+        { id: 4, nome: 'Sambódromo da Marquês de Sapucaí', lat: -22.9103, lng: -43.1978, categoria: 'Cultura', icone: 'fa-music', cor: '#FF0055', descricao: 'Palco do maior Carnaval do mundo', bairro: 'Centro', metroProximo: 'Praça Onze' },
+        { id: 5, nome: 'Arcos da Lapa', lat: -22.9137, lng: -43.1793, categoria: 'Historico', icone: 'fa-landmark', cor: '#9C27B0', descricao: 'Aqueduto histórico e cartão-postal', bairro: 'Lapa', metroProximo: 'Carioca' },
+        { id: 6, nome: 'Catedral Metropolitana', lat: -22.9106, lng: -43.1810, categoria: 'Religioso', icone: 'fa-church', cor: '#4CAF50', descricao: 'Arquitetura modernista cônica', bairro: 'Centro', metroProximo: 'Carioca' },
+        { id: 7, nome: 'Santa Teresa', lat: -22.9217, lng: -43.1872, categoria: 'Bairro', icone: 'fa-tram', cor: '#FF5722', descricao: 'Bairro boêmio com bondinhos históricos', bairro: 'Santa Teresa', metroProximo: 'Gloria' },
+        { id: 8, nome: 'Escadaria Selarón', lat: -22.9158, lng: -43.1797, categoria: 'Arte', icone: 'fa-paint-brush', cor: '#E91E63', descricao: 'Escadaria coberta de azulejos coloridos', bairro: 'Lapa', metroProximo: 'Carioca' },
+        { id: 9, nome: 'Praia de Copacabana', lat: -22.9714, lng: -43.1823, categoria: 'Praia', icone: 'fa-umbrella-beach', cor: '#FFD700', descricao: 'Praia mais famosa do Brasil', bairro: 'Copacabana', metroProximo: 'Cardeal Arcoverde' },
+        { id: 10, nome: 'Praia de Ipanema', lat: -22.9838, lng: -43.2045, categoria: 'Praia', icone: 'fa-umbrella-beach', cor: '#FF6B6B', descricao: 'Praia sofisticada e pôr do sol icônico', bairro: 'Ipanema', metroProximo: 'General Osório' },
+        { id: 11, nome: 'Lagoa Rodrigo de Freitas', lat: -22.9686, lng: -43.2127, categoria: 'Natureza', icone: 'fa-water', cor: '#2196F3', descricao: 'Lagoa urbana para lazer e esportes', bairro: 'Lagoa', metroProximo: 'Jardim de Alah' },
+        { id: 12, nome: 'Jardim Botânico', lat: -22.9679, lng: -43.2247, categoria: 'Natureza', icone: 'fa-leaf', cor: '#4CAF50', descricao: 'Jardim com mais de 8.000 espécies de plantas', bairro: 'Jardim Botânico' },
+        { id: 13, nome: 'Theatro Municipal', lat: -22.9090, lng: -43.1763, categoria: 'Cultura', icone: 'fa-theater-masks', cor: '#9C27B0', descricao: 'Teatro de ópera em estilo eclético', bairro: 'Centro', metroProximo: 'Cinelândia' },
+        { id: 14, nome: 'Palácio do Catete', lat: -22.9265, lng: -43.1750, categoria: 'Historico', icone: 'fa-building-columns', cor: '#607D8B', descricao: 'Antigo Palácio Presidencial, hoje Museu da República', bairro: 'Catete', metroProximo: 'Catete' },
+        { id: 15, nome: 'Quinta da Boa Vista', lat: -22.9062, lng: -43.2230, categoria: 'Parque', icone: 'fa-tree', cor: '#8BC34A', descricao: 'Parque imperial com Museu Nacional', bairro: 'São Cristóvão', metroProximo: 'São Cristóvão' },
+        { id: 16, nome: 'AquaRio', lat: -22.8932, lng: -43.1923, categoria: 'Atração', icone: 'fa-fish', cor: '#00BCD4', descricao: 'Maior aquário marinho da América do Sul', bairro: 'Praça Mauá' },
+        { id: 17, nome: 'Museu do Amanhã', lat: -22.8941, lng: -43.1800, categoria: 'Museu', icone: 'fa-rocket', cor: '#3F51B5', descricao: 'Museu de ciências futurista', bairro: 'Praça Mauá' },
+        { id: 18, nome: 'Forte de Copacabana', lat: -22.9863, lng: -43.1650, categoria: 'Historico', icone: 'fa-fort-awesome', cor: '#795548', descricao: 'Forte histórico com museu militar', bairro: 'Copacabana' },
+        { id: 19, nome: 'Parque Lage', lat: -22.9606, lng: -43.2108, categoria: 'Parque', icone: 'fa-camera', cor: '#8BC34A', descricao: 'Parque com mansão histórica e vista do Cristo', bairro: 'Jardim Botânico' },
+        { id: 20, nome: 'Pedra Bonita', lat: -22.9894, lng: -43.2819, categoria: 'Natureza', icone: 'fa-parachute-box', cor: '#FF5722', descricao: 'Rampa de voo livre com vista deslumbrante', bairro: 'São Conrado', metroProximo: 'São Conrado' }
+    ];
+
+    // Filtros ativos do metro
+    var metroFilters = { L1: true, L2: true, L4: true };
+    var metroMarkersVisible = { L1: {}, L2: {}, L4: {} };
+
+    // ============================================
+    // FUNCOES DO METRO
+    // ============================================
+    function toggleMetroSubmenu(event) {
+        if (event) event.stopPropagation();
+
+        var layerItems = document.querySelectorAll('.layer-item-group .layer-item.has-submenu');
+        var submenu = document.getElementById('metroSubmenu');
+        var metroLayerItem = null;
+
+        layerItems.forEach(function(item) {
+            if (item.querySelector('#layerMetro')) {
+                metroLayerItem = item;
+            }
+        });
+
+        if (metroLayerItem && submenu) {
+            var isExpanding = !submenu.classList.contains('expanded');
+            metroLayerItem.classList.toggle('expanded');
+            submenu.classList.toggle('expanded');
+
+            if (isExpanding) {
+                var checkbox = document.getElementById('layerMetro');
+                if (checkbox && !checkbox.checked) {
+                    checkbox.checked = true;
+                    loadMetroData();
+                }
+            }
+        }
+    }
+
+    function toggleAllMetro() {
+        var mainCheckbox = document.getElementById('layerMetro');
+        var isChecked = mainCheckbox ? mainCheckbox.checked : false;
+
+        ['L1', 'L2', 'L4'].forEach(function(linha) {
+            var cb = document.getElementById('layerMetro' + linha);
+            if (cb) cb.checked = isChecked;
+            metroFilters[linha] = isChecked;
+        });
+
+        if (isChecked) {
+            loadMetroData();
+        } else {
+            mapLayers.metro.clearLayers();
+            mapLayers.metroLinhas.clearLayers();
+            map.removeLayer(mapLayers.metro);
+            map.removeLayer(mapLayers.metroLinhas);
+        }
+
+        updateMetroCount();
+    }
+
+    function toggleMetroLine(linha) {
+        var checkbox = document.getElementById('layerMetro' + linha);
+        metroFilters[linha] = checkbox ? checkbox.checked : false;
+
+        renderMetroMarkers();
+        updateMetroCount();
+    }
+
+    function loadMetroData() {
+        console.log('Carregando dados do Metro...');
+        showToast('Carregando Metro...', 'info');
+
+        renderMetroMarkers();
+        mapLayers.metro.addTo(map);
+        mapLayers.metroLinhas.addTo(map);
+
+        showToast('Metro carregado com sucesso', 'success');
+        updateMetroCount();
+    }
+
+    function renderMetroMarkers() {
+        mapLayers.metro.clearLayers();
+        mapLayers.metroLinhas.clearLayers();
+
+        var cores = { L1: '#FF9800', L2: '#4CAF50', L4: '#FDD835' };
+
+        // Renderizar linhas (polylines)
+        ['L1', 'L2', 'L4'].forEach(function(linha) {
+            if (metroFilters[linha] && metroData.trajetos[linha]) {
+                var polyline = L.polyline(metroData.trajetos[linha], {
+                    color: cores[linha],
+                    weight: 5,
+                    opacity: 0.9,
+                    dashArray: null
+                });
+                polyline.addTo(mapLayers.metroLinhas);
+            }
+        });
+
+        // Renderizar estacoes
+        metroData.estacoes.forEach(function(estacao) {
+            if (!metroFilters[estacao.linha]) return;
+
+            var cor = cores[estacao.linha];
+            var temIntegracao = estacao.integracao && (estacao.integracao === 'L1' || estacao.integracao === 'L2' || estacao.integracao === 'L4' || estacao.integracao === 'SuperVia' || estacao.integracao === 'BRT');
+
+            var icon = L.divIcon({
+                className: 'metro-station-marker',
+                html: '<div style="' +
+                    'background: ' + cor + ';' +
+                    'width: ' + (temIntegracao ? '24px' : '18px') + ';' +
+                    'height: ' + (temIntegracao ? '24px' : '18px') + ';' +
+                    'border-radius: 50%;' +
+                    'border: 3px solid white;' +
+                    'box-shadow: 0 2px 8px rgba(0,0,0,0.5);' +
+                    'display: flex; align-items: center; justify-content: center;' +
+                    '">' +
+                    (temIntegracao ? '<i class="fas fa-exchange-alt" style="color: white; font-size: 9px;"></i>' : '') +
+                    '</div>',
+                iconSize: [temIntegracao ? 24 : 18, temIntegracao ? 24 : 18],
+                iconAnchor: [temIntegracao ? 12 : 9, temIntegracao ? 12 : 9],
+                popupAnchor: [0, -12]
+            });
+
+            var marker = L.marker([estacao.lat, estacao.lng], { icon: icon });
+
+            var integracaoHtml = '';
+            if (estacao.integracao) {
+                var integracaoCor = cores[estacao.integracao] || '#666';
+                if (estacao.integracao === 'SuperVia') integracaoCor = '#0066CC';
+                if (estacao.integracao === 'BRT') integracaoCor = '#009688';
+                integracaoHtml = '<p style="margin-top: 8px;"><i class="fas fa-exchange-alt"></i> Integração: <span style="color: ' + integracaoCor + '; font-weight: 600;">' + estacao.integracao + '</span></p>';
+            }
+
+            var pontoHtml = '';
+            if (estacao.pontoTuristico) {
+                pontoHtml = '<p style="color: #E91E63;"><i class="fas fa-camera"></i> Perto de: ' + estacao.pontoTuristico + '</p>';
+            }
+
+            var popupHtml = '<div style="font-family: Rajdhani, sans-serif; min-width: 200px;">' +
+                '<h4 style="margin: 0 0 8px 0; color: ' + cor + '; font-family: Orbitron, monospace; font-size: 0.95rem;">' +
+                '<i class="fas fa-subway"></i> ' + estacao.nome + '</h4>' +
+                '<div style="font-size: 0.85rem; color: #ccc;">' +
+                '<p><span style="background: ' + cor + '; padding: 2px 8px; border-radius: 4px; color: white; font-weight: 600;">' + metroData.linhas[estacao.linha].nome + '</span></p>' +
+                integracaoHtml + pontoHtml +
+                '</div></div>';
+
+            marker.bindPopup(popupHtml);
+            mapLayers.metro.addLayer(marker);
+        });
+
+        console.log('Metro renderizado: ' + mapLayers.metro.getLayers().length + ' estacoes');
+    }
+
+    function updateMetroCount() {
+        var total = 0;
+        var countL1 = 0, countL2 = 0, countL4 = 0;
+
+        metroData.estacoes.forEach(function(e) {
+            if (e.linha === 'L1' && metroFilters.L1) { countL1++; total++; }
+            if (e.linha === 'L2' && metroFilters.L2) { countL2++; total++; }
+            if (e.linha === 'L4' && metroFilters.L4) { countL4++; total++; }
+        });
+
+        var countEl = document.getElementById('countMetro');
+        if (countEl) countEl.textContent = total;
+
+        var countL1El = document.getElementById('countMetroL1');
+        if (countL1El) countL1El.textContent = countL1;
+
+        var countL2El = document.getElementById('countMetroL2');
+        if (countL2El) countL2El.textContent = countL2;
+
+        var countL4El = document.getElementById('countMetroL4');
+        if (countL4El) countL4El.textContent = countL4;
+    }
+
+    // ============================================
+    // FUNCOES DOS PONTOS TURISTICOS
+    // ============================================
+    function loadPontosTuristicosData() {
+        console.log('Carregando Pontos Turisticos...');
+        showToast('Carregando Pontos Turisticos...', 'info');
+
+        renderPontosTuristicosMarkers();
+        mapLayers.pontosTuristicos.addTo(map);
+
+        showToast('Pontos Turisticos carregados com sucesso', 'success');
+    }
+
+    function renderPontosTuristicosMarkers() {
+        mapLayers.pontosTuristicos.clearLayers();
+
+        pontosTuristicosData.forEach(function(ponto) {
+            var icon = L.divIcon({
+                className: 'ponto-turistico-marker',
+                html: '<div style="' +
+                    'background: ' + ponto.cor + ';' +
+                    'width: 32px;' +
+                    'height: 32px;' +
+                    'border-radius: 50%;' +
+                    'border: 3px solid white;' +
+                    'box-shadow: 0 3px 12px rgba(0,0,0,0.5);' +
+                    'display: flex; align-items: center; justify-content: center;' +
+                    '">' +
+                    '<i class="fas ' + ponto.icone + '" style="color: white; font-size: 14px;"></i>' +
+                    '</div>',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+                popupAnchor: [0, -16]
+            });
+
+            var marker = L.marker([ponto.lat, ponto.lng], { icon: icon });
+
+            var metroHtml = '';
+            if (ponto.metroProximo) {
+                metroHtml = '<p style="color: #FF5722; margin-top: 8px;"><i class="fas fa-subway"></i> Metro: ' + ponto.metroProximo + '</p>';
+            }
+
+            var popupHtml = '<div style="font-family: Rajdhani, sans-serif; min-width: 220px;">' +
+                '<h4 style="margin: 0 0 8px 0; color: ' + ponto.cor + '; font-family: Orbitron, monospace; font-size: 0.95rem;">' +
+                '<i class="fas ' + ponto.icone + '"></i> ' + ponto.nome + '</h4>' +
+                '<div style="font-size: 0.85rem; color: #ccc;">' +
+                '<p><span style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; color: ' + ponto.cor + '; font-weight: 500;">' + ponto.categoria + '</span></p>' +
+                '<p style="margin: 8px 0; color: #aaa;">' + ponto.descricao + '</p>' +
+                '<p><i class="fas fa-map-marker-alt"></i> ' + ponto.bairro + '</p>' +
+                metroHtml +
+                '</div></div>';
+
+            marker.bindPopup(popupHtml);
+            mapLayers.pontosTuristicos.addLayer(marker);
+        });
+
+        var countEl = document.getElementById('countPontosTuristicos');
+        if (countEl) countEl.textContent = pontosTuristicosData.length;
+
+        console.log('Pontos Turisticos renderizados: ' + mapLayers.pontosTuristicos.getLayers().length);
     }
 
     // Criar conteudo do popup
@@ -2115,24 +2994,25 @@
         console.log('Waze: ' + mapLayers.waze.getLayers().length + ' polylines renderizadas');
     }
 
-    // Animação de pulso para ocorrências via JavaScript (funciona melhor com Leaflet)
+    // Animação de pulso para ocorrências triangulares via JavaScript
     var ocPulseInterval = null;
     function startOcorrenciaPulse() {
         if (ocPulseInterval) clearInterval(ocPulseInterval);
         var pulseState = true;
         ocPulseInterval = setInterval(function() {
-            var dots = document.querySelectorAll('.oc-marker-dot');
-            dots.forEach(function(dot) {
+            var triangles = document.querySelectorAll('.oc-marker-triangle');
+            triangles.forEach(function(tri) {
+                var cor = tri.dataset.cor || '#00D4FF';
                 if (pulseState) {
-                    dot.style.boxShadow = '0 0 20px 8px ' + (dot.dataset.cor || '#00D4FF');
-                    dot.style.opacity = '1';
+                    tri.style.filter = 'drop-shadow(0 0 12px ' + cor + ') drop-shadow(0 0 6px ' + cor + ')';
+                    tri.style.transform = 'scale(1.1)';
                 } else {
-                    dot.style.boxShadow = '0 0 5px 2px ' + (dot.dataset.cor || '#00D4FF');
-                    dot.style.opacity = '0.7';
+                    tri.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))';
+                    tri.style.transform = 'scale(1)';
                 }
             });
             pulseState = !pulseState;
-        }, 600);
+        }, 700);
     }
     // Iniciar pulso após um pequeno delay para garantir que os markers foram renderizados
     setTimeout(startOcorrenciaPulse, 2000);
@@ -2159,9 +3039,9 @@
 
                 var icon = L.divIcon({
                     className: 'custom-marker ocorrencia-marker',
-                    html: '<div class="oc-marker-dot" data-cor="' + cor + '" style="background: ' + cor + '; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; transition: box-shadow 0.3s, opacity 0.3s;"><i class="fas ' + icone + '" style="color: white; font-size: 14px;"></i></div>',
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
+                    html: '<div class="oc-marker-triangle" data-cor="' + cor + '" style="position: relative; width: 36px; height: 42px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));"><div style="width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent; border-top: 32px solid white;"></div><div style="position: absolute; top: 2px; left: 3px; width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 27px solid ' + cor + ';"></div><div style="position: absolute; top: 4px; left: 0; width: 36px; display: flex; justify-content: center;"><i class="fas ' + icone + '" style="color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);"></i></div></div>',
+                    iconSize: [36, 42],
+                    iconAnchor: [18, 42]
                 });
 
                 var marker = L.marker([oc.latitude, oc.longitude], { icon: icon });
@@ -2233,7 +3113,7 @@
         if (savedStr) savedSettings = JSON.parse(savedStr);
     } catch (e) { console.log('Erro ao carregar settings:', e); }
 
-    var tourAtivo = savedSettings.tourAutoStart !== false; // Liga/desliga o tour automático
+    var tourAtivo = savedSettings.tourAutoStart === true; // Liga/desliga o tour automático (desligado por padrão)
     var tourEmExecucao = false;
     var tourNavegando = false; // Flag para indicar que o tour está navegando (evita pausar por eventos do mapa)
     var tourTimeoutId = null;
@@ -2488,6 +3368,87 @@
 
     // Modo de visualizacao atual
     var currentViewMode = 'contain';
+    var cameraPlayerResizeObserver = null;
+    var cameraPlayerResizeState = { width: 0, height: 0 };
+    var cameraPlayerResizeLock = false;
+    var CAMERA_DEFAULT_ASPECT = 16 / 9;
+
+    function clampNumber(value, minValue, maxValue) {
+        var min = Number.isFinite(minValue) ? minValue : value;
+        var max = Number.isFinite(maxValue) ? maxValue : value;
+        return Math.min(Math.max(value, min), max);
+    }
+
+    function getHeaderFooterHeight(modal) {
+        var header = modal.querySelector('.camera-player-header');
+        var footer = modal.querySelector('.camera-player-footer');
+        var headerHeight = header ? header.offsetHeight : 0;
+        var footerHeight = footer ? footer.offsetHeight : 0;
+        return headerHeight + footerHeight;
+    }
+
+    function initCameraPlayerSizing(modal) {
+        if (!modal || typeof ResizeObserver === 'undefined') return;
+
+        var style = window.getComputedStyle(modal);
+        var minWidth = parseFloat(style.minWidth) || 0;
+        var maxWidth = parseFloat(style.maxWidth) || 0;
+        var minHeight = parseFloat(style.minHeight) || 0;
+        var maxHeight = parseFloat(style.maxHeight) || 0;
+
+        function applySizeFromWidth(width) {
+            var headerFooter = getHeaderFooterHeight(modal);
+            var videoHeight = Math.round(width / CAMERA_DEFAULT_ASPECT);
+            var totalHeight = videoHeight + headerFooter;
+            var targetHeight = clampNumber(totalHeight, minHeight || totalHeight, maxHeight || totalHeight);
+            if (Math.abs(modal.offsetHeight - targetHeight) > 1) {
+                modal.style.height = targetHeight + 'px';
+            }
+        }
+
+        function applySizeFromHeight(height) {
+            var headerFooter = getHeaderFooterHeight(modal);
+            var videoHeight = Math.max(height - headerFooter, 1);
+            var totalWidth = Math.round(videoHeight * CAMERA_DEFAULT_ASPECT);
+            var targetWidth = clampNumber(totalWidth, minWidth || totalWidth, maxWidth || totalWidth);
+            if (Math.abs(modal.offsetWidth - targetWidth) > 1) {
+                modal.style.width = targetWidth + 'px';
+            }
+        }
+
+        cameraPlayerResizeState = {
+            width: modal.offsetWidth,
+            height: modal.offsetHeight
+        };
+
+        applySizeFromWidth(cameraPlayerResizeState.width);
+
+        if (cameraPlayerResizeObserver) {
+            cameraPlayerResizeObserver.disconnect();
+        }
+
+        cameraPlayerResizeObserver = new ResizeObserver(function(entries) {
+            if (cameraPlayerResizeLock) return;
+            cameraPlayerResizeLock = true;
+            var rect = entries[0].contentRect;
+            var deltaWidth = Math.abs(rect.width - cameraPlayerResizeState.width);
+            var deltaHeight = Math.abs(rect.height - cameraPlayerResizeState.height);
+
+            if (deltaWidth >= deltaHeight) {
+                applySizeFromWidth(rect.width);
+            } else {
+                applySizeFromHeight(rect.height);
+            }
+
+            cameraPlayerResizeState = {
+                width: modal.offsetWidth,
+                height: modal.offsetHeight
+            };
+            cameraPlayerResizeLock = false;
+        });
+
+        cameraPlayerResizeObserver.observe(modal);
+    }
 
     function openCameraPlayer(url, nome, cameraId) {
         // Fechar modal existente se houver
@@ -2562,6 +3523,8 @@
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
+        initCameraPlayerSizing(document.getElementById('cameraPlayerModal'));
+
         // Tornar arrastavel
         makeDraggable(document.getElementById('cameraPlayerModal'), document.getElementById('cameraPlayerHeader'));
 
@@ -2608,6 +3571,10 @@
         var modal = document.getElementById('cameraPlayerModal');
         if (modal) {
             modal.remove();
+        }
+        if (cameraPlayerResizeObserver) {
+            cameraPlayerResizeObserver.disconnect();
+            cameraPlayerResizeObserver = null;
         }
         document.removeEventListener('keydown', handleCameraEsc);
     }
@@ -2865,15 +3832,13 @@
         mosaicCameras.forEach(function(cam, index) {
             var camId = cam.id || cam.codigo;
             var camNome = cam.nome || cam.name || 'Camera';
-            var camUrl = cam.url || '';
+            // Construir URL do stream usando o ID da câmera (6 dígitos)
+            var camIdPadded = String(camId).padStart(6, '0');
+            var camUrl = '/integracity/api/camera/' + camIdPadded + '/stream/?embed=1';
 
             html += '<div class="mosaic-cell">';
-            html += '  <div class="mosaic-cell-header">' + camId + ' - ' + camNome + '</div>';
-            if (camUrl) {
-                html += '  <iframe src="' + camUrl + '" allowfullscreen></iframe>';
-            } else {
-                html += '  <div class="mosaic-no-stream"><i class="fas fa-video-slash"></i></div>';
-            }
+            html += '  <div class="mosaic-cell-header">' + camIdPadded + ' - ' + camNome + '</div>';
+            html += '  <iframe src="' + camUrl + '" allowfullscreen allow="autoplay"></iframe>';
             html += '</div>';
         });
 
@@ -2939,6 +3904,9 @@
     window.toggleCameraSubmenu = toggleCameraSubmenu;
     window.toggleAllCameras = toggleAllCameras;
     window.toggleCameraType = toggleCameraType;
+    window.toggleMetroSubmenu = toggleMetroSubmenu;
+    window.toggleAllMetro = toggleAllMetro;
+    window.toggleMetroLine = toggleMetroLine;
     window.openMosaicModal = openMosaicModal;
     window.closeMosaicModal = closeMosaicModal;
     window.setMosaicLayout = setMosaicLayout;
@@ -2961,6 +3929,175 @@
     console.log('IntegraCity High-Tech Dashboard initialized');
     console.log('Mapa centrado no Rio de Janeiro');
     console.log('Sistema de camadas carregado');
+
+    // ============================================
+    // MONITORAMENTO AUTOMATICO DE CHUVA
+    // ============================================
+    var rainMonitorInterval = null;
+    var lastRainAlertCount = 0;
+    var rainAlertBadgeVisible = false;
+
+    function monitorarChuva() {
+        console.log('[Monitor Chuva] Verificando dados de chuva...');
+
+        // Buscar dados combinados de sirenes e pluviometros
+        Promise.all([
+            fetch(baseUrl + 'integracity/api/sirenes-chuvas/').then(r => r.json()).catch(() => ({ data: [] })),
+            fetch(baseUrl + 'integracity/api/pluviometros-defesa-civil/').then(r => r.json()).catch(() => ({ data: [] }))
+        ]).then(function(results) {
+            var sirenesData = results[0].data || [];
+            var pluvioData = results[1].data || [];
+
+            // Filtrar pontos com chuva (h01 > 0)
+            var sirenesComChuva = sirenesData.filter(function(s) {
+                return s.chuva && s.chuva.h01 > 0;
+            });
+            var pluvioComChuva = pluvioData.filter(function(p) {
+                return p.dados && p.dados.h01 > 0;
+            });
+
+            var totalComChuva = sirenesComChuva.length + pluvioComChuva.length;
+            var temChuvaForte = sirenesComChuva.some(s => s.chuva.h01 > 25) ||
+                               pluvioComChuva.some(p => p.dados.h01 > 25);
+
+            console.log('[Monitor Chuva] Sirenes com chuva:', sirenesComChuva.length,
+                       '| Pluviometros com chuva:', pluvioComChuva.length);
+
+            // Limpar camada de alertas
+            mapLayers.alertasChuva.clearLayers();
+
+            if (totalComChuva > 0) {
+                // Mostrar legenda de chuva
+                var legend = document.getElementById('rainfallLegend');
+                if (legend) legend.style.display = 'block';
+
+                // Adicionar marcadores de sirenes com chuva
+                sirenesComChuva.forEach(function(sirene) {
+                    var lat = sirene.lat || sirene.latitude;
+                    var lng = sirene.lng || sirene.longitude;
+                    if (!lat || !lng) return;
+
+                    var cor = sirene.cor || '#3b82f6';
+                    var isForte = sirene.chuva.h01 > 25;
+
+                    var icon = L.divIcon({
+                        className: 'rain-alert-marker' + (isForte ? ' strong' : ''),
+                        html: '<div style="background: ' + cor + '; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 0 20px ' + cor + ';">' +
+                              '<i class="fas fa-bullhorn" style="color: white; font-size: 15px;"></i>' +
+                              '</div>',
+                        iconSize: [36, 36],
+                        iconAnchor: [18, 18],
+                        popupAnchor: [0, -18]
+                    });
+
+                    var marker = L.marker([lat, lng], { icon: icon });
+                    var popup = '<div style="font-family: Rajdhani, sans-serif; min-width: 200px;">' +
+                        '<h4 style="margin: 0 0 8px 0; color: ' + cor + '; font-family: Orbitron, monospace;">' +
+                        '<i class="fas fa-bullhorn"></i> ' + (sirene.nome || 'Sirene') + '</h4>' +
+                        '<p style="color: ' + cor + '; font-weight: 600;"><i class="fas fa-cloud-rain"></i> ' +
+                        (sirene.nivel_texto || 'Chuva') + '</p>' +
+                        '<p>1 hora: ' + Number(sirene.chuva.h01).toFixed(1) + ' mm</p>' +
+                        '</div>';
+                    marker.bindPopup(popup);
+                    mapLayers.alertasChuva.addLayer(marker);
+                });
+
+                // Adicionar marcadores de pluviometros com chuva
+                pluvioComChuva.forEach(function(pluvio) {
+                    var lat = pluvio.lat || pluvio.latitude;
+                    var lng = pluvio.lng || pluvio.longitude;
+                    if (!lat || !lng) return;
+
+                    var cor = pluvio.cor || '#3b82f6';
+                    var isForte = pluvio.dados.h01 > 25;
+
+                    var icon = L.divIcon({
+                        className: 'rain-alert-marker' + (isForte ? ' strong' : ''),
+                        html: '<div style="background: ' + cor + '; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 0 20px ' + cor + ';">' +
+                              '<i class="fas fa-cloud-rain" style="color: white; font-size: 15px;"></i>' +
+                              '</div>',
+                        iconSize: [36, 36],
+                        iconAnchor: [18, 18],
+                        popupAnchor: [0, -18]
+                    });
+
+                    var marker = L.marker([lat, lng], { icon: icon });
+                    var popup = '<div style="font-family: Rajdhani, sans-serif; min-width: 200px;">' +
+                        '<h4 style="margin: 0 0 8px 0; color: ' + cor + '; font-family: Orbitron, monospace;">' +
+                        '<i class="fas fa-cloud-rain"></i> ' + (pluvio.nome || 'Pluviometro') + '</h4>' +
+                        '<p style="color: ' + cor + '; font-weight: 600;"><i class="fas fa-tint"></i> ' +
+                        (pluvio.nivel_texto || 'Chuva') + '</p>' +
+                        '<p>1 hora: ' + Number(pluvio.dados.h01).toFixed(1) + ' mm</p>' +
+                        '</div>';
+                    marker.bindPopup(popup);
+                    mapLayers.alertasChuva.addLayer(marker);
+                });
+
+                // Mostrar badge de alerta se houver novos pontos de chuva
+                if (totalComChuva > lastRainAlertCount || !rainAlertBadgeVisible) {
+                    mostrarAlertaChuva(totalComChuva, temChuvaForte);
+                }
+                lastRainAlertCount = totalComChuva;
+
+            } else {
+                // Sem chuva - esconder badge se nenhuma camada de chuva estiver ativa
+                var sirenesCheck = document.getElementById('layerSirenes');
+                var pluvioCheck = document.getElementById('layerPluviometros');
+                if (!(sirenesCheck && sirenesCheck.checked) && !(pluvioCheck && pluvioCheck.checked)) {
+                    var legend = document.getElementById('rainfallLegend');
+                    if (legend) legend.style.display = 'none';
+                }
+                removerAlertaChuva();
+                lastRainAlertCount = 0;
+            }
+        }).catch(function(err) {
+            console.error('[Monitor Chuva] Erro:', err);
+        });
+    }
+
+    function mostrarAlertaChuva(quantidade, forte) {
+        // Remover badge anterior
+        removerAlertaChuva();
+
+        var badge = document.createElement('div');
+        badge.id = 'rainAlertBadge';
+        badge.className = 'rain-alert-badge' + (forte ? ' strong' : '');
+        badge.innerHTML = '<i class="fas fa-cloud-showers-heavy badge-icon"></i>' +
+                         '<span>' + quantidade + ' ponto' + (quantidade > 1 ? 's' : '') + ' com chuva</span>' +
+                         '<i class="fas fa-times badge-close" onclick="removerAlertaChuva()"></i>';
+        badge.onclick = function(e) {
+            if (!e.target.classList.contains('badge-close')) {
+                // Centralizar no primeiro ponto com chuva
+                var layers = mapLayers.alertasChuva.getLayers();
+                if (layers.length > 0) {
+                    map.setView(layers[0].getLatLng(), 13);
+                }
+            }
+        };
+        document.body.appendChild(badge);
+        rainAlertBadgeVisible = true;
+
+        // Tocar som de alerta (opcional)
+        showToast('Detectado ' + quantidade + ' ponto' + (quantidade > 1 ? 's' : '') + ' com chuva!',
+                  forte ? 'error' : 'warning');
+    }
+
+    function removerAlertaChuva() {
+        var badge = document.getElementById('rainAlertBadge');
+        if (badge) badge.remove();
+        rainAlertBadgeVisible = false;
+    }
+    window.removerAlertaChuva = removerAlertaChuva;
+
+    // Iniciar monitoramento (a cada 3 minutos)
+    function iniciarMonitoramentoChuva() {
+        console.log('[Monitor Chuva] Iniciando monitoramento automatico...');
+        monitorarChuva(); // Primeira verificacao imediata
+        rainMonitorInterval = setInterval(monitorarChuva, 180000); // 3 minutos
+    }
+
+    // Iniciar apos carregar a pagina
+    setTimeout(iniciarMonitoramentoChuva, 3000);
 
     // ===== DETECTOR DE MOSAICO NA URL =====
     window.addEventListener('DOMContentLoaded', function() {
@@ -3017,6 +4154,57 @@
             console.log('Carregando ocorrencias automaticamente...');
             mapLayers.ocorrencias.addTo(map);
             loadLayerData('ocorrencias');
+        }
+
+        // Carregar camada Waze automaticamente (checkbox marcado por padrao)
+        var wazeCheckbox = document.getElementById('layerWaze');
+        if (wazeCheckbox) {
+            wazeCheckbox.checked = true;
+            console.log('Carregando Waze automaticamente (Acidentes, Interdicoes, Perigos)...');
+            // Garantir que apenas os filtros desejados estejam marcados
+            var acidentesCheck = document.getElementById('layerWazeAcidentes');
+            var interdicoesCheck = document.getElementById('layerWazeInterdicoes');
+            var perigosCheck = document.getElementById('layerWazePerigos');
+            if (acidentesCheck) acidentesCheck.checked = true;
+            if (interdicoesCheck) interdicoesCheck.checked = true;
+            if (perigosCheck) perigosCheck.checked = true;
+            // Garantir que os outros estejam desmarcados
+            var congCheck = document.getElementById('layerWazeCongestionamentos');
+            var eventosCheck = document.getElementById('layerWazeEventos');
+            var buracosCheck = document.getElementById('layerWazeBuracos');
+            var carroCheck = document.getElementById('layerWazeCarroParado');
+            var policiaCheck = document.getElementById('layerWazePolicia');
+            var outrosCheck = document.getElementById('layerWazeOutros');
+            if (congCheck) congCheck.checked = false;
+            if (eventosCheck) eventosCheck.checked = false;
+            if (buracosCheck) buracosCheck.checked = false;
+            if (carroCheck) carroCheck.checked = false;
+            if (policiaCheck) policiaCheck.checked = false;
+            if (outrosCheck) outrosCheck.checked = false;
+            // Carregar dados do Waze e adicionar camadas ao mapa
+            var url = baseUrl + 'integracity/api/mob/waze-completo/';
+            fetch(url)
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    console.log('Waze carregado automaticamente:', data);
+                    layerDataCache.waze = data;
+                    renderWazeCompleto(data);
+                    // Adicionar apenas as camadas selecionadas ao mapa
+                    mapLayers.wazeAcidentes.addTo(map);
+                    mapLayers.wazeInterdicoes.addTo(map);
+                    mapLayers.wazePerigos.addTo(map);
+                    showToast('Waze carregado (Acidentes, Interdicoes, Perigos)', 'success');
+                })
+                .catch(function(err) {
+                    console.error('Erro ao carregar Waze:', err);
+                });
+        }
+
+        // Carregar camada Areas de Observacao automaticamente
+        var areasCheckbox = document.getElementById('layerAreasObservacao');
+        if (areasCheckbox && areasCheckbox.checked) {
+            console.log('Carregando Areas de Observacao automaticamente...');
+            mapLayers.areasObservacao.addTo(map);
         }
     });
 
