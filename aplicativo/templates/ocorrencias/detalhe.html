@@ -103,8 +103,8 @@
     .status-aberta { background: rgba(0, 212, 255, 0.2); color: var(--cyan); border: 1px solid var(--cyan); }
     .status-em_andamento { background: rgba(255, 204, 0, 0.2); color: var(--yellow-warn); border: 1px solid var(--yellow-warn); }
     .status-aguardando { background: rgba(181, 55, 242, 0.2); color: var(--purple-neon); border: 1px solid var(--purple-neon); }
-    .status-resolvida { background: rgba(0, 255, 136, 0.2); color: var(--green-neon); border: 1px solid var(--green-neon); }
-    .status-fechada, .status-cancelada { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); border: 1px solid rgba(255, 255, 255, 0.2); }
+    .status-fechada { background: rgba(0, 255, 136, 0.2); color: var(--green-neon); border: 1px solid var(--green-neon); }
+    .status-cancelada { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); border: 1px solid rgba(255, 255, 255, 0.2); }
 
     .prioridade-badge {
         display: inline-flex;
@@ -488,16 +488,10 @@
         color: var(--yellow-warn);
     }
 
-    .status-btn.resolvida {
+    .status-btn.fechada {
         border-color: var(--green-neon);
         background: rgba(0, 255, 136, 0.1);
         color: var(--green-neon);
-    }
-
-    .status-btn.fechada {
-        border-color: var(--text-muted);
-        background: rgba(255, 255, 255, 0.05);
-        color: var(--text-muted);
     }
 
     .status-btn:hover {
@@ -817,25 +811,14 @@
         color: #000;
     }
 
-    .btn-tech.action-btn.resolvida {
+    .btn-tech.action-btn.fechada {
         border-color: var(--green-neon);
         color: var(--green-neon);
         background: rgba(0, 255, 136, 0.1);
     }
 
-    .btn-tech.action-btn.resolvida:hover {
-        background: var(--green-neon);
-        color: #000;
-    }
-
-    .btn-tech.action-btn.fechada {
-        border-color: var(--text-muted);
-        color: var(--text-muted);
-        background: rgba(255, 255, 255, 0.05);
-    }
-
     .btn-tech.action-btn.fechada:hover {
-        background: var(--text-muted);
+        background: var(--green-neon);
         color: #000;
     }
 
@@ -1027,14 +1010,9 @@
                 <i class="fas fa-play"></i> Iniciar
             </button>
             {% endif %}
-            {% if ocorrencia.status != 'resolvida' %}
-            <button class="status-btn resolvida" onclick="updateStatus('resolvida')">
-                <i class="fas fa-check"></i> Resolver
-            </button>
-            {% endif %}
             {% if ocorrencia.status != 'fechada' %}
             <button class="status-btn fechada" onclick="updateStatus('fechada')">
-                <i class="fas fa-archive"></i> Fechar
+                <i class="fas fa-check"></i> Fechar
             </button>
             {% endif %}
         </div>
@@ -1074,14 +1052,11 @@
                     <i class="fas fa-play"></i> Iniciar
                 </button>
                 {% endif %}
-                {% if ocorrencia.status != 'resolvida' %}
-                <button class="btn-tech action-btn resolvida" onclick="updateStatus('resolvida')">
-                    <i class="fas fa-check"></i> Resolver
+                {% if ocorrencia.status != 'fechada' %}
+                <button class="btn-tech action-btn fechada" onclick="openFechamentoModal()">
+                    <i class="fas fa-check"></i> Fechar
                 </button>
                 {% endif %}
-                <button class="btn-tech action-btn fechada" onclick="openFechamentoModal()">
-                    <i class="fas fa-archive"></i> Fechar
-                </button>
             </div>
             {% endif %}
             <a href="{% url 'ocorrencia_editar' ocorrencia_id=ocorrencia.id %}" class="btn-tech warning">

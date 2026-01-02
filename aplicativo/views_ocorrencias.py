@@ -38,7 +38,7 @@ def ocorrencias_dashboard(request):
         'abertas': OcorrenciaGerenciada.objects.filter(status='aberta').count(),
         'em_andamento': OcorrenciaGerenciada.objects.filter(status='em_andamento').count(),
         'aguardando': OcorrenciaGerenciada.objects.filter(status='aguardando').count(),
-        'resolvidas': OcorrenciaGerenciada.objects.filter(status='resolvida').count(),
+        'fechadas': OcorrenciaGerenciada.objects.filter(status='fechada').count(),
         'criticas': OcorrenciaGerenciada.objects.filter(prioridade='critica').count(),
         'hoje': OcorrenciaGerenciada.objects.filter(
             data_abertura__date=timezone.now().date()
@@ -355,7 +355,7 @@ def ocorrencia_detalhe(request, ocorrencia_id):
 
     # Estatísticas da ocorrência
     tempo_aberto = None
-    if ocorrencia.status not in ['fechada', 'cancelada', 'resolvida']:
+    if ocorrencia.status not in ['fechada', 'cancelada']:
         tempo_aberto = timezone.now() - ocorrencia.data_abertura
 
     context = {
@@ -458,8 +458,8 @@ def ocorrencia_editar(request, ocorrencia_id):
             # Verificar mudança de status
             status_anterior = OcorrenciaGerenciada.objects.get(id=ocorrencia_id).status
             if ocorrencia.status != status_anterior:
-                # Se foi resolvida ou fechada, registrar data de conclusão
-                if ocorrencia.status in ['resolvida', 'fechada']:
+                # Se foi fechada, registrar data de conclusão
+                if ocorrencia.status == 'fechada':
                     ocorrencia.data_conclusao = timezone.now()
 
             ocorrencia.save()
@@ -589,7 +589,7 @@ def ocorrencia_atualizar_status(request, ocorrencia_id):
         status_anterior = ocorrencia.status
         ocorrencia.status = novo_status
 
-        if novo_status in ['resolvida', 'fechada']:
+        if novo_status == 'fechada':
             ocorrencia.data_conclusao = timezone.now()
 
         ocorrencia.save()
@@ -790,7 +790,7 @@ def api_estatisticas_ocorrencias(request):
         'total': ocorrencias.count(),
         'abertas': ocorrencias.filter(status='aberta').count(),
         'em_andamento': ocorrencias.filter(status='em_andamento').count(),
-        'resolvidas': ocorrencias.filter(status='resolvida').count(),
+        'fechadas': ocorrencias.filter(status='fechada').count(),
         'criticas': ocorrencias.filter(prioridade='critica').count(),
     }
 

@@ -250,13 +250,13 @@
         border: 1px solid var(--purple-neon);
     }
 
-    .status-resolvida {
+    .status-fechada {
         background: rgba(0, 255, 136, 0.2);
         color: var(--green-neon);
         border: 1px solid var(--green-neon);
     }
 
-    .status-fechada, .status-cancelada {
+    .status-cancelada {
         background: rgba(255, 255, 255, 0.1);
         color: var(--text-muted);
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -805,8 +805,8 @@
         </div>
         <div class="stat-card success">
             <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-            <div class="stat-label">Resolvidas</div>
-            <div class="stat-value">{{ stats.resolvidas }}</div>
+            <div class="stat-label">Fechadas</div>
+            <div class="stat-value">{{ stats.fechadas }}</div>
         </div>
         <div class="stat-card danger">
             <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>

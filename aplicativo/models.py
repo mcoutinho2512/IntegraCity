@@ -5580,7 +5580,6 @@ class OcorrenciaGerenciada(models.Model):
         ('aberta', 'Aberta'),
         ('em_andamento', 'Em Andamento'),
         ('aguardando', 'Aguardando Retorno'),
-        ('resolvida', 'Resolvida'),
         ('fechada', 'Fechada'),
         ('cancelada', 'Cancelada'),
     ]
@@ -5716,8 +5715,7 @@ class OcorrenciaGerenciada(models.Model):
             'aberta': '#00D4FF',
             'em_andamento': '#FFB800',
             'aguardando': '#B537F2',
-            'resolvida': '#4CAF50',
-            'fechada': '#6B7280',
+            'fechada': '#4CAF50',  # Verde - concluída
             'cancelada': '#EF4444',
         }
         return colors.get(self.status, '#00D4FF')

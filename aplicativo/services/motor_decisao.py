@@ -501,7 +501,6 @@ class MotorDecisao:
             total=Count('id'),
             abertas=Count('id', filter=Q(status='aberta')),
             em_andamento=Count('id', filter=Q(status='em_andamento')),
-            resolvidas=Count('id', filter=Q(status='resolvida')),
             fechadas=Count('id', filter=Q(status='fechada')),
             baixas=Count('id', filter=Q(prioridade='baixa')),
             medias=Count('id', filter=Q(prioridade='media')),

@@ -699,7 +699,7 @@
                         <!-- Congestionamentos -->
                         <div class="submenu-item" onclick="event.stopPropagation()">
                             <label class="submenu-checkbox">
-                                <input type="checkbox" id="layerWazeCongestionamentos" onchange="toggleWazeFilter('congestionamentos')">
+                                <input type="checkbox" id="layerWazeCongestionamentos" onchange="toggleWazeFilter('congestionamentos')" checked>
                                 <span class="submenu-checkmark"></span>
                             </label>
                             <div class="submenu-icon" style="background: rgba(255, 165, 0, 0.2); color: #ffa500; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -1356,7 +1356,7 @@
 
     // Estado dos filtros de Waze
     var wazeFilters = {
-        congestionamentos: false,
+        congestionamentos: true,  // Default: mostrar linhas de congestionamento
         interdicoes: true,
         eventos: false,
         acidentes: true,
@@ -4264,17 +4264,17 @@
             var acidentesCheck = document.getElementById('layerWazeAcidentes');
             var interdicoesCheck = document.getElementById('layerWazeInterdicoes');
             var perigosCheck = document.getElementById('layerWazePerigos');
+            var congCheck = document.getElementById('layerWazeCongestionamentos');
             if (acidentesCheck) acidentesCheck.checked = true;
             if (interdicoesCheck) interdicoesCheck.checked = true;
             if (perigosCheck) perigosCheck.checked = true;
+            if (congCheck) congCheck.checked = true;  // Congestionamentos como default
             // Garantir que os outros estejam desmarcados
-            var congCheck = document.getElementById('layerWazeCongestionamentos');
             var eventosCheck = document.getElementById('layerWazeEventos');
             var buracosCheck = document.getElementById('layerWazeBuracos');
             var carroCheck = document.getElementById('layerWazeCarroParado');
             var policiaCheck = document.getElementById('layerWazePolicia');
             var outrosCheck = document.getElementById('layerWazeOutros');
-            if (congCheck) congCheck.checked = false;
             if (eventosCheck) eventosCheck.checked = false;
             if (buracosCheck) buracosCheck.checked = false;
             if (carroCheck) carroCheck.checked = false;
@@ -4288,11 +4288,12 @@
                     console.log('Waze carregado automaticamente:', data);
                     layerDataCache.waze = data;
                     renderWazeCompleto(data);
-                    // Adicionar apenas as camadas selecionadas ao mapa
+                    // Adicionar camadas default ao mapa
+                    mapLayers.wazeCongestionamentos.addTo(map);
                     mapLayers.wazeAcidentes.addTo(map);
                     mapLayers.wazeInterdicoes.addTo(map);
                     mapLayers.wazePerigos.addTo(map);
-                    showToast('Waze carregado (Acidentes, Interdicoes, Perigos)', 'success');
+                    showToast('Waze carregado', 'success');
                 })
                 .catch(function(err) {
                     console.error('Erro ao carregar Waze:', err);
