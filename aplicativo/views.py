@@ -10,7 +10,8 @@ from django.views.decorators.cache import cache_page, never_cache
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.contrib.auth.decorators import login_required  
+from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from django.utils import timezone
 from datetime import datetime, timedelta
 from datetime import datetime
@@ -1480,9 +1481,45 @@ def api_brt_linhas(request):
 
 @api_view(['GET'])
 def api_brt(request):
-    """Compatibilidade com /api/brt/."""
-    base_request = getattr(request, "_request", request)
-    return api_brt_linhas(base_request)
+    """API de estações do BRT com coordenadas geográficas."""
+    import json
+    import os
+
+    try:
+        # Carregar estações do arquivo JSON
+        json_path = os.path.join(settings.BASE_DIR, 'static', 'brt_estacoes.json')
+
+        if os.path.exists(json_path):
+            with open(json_path, 'r', encoding='utf-8') as f:
+                estacoes = json.load(f)
+        else:
+            # Fallback se o arquivo não existir
+            estacoes = []
+
+        # Cores por corredor
+        cores_corredor = {
+            'Transoeste': '#0066cc',
+            'Transcarioca': '#ff6600',
+            'Transolimpica': '#00cc66',
+            'Transbrasil': '#cc0000'
+        }
+
+        # Adicionar cor a cada estação
+        for est in estacoes:
+            est['cor'] = cores_corredor.get(est.get('corredor'), '#009688')
+            est['latitude'] = est.get('lat')
+            est['longitude'] = est.get('lng')
+
+        return Response({
+            'success': True,
+            'data': estacoes,
+            'count': len(estacoes)
+        })
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 
 @api_view(['GET'])

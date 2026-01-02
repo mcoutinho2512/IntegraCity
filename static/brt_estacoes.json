@@ -1,0 +1,1397 @@
+[
+  {
+    "id": 1,
+    "nome": "Terminal Deodoro",
+    "tipo": "Terminal",
+    "corredor": "Transbrasil",
+    "ano": "2023",
+    "lat": -22.853686,
+    "lng": -43.384284
+  },
+  {
+    "id": 2,
+    "nome": "Guadalupe",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.845053,
+    "lng": -43.377174
+  },
+  {
+    "id": 3,
+    "nome": "Jardim Guadalupe",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.83978,
+    "lng": -43.368679
+  },
+  {
+    "id": 4,
+    "nome": "Fazenda Botafogo",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.831041,
+    "lng": -43.350848
+  },
+  {
+    "id": 5,
+    "nome": "Ceasa-Irajá",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.82436,
+    "lng": -43.332619
+  },
+  {
+    "id": 6,
+    "nome": "Vigário Geral",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.818188,
+    "lng": -43.308406
+  },
+  {
+    "id": 7,
+    "nome": "Cidade Alta",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.814926,
+    "lng": -43.29238
+  },
+  {
+    "id": 8,
+    "nome": "Mercado São Sebastião",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.81956,
+    "lng": -43.284013
+  },
+  {
+    "id": 9,
+    "nome": "Lobo Junior",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.829123,
+    "lng": -43.271792
+  },
+  {
+    "id": 10,
+    "nome": "Marinha Mercante",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.836948,
+    "lng": -43.258097
+  },
+  {
+    "id": 11,
+    "nome": "Piscinão de Ramos",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.842962,
+    "lng": -43.251022
+  },
+  {
+    "id": 12,
+    "nome": "Rubens Vaz",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.853101,
+    "lng": -43.247635
+  },
+  {
+    "id": 13,
+    "nome": "Baixa do Sapateiro",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.860983,
+    "lng": -43.247815
+  },
+  {
+    "id": 14,
+    "nome": "Hospital de Bonsucesso - CPOR",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.86663,
+    "lng": -43.247627
+  },
+  {
+    "id": 15,
+    "nome": "Fiocruz",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.875335,
+    "lng": -43.243022
+  },
+  {
+    "id": 16,
+    "nome": "Benfica",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.884184,
+    "lng": -43.236251
+  },
+  {
+    "id": 17,
+    "nome": "Vasco da Gama",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.886862,
+    "lng": -43.224533
+  },
+  {
+    "id": 18,
+    "nome": "INTO",
+    "tipo": "Estação",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.893877,
+    "lng": -43.215398
+  },
+  {
+    "id": 19,
+    "nome": "Terminal Gentileza",
+    "tipo": "Terminal",
+    "corredor": "Transbrasil",
+    "ano": "2024",
+    "lat": -22.898748,
+    "lng": -43.210871
+  },
+  {
+    "id": 20,
+    "nome": "Santa Luzia",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.854851,
+    "lng": -43.253273
+  },
+  {
+    "id": 21,
+    "nome": "Maré",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.847063,
+    "lng": -43.243885
+  },
+  {
+    "id": 22,
+    "nome": "Cardoso de Moraes - Viúva Garcia",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.857403,
+    "lng": -43.258292
+  },
+  {
+    "id": 23,
+    "nome": "Penha I",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.841559,
+    "lng": -43.277109
+  },
+  {
+    "id": 24,
+    "nome": "Penha II",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.842031,
+    "lng": -43.276714
+  },
+  {
+    "id": 25,
+    "nome": "Pastor José Santos",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.839082,
+    "lng": -43.283405
+  },
+  {
+    "id": 26,
+    "nome": "Guaporé",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.837702,
+    "lng": -43.289839
+  },
+  {
+    "id": 27,
+    "nome": "Praça do Carmo",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.838806,
+    "lng": -43.295122
+  },
+  {
+    "id": 28,
+    "nome": "Pedro Taques",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.841471,
+    "lng": -43.298758
+  },
+  {
+    "id": 29,
+    "nome": "Vila Kosmos",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.849729,
+    "lng": -43.307987
+  },
+  {
+    "id": 30,
+    "nome": "Vicente de Carvalho",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.852711,
+    "lng": -43.312869
+  },
+  {
+    "id": 31,
+    "nome": "Marambaia",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.85301,
+    "lng": -43.32047
+  },
+  {
+    "id": 32,
+    "nome": "Vaz Lobo",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.856598,
+    "lng": -43.328419
+  },
+  {
+    "id": 33,
+    "nome": "Vila Queiroz",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.861482,
+    "lng": -43.330427
+  },
+  {
+    "id": 34,
+    "nome": "Otaviano",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.86584,
+    "lng": -43.334432
+  },
+  {
+    "id": 35,
+    "nome": "Santa Efigênia",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.936592,
+    "lng": -43.371765
+  },
+  {
+    "id": 36,
+    "nome": "Divina Providência",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.940665,
+    "lng": -43.372658
+  },
+  {
+    "id": 37,
+    "nome": "Merck",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.93549,
+    "lng": -43.371791
+  },
+  {
+    "id": 38,
+    "nome": "Tanque",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.915648,
+    "lng": -43.361333
+  },
+  {
+    "id": 39,
+    "nome": "Madureira-Manaceia",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.877401,
+    "lng": -43.336149
+  },
+  {
+    "id": 40,
+    "nome": "Rio II",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.973202,
+    "lng": -43.384261
+  },
+  {
+    "id": 41,
+    "nome": "Pedro Correia",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.967704,
+    "lng": -43.390619
+  },
+  {
+    "id": 42,
+    "nome": "Rede Sarah",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.973369,
+    "lng": -43.376649
+  },
+  {
+    "id": 43,
+    "nome": "Centro Metropolitano",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.973435,
+    "lng": -43.365654
+  },
+  {
+    "id": 44,
+    "nome": "Curicica",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.959891,
+    "lng": -43.388733
+  },
+  {
+    "id": 45,
+    "nome": "Praça do Bandolim",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.958575,
+    "lng": -43.383365
+  },
+  {
+    "id": 46,
+    "nome": "Arroio Pavuna",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.955257,
+    "lng": -43.377339
+  },
+  {
+    "id": 47,
+    "nome": "Vila Sapê - IV Centenário",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.952304,
+    "lng": -43.374626
+  },
+  {
+    "id": 48,
+    "nome": "Recanto das Palmeiras - Jardim São Luiz",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.948178,
+    "lng": -43.372398
+  },
+  {
+    "id": 49,
+    "nome": "Andre Rocha",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.929369,
+    "lng": -43.373388
+  },
+  {
+    "id": 50,
+    "nome": "Taquara",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.924112,
+    "lng": -43.373853
+  },
+  {
+    "id": 51,
+    "nome": "Aracy Cabral",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.920099,
+    "lng": -43.368272
+  },
+  {
+    "id": 52,
+    "nome": "Ipase",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.904691,
+    "lng": -43.357057
+  },
+  {
+    "id": 53,
+    "nome": "Praça Seca",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.897682,
+    "lng": -43.352252
+  },
+  {
+    "id": 54,
+    "nome": "Capitão Menezes",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.892766,
+    "lng": -43.34864
+  },
+  {
+    "id": 55,
+    "nome": "Pinto Teles",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.888348,
+    "lng": -43.345851
+  },
+  {
+    "id": 56,
+    "nome": "Campinho",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.882228,
+    "lng": -43.341934
+  },
+  {
+    "id": 57,
+    "nome": "Terminal Paulo da Portela",
+    "tipo": "Terminal",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.877521,
+    "lng": -43.336223
+  },
+  {
+    "id": 58,
+    "nome": "Mercadão",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.870251,
+    "lng": -43.335624
+  },
+  {
+    "id": 59,
+    "nome": "Ibiapina",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.842339,
+    "lng": -43.272473
+  },
+  {
+    "id": 60,
+    "nome": "Olaria - Cacique de Ramos",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.848549,
+    "lng": -43.265348
+  },
+  {
+    "id": 61,
+    "nome": "Terminal Fundão - Aroldo Melodia",
+    "tipo": "Terminal",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.839334,
+    "lng": -43.239893
+  },
+  {
+    "id": 62,
+    "nome": "Via Parque",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.983939,
+    "lng": -43.365661
+  },
+  {
+    "id": 63,
+    "nome": "Aeroporto de Jacarepaguá",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.988983,
+    "lng": -43.365794
+  },
+  {
+    "id": 64,
+    "nome": "Lourenço Jorge",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.995573,
+    "lng": -43.36586
+  },
+  {
+    "id": 65,
+    "nome": "Galeão Tom Jobim 1",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.81122,
+    "lng": -43.251491
+  },
+  {
+    "id": 66,
+    "nome": "Galeão Tom Jobim 2",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.814415,
+    "lng": -43.246419
+  },
+  {
+    "id": 67,
+    "nome": "Terminal Alvorada",
+    "tipo": "Terminal",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000385,
+    "lng": -43.366118
+  },
+  {
+    "id": 68,
+    "nome": "Parque Olímpico",
+    "tipo": "Estação",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.973026,
+    "lng": -43.393594
+  },
+  {
+    "id": 69,
+    "nome": "Terminal Centro Olímpico",
+    "tipo": "Terminal",
+    "corredor": "Transcarioca",
+    "ano": "2014",
+    "lat": -22.97205,
+    "lng": -43.401038
+  },
+  {
+    "id": 70,
+    "nome": "Cesarão II",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.933403,
+    "lng": -43.661955
+  },
+  {
+    "id": 71,
+    "nome": "Cesarão III",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.931697,
+    "lng": -43.657288
+  },
+  {
+    "id": 72,
+    "nome": "Vila Paciência",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.928349,
+    "lng": -43.653809
+  },
+  {
+    "id": 73,
+    "nome": "Três Pontes",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.925401,
+    "lng": -43.649973
+  },
+  {
+    "id": 74,
+    "nome": "Cesarinho",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.920416,
+    "lng": -43.643538
+  },
+  {
+    "id": 75,
+    "nome": "31 de Outubro",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.918193,
+    "lng": -43.63905
+  },
+  {
+    "id": 76,
+    "nome": "Santa Eugênia",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.916765,
+    "lng": -43.632793
+  },
+  {
+    "id": 77,
+    "nome": "Júlia Miguel",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.915591,
+    "lng": -43.627974
+  },
+  {
+    "id": 78,
+    "nome": "Parque São Paulo",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.916234,
+    "lng": -43.622381
+  },
+  {
+    "id": 79,
+    "nome": "Icurana",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.915092,
+    "lng": -43.605847
+  },
+  {
+    "id": 80,
+    "nome": "Vilar Carioca",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.914166,
+    "lng": -43.601299
+  },
+  {
+    "id": 81,
+    "nome": "Inhoaíba",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.913283,
+    "lng": -43.595626
+  },
+  {
+    "id": 82,
+    "nome": "Golfe Olímpico",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000009,
+    "lng": -43.412214
+  },
+  {
+    "id": 83,
+    "nome": "Ana Gonzaga",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.911302,
+    "lng": -43.589757
+  },
+  {
+    "id": 84,
+    "nome": "São Jorge",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.91082,
+    "lng": -43.584189
+  },
+  {
+    "id": 85,
+    "nome": "Pina Rangel",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.907473,
+    "lng": -43.575781
+  },
+  {
+    "id": 86,
+    "nome": "Parque Esperança",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.906871,
+    "lng": -43.571653
+  },
+  {
+    "id": 87,
+    "nome": "Cândido Magalhães",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.907679,
+    "lng": -43.564034
+  },
+  {
+    "id": 88,
+    "nome": "Prefeito Alim Pedro",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.903588,
+    "lng": -43.566286
+  },
+  {
+    "id": 89,
+    "nome": "Santa Verediana",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.940461,
+    "lng": -43.665204
+  },
+  {
+    "id": 90,
+    "nome": "Gastão Rangel",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.927532,
+    "lng": -43.677577
+  },
+  {
+    "id": 91,
+    "nome": "Terminal Santa Cruz",
+    "tipo": "Terminal",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.91686,
+    "lng": -43.683685
+  },
+  {
+    "id": 92,
+    "nome": "Parque das Rosas",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000109,
+    "lng": -43.352486
+  },
+  {
+    "id": 93,
+    "nome": "Cesarão I",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.934551,
+    "lng": -43.665348
+  },
+  {
+    "id": 94,
+    "nome": "Cosmos",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.915638,
+    "lng": -43.61608
+  },
+  {
+    "id": 95,
+    "nome": "Recanto das Garças",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.020992,
+    "lng": -43.49668
+  },
+  {
+    "id": 96,
+    "nome": "Dom Bosco",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.01821,
+    "lng": -43.509004
+  },
+  {
+    "id": 97,
+    "nome": "CTEx",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.00521,
+    "lng": -43.558467
+  },
+  {
+    "id": 98,
+    "nome": "Embrapa",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.999519,
+    "lng": -43.582478
+  },
+  {
+    "id": 99,
+    "nome": "Terminal Campo Grande",
+    "tipo": "Terminal",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.901748,
+    "lng": -43.554973
+  },
+  {
+    "id": 100,
+    "nome": "Nova Barra",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.015573,
+    "lng": -43.471469
+  },
+  {
+    "id": 101,
+    "nome": "Vendas de Varanda",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.950845,
+    "lng": -43.65083
+  },
+  {
+    "id": 102,
+    "nome": "Curral Falso",
+    "tipo": "Terminal",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.936516,
+    "lng": -43.666962
+  },
+  {
+    "id": 103,
+    "nome": "Cajueiros",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.930824,
+    "lng": -43.67351
+  },
+  {
+    "id": 104,
+    "nome": "Terminal Jd. Oceânico",
+    "tipo": "Terminal",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.006691,
+    "lng": -43.311627
+  },
+  {
+    "id": 105,
+    "nome": "Bosque Marapendi",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.003731,
+    "lng": -43.323072
+  },
+  {
+    "id": 106,
+    "nome": "Paulo Malta Rezende",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.00128,
+    "lng": -43.329167
+  },
+  {
+    "id": 107,
+    "nome": "Afrânio Costa",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000599,
+    "lng": -43.335126
+  },
+  {
+    "id": 108,
+    "nome": "Riviera",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000287,
+    "lng": -43.342058
+  },
+  {
+    "id": 109,
+    "nome": "Ricardo Marinho",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000213,
+    "lng": -43.346574
+  },
+  {
+    "id": 110,
+    "nome": "Barra Shopping",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000003,
+    "lng": -43.359871
+  },
+  {
+    "id": 111,
+    "nome": "Bosque da Barra",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000285,
+    "lng": -43.377455
+  },
+  {
+    "id": 112,
+    "nome": "Novo Leblon",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000383,
+    "lng": -43.383204
+  },
+  {
+    "id": 113,
+    "nome": "Américas Park",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000393,
+    "lng": -43.389797
+  },
+  {
+    "id": 114,
+    "nome": "Santa Mônica Jardins",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000189,
+    "lng": -43.398498
+  },
+  {
+    "id": 115,
+    "nome": "Rio Mar",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.999914,
+    "lng": -43.406909
+  },
+  {
+    "id": 116,
+    "nome": "Interlagos",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.000847,
+    "lng": -43.417476
+  },
+  {
+    "id": 117,
+    "nome": "Pedra de Itaúna",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.002885,
+    "lng": -43.424048
+  },
+  {
+    "id": 118,
+    "nome": "Pontões/Barrasul",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.005463,
+    "lng": -43.431955
+  },
+  {
+    "id": 119,
+    "nome": "Salvador Allende",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.008251,
+    "lng": -43.442704
+  },
+  {
+    "id": 120,
+    "nome": "Gelson Fonseca",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.009747,
+    "lng": -43.44866
+  },
+  {
+    "id": 121,
+    "nome": "Guignard",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.010747,
+    "lng": -43.452671
+  },
+  {
+    "id": 122,
+    "nome": "Gláucio Gil",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.012397,
+    "lng": -43.45897
+  },
+  {
+    "id": 123,
+    "nome": "Benvindo de Novaes",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.014344,
+    "lng": -43.466693
+  },
+  {
+    "id": 124,
+    "nome": "Gilka Machado",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.017022,
+    "lng": -43.47708
+  },
+  {
+    "id": 125,
+    "nome": "Guiomar Novais",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.018404,
+    "lng": -43.482616
+  },
+  {
+    "id": 126,
+    "nome": "Recreio Shopping",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.019609,
+    "lng": -43.487293
+  },
+  {
+    "id": 127,
+    "nome": "Notre Dame",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.020579,
+    "lng": -43.500285
+  },
+  {
+    "id": 128,
+    "nome": "Pontal",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.016253,
+    "lng": -43.516036
+  },
+  {
+    "id": 129,
+    "nome": "Ilha de Guaratiba",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -23.0094,
+    "lng": -43.539892
+  },
+  {
+    "id": 130,
+    "nome": "Mato Alto",
+    "tipo": "Terminal",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.993811,
+    "lng": -43.596765
+  },
+  {
+    "id": 131,
+    "nome": "Magarça",
+    "tipo": "Terminal",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.968615,
+    "lng": -43.622055
+  },
+  {
+    "id": 132,
+    "nome": "Pingo DÁgua",
+    "tipo": "Terminal",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.964827,
+    "lng": -43.647323
+  },
+  {
+    "id": 133,
+    "nome": "General Olímpo",
+    "tipo": "Estação",
+    "corredor": "Transoeste",
+    "ano": "2012",
+    "lat": -22.922209,
+    "lng": -43.679666
+  },
+  {
+    "id": 134,
+    "nome": "Terminal Recreio",
+    "tipo": "Terminal",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -23.008064,
+    "lng": -43.439587
+  },
+  {
+    "id": 135,
+    "nome": "Catedral do Recreio",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -23.003841,
+    "lng": -43.434079
+  },
+  {
+    "id": 136,
+    "nome": "Tapebuias",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -23.000309,
+    "lng": -43.429906
+  },
+  {
+    "id": 137,
+    "nome": "Ilha Pura",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.989555,
+    "lng": -43.417634
+  },
+  {
+    "id": 138,
+    "nome": "Olof Palme",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.981835,
+    "lng": -43.410126
+  },
+  {
+    "id": 139,
+    "nome": "Riocentro",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.977081,
+    "lng": -43.40635
+  },
+  {
+    "id": 140,
+    "nome": "Morro do Outeiro",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.972131,
+    "lng": -43.402076
+  },
+  {
+    "id": 141,
+    "nome": "Minha Praia",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.966658,
+    "lng": -43.396915
+  },
+  {
+    "id": 142,
+    "nome": "Asa Branca",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.963375,
+    "lng": -43.393935
+  },
+  {
+    "id": 143,
+    "nome": "Leila Diniz",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.954695,
+    "lng": -43.391786
+  },
+  {
+    "id": 144,
+    "nome": "Ventura",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.947779,
+    "lng": -43.391789
+  },
+  {
+    "id": 145,
+    "nome": "Colônia",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.941076,
+    "lng": -43.394554
+  },
+  {
+    "id": 146,
+    "nome": "Outeiro Santo",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.927925,
+    "lng": -43.395904
+  },
+  {
+    "id": 147,
+    "nome": "Boiúna",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.91559,
+    "lng": -43.398047
+  },
+  {
+    "id": 148,
+    "nome": "Marechal Fontenelle",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.886545,
+    "lng": -43.400765
+  },
+  {
+    "id": 149,
+    "nome": "Padre João Cribbin",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.875954,
+    "lng": -43.405358
+  },
+  {
+    "id": 150,
+    "nome": "Magalhães Bastos",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.868749,
+    "lng": -43.413882
+  },
+  {
+    "id": 151,
+    "nome": "Vila Militar",
+    "tipo": "Estação",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.862364,
+    "lng": -43.40109
+  },
+  {
+    "id": 152,
+    "nome": "Terminal Sulacap",
+    "tipo": "Terminal",
+    "corredor": "Transolimpica",
+    "ano": "2016",
+    "lat": -22.884271,
+    "lng": -43.399511
+  },
+  {
+    "id": 153,
+    "nome": "Terminal Margaridas",
+    "tipo": "Terminal",
+    "corredor": "Transbrasil",
+    "ano": "",
+    "lat": -22.819692,
+    "lng": -43.322774
+  },
+  {
+    "id": 154,
+    "nome": "Terminal Missões",
+    "tipo": "Terminal",
+    "corredor": "Transbrasil",
+    "ano": "",
+    "lat": -22.813401,
+    "lng": -43.289863
+  },
+  {
+    "id": 155,
+    "nome": "FUTURO Terminal Santa Cruz",
+    "tipo": "Terminal",
+    "corredor": "Transoeste",
+    "ano": "x",
+    "lat": -22.917599,
+    "lng": -43.686002
+  }
+]

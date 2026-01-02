@@ -648,7 +648,7 @@
                 <!-- BRT -->
                 <div class="layer-item" onclick="toggleLayerByClick('brt', event)">
                     <label class="layer-checkbox" onclick="event.stopPropagation()">
-                        <input type="checkbox" id="layerBRT" onchange="toggleMapLayer('brt')">
+                        <input type="checkbox" id="layerBrt" onchange="toggleMapLayer('brt')">
                         <span class="checkmark"></span>
                     </label>
                     <div class="layer-icon" style="background: rgba(0, 150, 136, 0.2); color: #009688;">
@@ -656,7 +656,7 @@
                     </div>
                     <div class="layer-info">
                         <span class="layer-name">BRT</span>
-                        <span class="layer-count" id="countBRT">--</span>
+                        <span class="layer-count" id="countBrt">--</span>
                     </div>
                 </div>
 
@@ -2306,6 +2306,9 @@
                     renderPluviometrosMarkers(data);
                     // Contagem e tratada dentro de renderPluviometrosMarkers
                     showToast('Pluviometros carregados com sucesso', 'success');
+                } else if (layerName === 'brt') {
+                    renderBRTMarkers(data);
+                    showToast('BRT carregado: ' + (data.count || 0) + ' estações', 'success');
                 } else {
                     renderLayerMarkers(layerName, data);
                     updateLayerCount(layerName, data);
@@ -2522,6 +2525,83 @@
             var comChuva = data.com_chuva || pluviometros.filter(p => p.dados && p.dados.h01 > 0).length;
             countEl.textContent = pluviometros.length;
             countEl.title = comChuva + ' com chuva de ' + pluviometros.length + ' total';
+        }
+    }
+
+    // ============================================
+    // RENDERIZAR ESTACOES DO BRT
+    // ============================================
+    function renderBRTMarkers(data) {
+        mapLayers.brt.clearLayers();
+
+        var estacoes = data.data || data.estacoes || data;
+        if (!Array.isArray(estacoes)) {
+            console.warn('Dados de BRT invalidos:', data);
+            return;
+        }
+
+        console.log('Renderizando ' + estacoes.length + ' estacoes do BRT');
+
+        // Cores por corredor
+        var coresCorredor = {
+            'Transoeste': '#0066cc',
+            'Transcarioca': '#ff6600',
+            'Transolimpica': '#00cc66',
+            'Transbrasil': '#cc0000'
+        };
+
+        estacoes.forEach(function(item) {
+            var lat = item.lat || item.latitude;
+            var lng = item.lng || item.longitude;
+
+            if (lat && lng) {
+                var corredor = item.corredor || 'BRT';
+                var cor = item.cor || coresCorredor[corredor] || '#009688';
+                var tipo = item.tipo || 'Estacao';
+                var isTerminal = tipo.toLowerCase().includes('terminal');
+
+                // Icone do BRT - maior para terminais
+                var tamanho = isTerminal ? 36 : 28;
+                var icon = L.divIcon({
+                    className: 'brt-marker',
+                    html: '<div style="background: ' + cor + '; width: ' + tamanho + 'px; height: ' + tamanho + 'px; border-radius: ' + (isTerminal ? '8px' : '50%') + '; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">' +
+                          '<i class="fas fa-bus" style="color: white; font-size: ' + (isTerminal ? '16px' : '12px') + ';"></i>' +
+                          '</div>',
+                    iconSize: [tamanho, tamanho],
+                    iconAnchor: [tamanho/2, tamanho/2],
+                    popupAnchor: [0, -tamanho/2]
+                });
+
+                var marker = L.marker([lat, lng], { icon: icon });
+
+                // Popup com informacoes
+                var popupHtml = '<div style="font-family: Rajdhani, sans-serif; min-width: 200px;">' +
+                    '<h4 style="margin: 0 0 8px 0; color: ' + cor + '; font-family: Orbitron, monospace; font-size: 0.9rem;">' +
+                    '<i class="fas fa-bus"></i> ' + (item.nome || 'Estacao BRT') + '</h4>' +
+                    '<div style="font-size: 0.85rem; color: #ccc;">' +
+                    '<p><i class="fas fa-route" style="color: ' + cor + ';"></i> <strong>' + corredor + '</strong></p>' +
+                    '<p><i class="fas fa-map-marker-alt"></i> ' + tipo + '</p>' +
+                    '</div></div>';
+
+                marker.bindPopup(popupHtml);
+
+                // Tooltip no hover
+                marker.bindTooltip(item.nome || 'Estacao BRT', {
+                    permanent: false,
+                    direction: 'top',
+                    className: 'brt-tooltip'
+                });
+
+                mapLayers.brt.addLayer(marker);
+            }
+        });
+
+        console.log('BRT renderizado: ' + mapLayers.brt.getLayers().length + ' estacoes');
+
+        // Atualizar contador na sidebar
+        var countEl = document.getElementById('countBrt');
+        if (countEl) {
+            countEl.textContent = estacoes.length;
         }
     }
 
