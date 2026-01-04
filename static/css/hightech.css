@@ -2217,7 +2217,24 @@ h1, h2, h3, h4, h5, h6,
     }
 
     .header-nav {
+        display: flex;
+        gap: 2px;
+        margin-left: auto;
+        margin-right: 5px;
+    }
+
+    .header-nav .nav-link {
+        padding: 4px 6px;
+        font-size: 0.75rem;
+        border-radius: 4px;
+    }
+
+    .header-nav .nav-link span {
         display: none;
+    }
+
+    .header-nav .nav-link i {
+        font-size: 0.85rem;
     }
 
     .header-right {
@@ -2363,7 +2380,19 @@ h1, h2, h3, h4, h5, h6,
 @media (max-width: 360px) {
     .header-logo-full {
         height: 26px;
-        max-width: 110px;
+        max-width: 100px;
+    }
+
+    .header-nav {
+        gap: 1px;
+    }
+
+    .header-nav .nav-link {
+        padding: 3px 5px;
+    }
+
+    .header-nav .nav-link i {
+        font-size: 0.8rem;
     }
 
     .header-btn {
@@ -2418,6 +2447,177 @@ h1, h2, h3, h4, h5, h6,
 
 .hidden { display: none !important; }
 .invisible { visibility: hidden !important; }
+
+/* ============================================
+   17. RESPONSIVE UTILITIES
+   ============================================ */
+
+/* Table responsive wrapper */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: var(--bg-card);
+    border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: var(--cyan);
+    border-radius: 3px;
+}
+
+/* Grid responsive */
+.grid-responsive {
+    display: grid;
+    gap: 15px;
+}
+
+/* Form responsive */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-row > .form-group {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+/* Buttons responsive */
+.btn-group-responsive {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Visibility utilities */
+.hide-desktop { display: none !important; }
+.hide-tablet { display: none !important; }
+.hide-mobile { display: none !important; }
+.show-desktop { display: block !important; }
+.show-tablet { display: none !important; }
+.show-mobile { display: none !important; }
+
+@media (max-width: 1024px) {
+    .hide-tablet { display: block !important; }
+    .show-tablet { display: block !important; }
+    .hide-desktop { display: block !important; }
+    .show-desktop { display: none !important; }
+}
+
+@media (max-width: 768px) {
+    .hide-mobile { display: block !important; }
+    .show-mobile { display: block !important; }
+    .hide-tablet { display: none !important; }
+    .show-tablet { display: none !important; }
+
+    /* Main content adjustments for mobile */
+    .main-content-full {
+        margin-left: 0 !important;
+        padding: 10px !important;
+    }
+
+    /* Stats grid responsive */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+
+    /* Form adjustments */
+    .form-row {
+        flex-direction: column;
+    }
+
+    .form-row > .form-group {
+        flex: 1 1 100%;
+    }
+
+    /* Button group stacking */
+    .btn-group-responsive {
+        flex-direction: column;
+    }
+
+    .btn-group-responsive > .btn {
+        width: 100%;
+    }
+
+    /* Card grid responsive */
+    .card-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Modal responsive */
+    .modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        margin: 10px auto !important;
+    }
+
+    /* Page header responsive */
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .page-header .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Smaller padding on mobile */
+    .main-content-full {
+        padding: 8px !important;
+    }
+
+    /* Card compact mode */
+    .compact-card {
+        margin-bottom: 8px;
+    }
+
+    /* Table minimum width for scroll */
+    .table-responsive table {
+        min-width: 600px;
+    }
+
+    /* Action buttons stack */
+    .action-buttons,
+    .table-actions {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .action-buttons .btn,
+    .table-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 360px) {
+    .stats-grid {
+        gap: 8px !important;
+    }
+
+    .page-title {
+        font-size: 1.2rem !important;
+    }
+}
 
 /* ====================================
    CARDS COMPACTOS RETRÁTEIS

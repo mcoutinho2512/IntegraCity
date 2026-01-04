@@ -13,14 +13,133 @@
     /* Container Principal com Scroll */
     .cadastro-wrapper {
         position: fixed;
-        top: 60px;
-        left: 60px;
+        top: var(--header-height, 60px);
+        left: var(--sidebar-collapsed-width, 60px);
         right: 0;
         bottom: 0;
         overflow-y: auto;
         overflow-x: hidden;
         background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a2a 100%);
         padding: 20px 30px;
+        transition: left 0.3s ease;
+    }
+
+    /* Responsivo - Tablet */
+    @media (max-width: 768px) {
+        .cadastro-wrapper {
+            left: 0 !important;
+            padding: 15px;
+            top: 50px;
+        }
+
+        .cadastro-container {
+            padding-bottom: 30px;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .page-title {
+            font-size: 18px;
+        }
+
+        .btn-voltar {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .form-section {
+            padding: 15px;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .criticidade-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .data-item-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-salvar,
+        .btn-cancelar {
+            width: 100%;
+            justify-content: center;
+            text-align: center;
+        }
+
+        #map {
+            height: 250px;
+        }
+    }
+
+    /* Responsivo - Mobile */
+    @media (max-width: 480px) {
+        .cadastro-wrapper {
+            padding: 10px;
+            top: 45px;
+        }
+
+        .page-title {
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+
+        .section-title {
+            font-size: 12px;
+        }
+
+        .form-section {
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        .form-control {
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .criticidade-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .criticidade-resultado-value {
+            font-size: 18px;
+        }
+
+        #map {
+            height: 200px;
+        }
+
+        .btn-salvar {
+            padding: 14px 25px;
+        }
+
+        .btn-cancelar {
+            padding: 14px 25px;
+        }
+    }
+
+    /* Responsivo - Mobile pequeno */
+    @media (max-width: 360px) {
+        .page-title {
+            font-size: 14px;
+        }
+
+        .criticidade-resultado-value {
+            font-size: 16px;
+        }
     }
 
     .cadastro-container {

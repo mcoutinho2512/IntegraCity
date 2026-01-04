@@ -84,6 +84,132 @@
         .stats-grid {
             grid-template-columns: repeat(2, 1fr);
         }
+
+        .eventos-page {
+            padding: 15px;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+        }
+
+        .btn-novo {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .filtros-section {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .filtro-group {
+            width: 100%;
+        }
+
+        .filtro-control {
+            width: 100%;
+            min-width: unset;
+        }
+
+        .btn-filtrar,
+        .btn-limpar {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Tabela responsiva */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .eventos-table {
+            min-width: 800px;
+        }
+
+        .eventos-table th,
+        .eventos-table td {
+            padding: 10px 12px;
+            font-size: 0.85rem;
+        }
+
+        .acoes-cell {
+            flex-wrap: nowrap;
+        }
+
+        .modal-content {
+            width: 95%;
+            max-width: none;
+            margin: 10px;
+        }
+
+        .modal-actions {
+            flex-direction: column;
+        }
+
+        .btn-cancel,
+        .btn-confirm-delete {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .eventos-page {
+            padding: 10px;
+        }
+
+        .page-title {
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .stat-card {
+            padding: 12px;
+        }
+
+        .stat-card .stat-card-value {
+            font-size: 1.5rem;
+        }
+
+        .stat-card .stat-card-label {
+            font-size: 0.65rem;
+        }
+
+        .filtros-section {
+            padding: 12px;
+        }
+
+        .eventos-table th,
+        .eventos-table td {
+            padding: 8px 10px;
+            font-size: 0.8rem;
+        }
+
+        .badge {
+            padding: 2px 6px;
+            font-size: 0.6rem;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .page-title {
+            font-size: 0.9rem;
+        }
+
+        .stat-card .stat-card-value {
+            font-size: 1.3rem;
+        }
     }
 
     .stat-card {

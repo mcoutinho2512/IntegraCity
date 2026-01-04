@@ -1823,6 +1823,272 @@
         background: rgba(0, 119, 204, 0.1);
         border-color: rgba(0, 119, 204, 0.3);
     }
+
+    /* ============================================
+       RESPONSIVE DESIGN - MOBILE & TABLET
+       ============================================ */
+
+    /* Tablet (768px - 1024px) */
+    @media (max-width: 1024px) {
+        .sidebar {
+            width: 320px;
+        }
+
+        .map-wrapper {
+            left: 320px;
+        }
+
+        .floating-info {
+            right: 10px;
+            bottom: 10px;
+            gap: 8px;
+        }
+
+        .map-controls {
+            right: 10px;
+        }
+    }
+
+    /* Tablet Portrait & Mobile (768px) */
+    @media (max-width: 768px) {
+        /* Sidebar mobile overlay */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: var(--header-height, 60px);
+            width: 100%;
+            max-width: 350px;
+            height: calc(100vh - var(--header-height, 60px));
+            transform: translateX(-100%);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.mobile-open {
+            transform: translateX(0);
+        }
+
+        /* Map full width */
+        .map-wrapper {
+            left: 0 !important;
+        }
+
+        /* Floating controls adjustment */
+        .floating-info {
+            flex-direction: column;
+            right: 10px;
+            bottom: 60px;
+        }
+
+        .info-card {
+            padding: 8px 12px;
+            font-size: 0.75rem;
+        }
+
+        /* Layer selector mobile */
+        .layer-selector {
+            bottom: 10px;
+            left: 50%;
+            right: auto;
+            transform: translateX(-50%);
+            max-width: 95%;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 5px;
+            padding: 6px 10px;
+        }
+
+        .layer-btn {
+            padding: 6px 12px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* Map controls */
+        .map-controls {
+            top: auto;
+            bottom: 70px;
+            right: 10px;
+        }
+
+        .map-controls button {
+            width: 36px;
+            height: 36px;
+        }
+
+        /* Cards compactos no mobile */
+        .compact-card {
+            margin-bottom: 8px;
+        }
+
+        .compact-card .card-header {
+            padding: 10px 12px;
+        }
+
+        .card-value {
+            font-size: 1.2rem;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 14px;
+        }
+
+        /* Mosaic camera - 1 column */
+        .mosaic-container {
+            grid-template-columns: 1fr !important;
+        }
+
+        /* Layers panel */
+        .layers-panel {
+            width: calc(100% - 20px);
+            max-width: 300px;
+            right: 10px;
+            top: 60px;
+            max-height: calc(100vh - 130px);
+        }
+
+        /* Camera modal fullscreen */
+        .camera-modal-content {
+            width: 95%;
+            max-width: none;
+            margin: 10px;
+        }
+
+        /* Toggle sidebar button */
+        .toggle-sidebar {
+            left: 0;
+            z-index: 1001;
+        }
+
+        .toggle-sidebar.mobile-open {
+            left: calc(100% - 15px);
+            max-left: 335px;
+        }
+    }
+
+    /* Mobile (480px) */
+    @media (max-width: 480px) {
+        .sidebar {
+            max-width: 100%;
+        }
+
+        .sidebar-header {
+            padding: 10px;
+        }
+
+        .sidebar-title {
+            font-size: 0.8rem;
+        }
+
+        .compact-card .card-header {
+            padding: 8px 10px;
+        }
+
+        .card-value {
+            font-size: 1rem;
+        }
+
+        .card-label {
+            font-size: 0.6rem;
+        }
+
+        .card-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+
+        .status-badge {
+            padding: 2px 6px;
+            font-size: 7px;
+        }
+
+        .card-body {
+            padding: 6px 10px;
+        }
+
+        .card-detail-row {
+            font-size: 0.7rem;
+            padding: 3px 0;
+        }
+
+        /* Floating info */
+        .floating-info {
+            bottom: 55px;
+            right: 5px;
+        }
+
+        .info-card {
+            padding: 6px 10px;
+            font-size: 0.7rem;
+        }
+
+        /* Layer selector */
+        .layer-selector {
+            padding: 4px 8px;
+            gap: 4px;
+        }
+
+        .layer-btn {
+            padding: 5px 10px;
+            font-size: 0.65rem;
+        }
+
+        /* Map controls */
+        .map-controls {
+            bottom: 65px;
+        }
+
+        .map-controls button {
+            width: 32px;
+            height: 32px;
+            font-size: 0.85rem;
+        }
+
+        /* Layers panel */
+        .layers-panel {
+            width: calc(100% - 10px);
+            right: 5px;
+        }
+
+        .layer-item {
+            padding: 8px 10px;
+        }
+
+        .layer-name {
+            font-size: 0.75rem;
+        }
+    }
+
+    /* Mobile pequeno (360px) */
+    @media (max-width: 360px) {
+        .card-value {
+            font-size: 0.9rem;
+        }
+
+        .card-icon {
+            width: 26px;
+            height: 26px;
+            font-size: 11px;
+        }
+
+        .layer-btn {
+            padding: 4px 8px;
+            font-size: 0.6rem;
+        }
+
+        .floating-info {
+            gap: 4px;
+        }
+
+        .info-card {
+            padding: 5px 8px;
+            font-size: 0.65rem;
+        }
+    }
 </style>
 {% endblock %}
 

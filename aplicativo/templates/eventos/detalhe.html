@@ -13,14 +13,15 @@
     /* Container Principal com Scroll */
     .detalhe-wrapper {
         position: fixed;
-        top: 60px;
-        left: 60px;
+        top: var(--header-height, 60px);
+        left: var(--sidebar-collapsed-width, 60px);
         right: 0;
         bottom: 0;
         overflow-y: auto;
         overflow-x: hidden;
         background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a2a 100%);
         padding: 20px 30px;
+        transition: left 0.3s ease;
     }
 
     .detalhe-container {
@@ -527,6 +528,137 @@
     html.light-theme .detalhe-wrapper::-webkit-scrollbar-thumb,
     body.light-theme .detalhe-wrapper::-webkit-scrollbar-thumb {
         background: rgba(8, 145, 178, 0.3) !important;
+    }
+
+    /* ============================================
+       RESPONSIVE DESIGN
+       ============================================ */
+
+    /* Tablet (768px) */
+    @media (max-width: 768px) {
+        .detalhe-wrapper {
+            left: 0 !important;
+            padding: 15px;
+            top: 50px;
+        }
+
+        .page-header {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .page-title {
+            font-size: 18px;
+        }
+
+        .page-subtitle {
+            font-size: 12px;
+        }
+
+        .header-actions {
+            width: 100%;
+        }
+
+        .header-actions .btn-action {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .info-card {
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .criticidade-grid {
+            grid-template-columns: 1fr;
+        }
+
+        #map {
+            height: 220px;
+        }
+    }
+
+    /* Mobile (480px) */
+    @media (max-width: 480px) {
+        .detalhe-wrapper {
+            padding: 10px;
+            top: 45px;
+        }
+
+        .page-title {
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+
+        .badges-row {
+            gap: 8px;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            font-size: 10px;
+        }
+
+        .info-card {
+            padding: 12px;
+        }
+
+        .card-title {
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+
+        .info-row {
+            flex-direction: column;
+            gap: 4px;
+            padding: 10px 0;
+        }
+
+        .info-value {
+            text-align: left;
+        }
+
+        .data-item {
+            padding: 10px;
+        }
+
+        .data-date {
+            font-size: 12px;
+        }
+
+        .data-time {
+            font-size: 11px;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #map {
+            height: 180px;
+        }
+
+        .header-actions {
+            flex-direction: column;
+        }
+
+        .header-actions .btn-action {
+            width: 100%;
+        }
+    }
+
+    /* Mobile pequeno (360px) */
+    @media (max-width: 360px) {
+        .page-title {
+            font-size: 14px;
+        }
+
+        .badge {
+            padding: 3px 8px;
+            font-size: 9px;
+        }
     }
 </style>
 
