@@ -100,7 +100,7 @@
         background: rgba(0, 30, 60, 0.6);
     }
 
-    .stat-value {
+    .stat-card .stat-card-value {
         font-family: 'Orbitron', monospace;
         font-size: 1.8rem;
         font-weight: 700;
@@ -108,7 +108,7 @@
         line-height: 1;
     }
 
-    .stat-label {
+    .stat-card .stat-card-label {
         font-family: 'Rajdhani', sans-serif;
         font-size: 0.7rem;
         color: rgba(255, 255, 255, 0.5);
@@ -117,9 +117,9 @@
         margin-top: 6px;
     }
 
-    .stat-card.alta .stat-value { color: #ff4444; }
-    .stat-card.media .stat-value { color: #ffaa00; }
-    .stat-card.normal .stat-value { color: #00ff88; }
+    .stat-card.alta .stat-card-value { color: #ff4444; }
+    .stat-card.media .stat-card-value { color: #ffaa00; }
+    .stat-card.normal .stat-card-value { color: #00ff88; }
 
     /* Filtros */
     .filtros-section {
@@ -431,24 +431,24 @@
     <!-- Stats Cards -->
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-value" id="statTotal">0</div>
-            <div class="stat-label">Total</div>
+            <div class="stat-card-value" id="statTotal">0</div>
+            <div class="stat-card-label">Total</div>
         </div>
         <div class="stat-card alta">
-            <div class="stat-value" id="statAlta">0</div>
-            <div class="stat-label">Criticidade Alta</div>
+            <div class="stat-card-value" id="statAlta">0</div>
+            <div class="stat-card-label">Criticidade Alta</div>
         </div>
         <div class="stat-card media">
-            <div class="stat-value" id="statMedia">0</div>
-            <div class="stat-label">Criticidade Media</div>
+            <div class="stat-card-value" id="statMedia">0</div>
+            <div class="stat-card-label">Criticidade Media</div>
         </div>
         <div class="stat-card normal">
-            <div class="stat-value" id="statNormal">0</div>
-            <div class="stat-label">Criticidade Normal</div>
+            <div class="stat-card-value" id="statNormal">0</div>
+            <div class="stat-card-label">Criticidade Normal</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value" id="statProximos7">0</div>
-            <div class="stat-label">Proximos 7 dias</div>
+            <div class="stat-card-value" id="statProximos7">0</div>
+            <div class="stat-card-label">Proximos 7 dias</div>
         </div>
     </div>
 

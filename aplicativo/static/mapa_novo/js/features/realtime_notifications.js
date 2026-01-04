@@ -556,7 +556,7 @@ const IntegraCityNotifications = (function() {
         if (Notification.permission === 'granted') {
             new Notification(notification.title, {
                 body: notification.message,
-                icon: '/static/images/siscor-icon-192.png',
+                icon: '/static/images/integracity-icon-192.png',
                 tag: notification.id,
                 requireInteraction: notification.type === 'critical'
             });

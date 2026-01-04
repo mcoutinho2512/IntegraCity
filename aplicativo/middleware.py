@@ -40,7 +40,7 @@ class SecurityMiddleware(MiddlewareMixin):
         Executar DEPOIS que o usuário já foi autenticado
         process_view é executado DEPOIS do AuthenticationMiddleware
         """
-        # Usar path_info para ignorar o FORCE_SCRIPT_NAME (/siscor)
+        # Usar path_info para ignorar o FORCE_SCRIPT_NAME (/integracity)
         path = getattr(request, 'path_info', request.path)
 
         # Se é URL pública, permitir

@@ -43,9 +43,6 @@ INSTALLED_APPS = [
     
     'rest_framework',
     'aplicativo',
-
-# ===== NOVOS MODULOS INTEGRACITY =====
-    'core',
 ]
 
 # LOGIN_REQUIRED_URLS_EXCEPTIONS removido por seguranca

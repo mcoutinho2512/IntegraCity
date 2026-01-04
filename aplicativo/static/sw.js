@@ -262,8 +262,8 @@ self.addEventListener('push', (event) => {
 
         const options = {
             body: data.body || data.message,
-            icon: '/integracity/static/images/siscor-icon-192.png',
-            badge: '/integracity/static/images/siscor-badge.png',
+            icon: '/integracity/static/images/integracity-icon-192.png',
+            badge: '/integracity/static/images/integracity-badge.png',
             vibrate: [100, 50, 100],
             data: {
                 url: data.url || '/integracity/cor/',

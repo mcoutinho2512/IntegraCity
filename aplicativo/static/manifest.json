@@ -12,49 +12,49 @@
   "categories": ["utilities", "productivity", "government"],
   "icons": [
     {
-      "src": "/integracity/static/images/siscor-icon-72.png",
+      "src": "/integracity/static/images/integracity-icon-72.png",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/integracity/static/images/siscor-icon-96.png",
+      "src": "/integracity/static/images/integracity-icon-96.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/integracity/static/images/siscor-icon-128.png",
+      "src": "/integracity/static/images/integracity-icon-128.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/integracity/static/images/siscor-icon-144.png",
+      "src": "/integracity/static/images/integracity-icon-144.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/integracity/static/images/siscor-icon-152.png",
+      "src": "/integracity/static/images/integracity-icon-152.png",
       "sizes": "152x152",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/integracity/static/images/siscor-icon-192.png",
+      "src": "/integracity/static/images/integracity-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/integracity/static/images/siscor-icon-384.png",
+      "src": "/integracity/static/images/integracity-icon-384.png",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/integracity/static/images/siscor-icon-512.png",
+      "src": "/integracity/static/images/integracity-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

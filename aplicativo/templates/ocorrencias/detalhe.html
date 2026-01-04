@@ -1764,7 +1764,8 @@ async function confirmarFechamento() {
 
             showToast('Ocorrencia fechada com sucesso!', 'success');
             closeFechamentoModal();
-            setTimeout(() => location.reload(), 1000);
+            // Redirecionar para lista de ocorrencias apos fechar
+            setTimeout(() => window.location.href = '{% url "ocorrencias_lista" %}', 1000);
         } else {
             showToast(data.error || 'Erro ao fechar ocorrencia', 'error');
         }
