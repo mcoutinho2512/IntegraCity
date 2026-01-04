@@ -24,7 +24,7 @@ from .forms import UserCreateForm, UserEditForm, PasswordResetByAdminForm
 # ============================================
 
 def admin_required(view_func):
-    """Decorator para verificar se usuário é admin ou superadmin"""
+    """Decorator para verificar se usuário é administrador"""
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -42,8 +42,8 @@ def admin_required(view_func):
     return wrapper
 
 
-def superadmin_required(view_func):
-    """Decorator para verificar se usuário é superadmin"""
+def administrador_required(view_func):
+    """Decorator para verificar se usuário é administrador"""
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -52,12 +52,16 @@ def superadmin_required(view_func):
 
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
 
-        if not profile.is_superadmin():
-            messages.error(request, 'Apenas Super Administradores podem acessar esta página.')
+        if not profile.is_admin():
+            messages.error(request, 'Apenas Administradores podem acessar esta página.')
             return redirect('user_management')
 
         return view_func(request, *args, **kwargs)
     return wrapper
+
+
+# Alias para compatibilidade
+superadmin_required = administrador_required
 
 
 # ============================================
@@ -169,16 +173,16 @@ def user_edit(request, user_id):
     # Garantir que o usuário tem profile
     profile, _ = UserProfile.objects.get_or_create(user=user_obj)
 
-    # Super admins só podem ser editados por outros super admins
-    if profile.role == 'superadmin':
+    # Administradores só podem ser editados por outros administradores
+    if profile.role == 'administrador':
         request_profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        if not request_profile.is_superadmin():
-            messages.error(request, 'Você não tem permissão para editar Super Administradores.')
+        if not request_profile.is_admin():
+            messages.error(request, 'Você não tem permissão para editar Administradores.')
             return redirect('user_management')
 
     # Não pode editar a si mesmo via esta página (deve usar perfil)
-    # Mas permitimos para superadmins
-    if user_obj == request.user and not request.user.profile.is_superadmin():
+    # Mas permitimos para administradores
+    if user_obj == request.user and not request.user.profile.is_admin():
         messages.warning(request, 'Use a página de perfil para editar seus próprios dados.')
         return redirect('user_management')
 
@@ -279,13 +283,13 @@ def user_toggle_status(request, user_id):
             'error': 'Não é possível desativar seu próprio usuário.'
         })
 
-    # Super admins só podem ser desativados por outros super admins
-    if profile.role == 'superadmin':
+    # Administradores só podem ser desativados por outros administradores
+    if profile.role == 'administrador':
         request_profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        if not request_profile.is_superadmin():
+        if not request_profile.is_admin():
             return JsonResponse({
                 'success': False,
-                'error': 'Apenas Super Administradores podem desativar outros Super Administradores.'
+                'error': 'Apenas Administradores podem desativar outros Administradores.'
             })
 
     # Toggle status
@@ -363,13 +367,13 @@ def user_delete(request, user_id):
             'error': 'Não é possível excluir seu próprio usuário.'
         })
 
-    # Super admins só podem ser excluídos por outros super admins
-    if profile.role == 'superadmin':
+    # Administradores só podem ser excluídos por outros administradores
+    if profile.role == 'administrador':
         request_profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        if not request_profile.is_superadmin():
+        if not request_profile.is_admin():
             return JsonResponse({
                 'success': False,
-                'error': 'Apenas Super Administradores podem excluir outros Super Administradores.'
+                'error': 'Apenas Administradores podem excluir outros Administradores.'
             })
 
     username = user_obj.username
@@ -403,11 +407,11 @@ def user_reset_password(request, user_id):
     user_obj = get_object_or_404(User, id=user_id)
     profile, _ = UserProfile.objects.get_or_create(user=user_obj)
 
-    # Não pode resetar senha de superadmin se não for superadmin
-    if profile.role == 'superadmin':
+    # Não pode resetar senha de administrador se não for administrador
+    if profile.role == 'administrador':
         request_profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        if not request_profile.is_superadmin():
-            messages.error(request, 'Você não tem permissão para resetar senha de Super Administradores.')
+        if not request_profile.is_admin():
+            messages.error(request, 'Você não tem permissão para resetar senha de Administradores.')
             return redirect('user_management')
 
     if request.method == 'POST':
@@ -460,11 +464,11 @@ def user_permissions(request, user_id):
     user_obj = get_object_or_404(User, id=user_id)
     profile, _ = UserProfile.objects.get_or_create(user=user_obj)
 
-    # Super admins só podem ter permissões editadas por outros super admins
-    if profile.role == 'superadmin':
+    # Administradores só podem ter permissões editadas por outros administradores
+    if profile.role == 'administrador':
         request_profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        if not request_profile.is_superadmin():
-            messages.error(request, 'Você não tem permissão para editar permissões de Super Administradores.')
+        if not request_profile.is_admin():
+            messages.error(request, 'Você não tem permissão para editar permissões de Administradores.')
             return redirect('user_management')
 
     if request.method == 'POST':
@@ -529,6 +533,133 @@ def user_permissions(request, user_id):
     }
 
     return render(request, 'users/user_permissions.html', context)
+
+
+@login_required
+@admin_required
+def user_module_permissions(request, user_id):
+    """Gerenciar permissões de acesso a módulos do usuário"""
+
+    user_obj = get_object_or_404(User, id=user_id)
+    profile, _ = UserProfile.objects.get_or_create(user=user_obj)
+
+    # Administradores não podem ter módulos alterados (sempre têm acesso total)
+    if profile.role == 'administrador':
+        messages.warning(request, 'Administradores sempre têm acesso a todos os módulos.')
+        return redirect('user_management')
+
+    # Não pode editar a si mesmo
+    if user_obj == request.user:
+        messages.warning(request, 'Você não pode editar suas próprias permissões de módulo.')
+        return redirect('user_management')
+
+    if request.method == 'POST':
+        try:
+            # Obter módulos selecionados do formulário
+            selected_modules = request.POST.getlist('modules')
+
+            # Validar que são módulos válidos
+            valid_modules = [m[0] for m in UserProfile.MODULES]
+            selected_modules = [m for m in selected_modules if m in valid_modules]
+
+            # Salvar módulos
+            old_modules = profile.allowed_modules or []
+            profile.allowed_modules = selected_modules
+            profile.save(update_fields=['allowed_modules'])
+
+            # Log de auditoria
+            AuditLog.log(
+                request=request,
+                action='permission_grant',
+                resource_type='ModulePermission',
+                resource_id=user_obj.id,
+                details={
+                    'username': user_obj.username,
+                    'old_modules': old_modules,
+                    'new_modules': selected_modules,
+                }
+            )
+
+            messages.success(request, f'Permissões de módulos de "{user_obj.username}" atualizadas com sucesso!')
+            return redirect('user_management')
+
+        except Exception as e:
+            messages.error(request, f'Erro ao salvar permissões: {str(e)}')
+
+    # Módulos atuais (ou padrão do perfil)
+    current_modules = profile.get_allowed_modules()
+    default_modules = profile.DEFAULT_MODULES.get(profile.role, [])
+
+    context = {
+        'user_obj': user_obj,
+        'profile': profile,
+        'all_modules': UserProfile.MODULES,
+        'current_modules': current_modules,
+        'default_modules': default_modules,
+        'page_title': f'Permissões de Módulos: {user_obj.get_full_name() or user_obj.username}',
+    }
+
+    return render(request, 'users/user_module_permissions.html', context)
+
+
+@login_required
+@admin_required
+@require_http_methods(["POST"])
+def api_user_module_permissions(request, user_id):
+    """API: Atualizar permissões de módulos (AJAX)"""
+
+    user_obj = get_object_or_404(User, id=user_id)
+    profile, _ = UserProfile.objects.get_or_create(user=user_obj)
+
+    # Administradores não podem ter módulos alterados
+    if profile.role == 'administrador':
+        return JsonResponse({
+            'success': False,
+            'error': 'Administradores sempre têm acesso a todos os módulos.'
+        })
+
+    try:
+        data = json.loads(request.body)
+        modules = data.get('modules', [])
+
+        # Validar módulos
+        valid_modules = [m[0] for m in UserProfile.MODULES]
+        modules = [m for m in modules if m in valid_modules]
+
+        # Salvar
+        old_modules = profile.allowed_modules or []
+        profile.allowed_modules = modules
+        profile.save(update_fields=['allowed_modules'])
+
+        # Log de auditoria
+        AuditLog.log(
+            request=request,
+            action='permission_grant',
+            resource_type='ModulePermission',
+            resource_id=user_obj.id,
+            details={
+                'username': user_obj.username,
+                'old_modules': old_modules,
+                'new_modules': modules,
+            }
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Permissões de "{user_obj.username}" atualizadas com sucesso.',
+            'modules': modules,
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Dados inválidos.'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
 
 
 # ============================================

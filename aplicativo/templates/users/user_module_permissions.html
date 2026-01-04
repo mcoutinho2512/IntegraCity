@@ -1,0 +1,429 @@
+{% extends 'base_hightech.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - IntegraCity{% endblock %}
+
+{% block extra_css %}
+<style>
+    .permissions-container {
+        padding: 20px;
+        max-width: 900px;
+        margin: 0 auto;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        color: #00D4FF;
+    }
+
+    .btn-back {
+        background: transparent;
+        border: 1px solid rgba(0, 212, 255, 0.5);
+        color: #00D4FF;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .user-info-box {
+        background: rgba(0, 20, 40, 0.8);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .user-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00D4FF, #B537F2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .user-details .user-name {
+        font-size: 1.3rem;
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .user-details .user-role {
+        display: inline-block;
+        margin-top: 5px;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+
+    .user-role.administrador { background: rgba(181, 55, 242, 0.2); color: #B537F2; border: 1px solid #B537F2; }
+    .user-role.coordenador { background: rgba(0, 212, 255, 0.2); color: #00D4FF; border: 1px solid #00D4FF; }
+    .user-role.operador { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid #00ff88; }
+    .user-role.planejamento { background: rgba(255, 152, 0, 0.2); color: #ff9800; border: 1px solid #ff9800; }
+
+    .info-note {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 25px;
+        color: #8892b0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .info-note i {
+        color: #00D4FF;
+        font-size: 1.2rem;
+    }
+
+    .modules-card {
+        background: rgba(0, 20, 40, 0.8);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        padding: 25px;
+    }
+
+    .section-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+        color: #B537F2;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(181, 55, 242, 0.3);
+    }
+
+    .modules-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .module-item {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 10px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .module-item:hover {
+        border-color: rgba(0, 212, 255, 0.5);
+        transform: translateY(-2px);
+    }
+
+    .module-item.selected {
+        border-color: #00ff88;
+        background: rgba(0, 255, 136, 0.1);
+    }
+
+    .module-item.default {
+        border-color: #B537F2;
+        background: rgba(181, 55, 242, 0.1);
+    }
+
+    .module-checkbox {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 22px;
+        height: 22px;
+        accent-color: #00ff88;
+        cursor: pointer;
+    }
+
+    .module-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: #00D4FF;
+    }
+
+    .module-item.selected .module-icon {
+        color: #00ff88;
+    }
+
+    .module-name {
+        font-weight: 600;
+        color: #fff;
+        font-size: 1rem;
+    }
+
+    .module-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 0.65rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: rgba(181, 55, 242, 0.3);
+        color: #B537F2;
+        text-transform: uppercase;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .btn-reset {
+        background: transparent;
+        border: 1px solid rgba(255, 152, 0, 0.5);
+        color: #ff9800;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-reset:hover {
+        background: rgba(255, 152, 0, 0.1);
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #00D4FF, #B537F2);
+        color: #fff;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-cancel {
+        background: transparent;
+        border: 1px solid #8892b0;
+        color: #8892b0;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+    }
+
+    .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alert.success {
+        background: rgba(0, 255, 136, 0.1);
+        border: 1px solid #00ff88;
+        color: #00ff88;
+    }
+
+    .alert.error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid #ef4444;
+        color: #ef4444;
+    }
+
+    .alert.warning {
+        background: rgba(255, 152, 0, 0.1);
+        border: 1px solid #ff9800;
+        color: #ff9800;
+    }
+
+    /* Module Icons */
+    .module-dashboard .module-icon::before { content: "\f3fd"; }
+    .module-ocorrencias .module-icon::before { content: "\f071"; }
+    .module-eventos .module-icon::before { content: "\f073"; }
+    .module-areas .module-icon::before { content: "\f5a0"; }
+    .module-matriz .module-icon::before { content: "\f00a"; }
+    .module-cameras .module-icon::before { content: "\f030"; }
+    .module-usuarios .module-icon::before { content: "\f0c0"; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="permissions-container">
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert {{ message.tags }}">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-th-large"></i>
+            {{ page_title }}
+        </h1>
+        <a href="{% url 'user_management' %}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="user-info-box">
+        <div class="user-avatar">
+            {% if user_obj.first_name %}
+            {{ user_obj.first_name.0|upper }}{{ user_obj.last_name.0|upper|default:"" }}
+            {% else %}
+            {{ user_obj.username.0|upper }}
+            {% endif %}
+        </div>
+        <div class="user-details">
+            <div class="user-name">{{ user_obj.get_full_name|default:user_obj.username }}</div>
+            <span class="user-role {{ profile.role }}">{{ profile.get_role_display }}</span>
+        </div>
+    </div>
+
+    <div class="info-note">
+        <i class="fas fa-info-circle"></i>
+        <span>
+            Selecione os modulos que o usuario podera acessar. Os modulos marcados com
+            <span style="color: #B537F2; font-weight: 600;">PADRAO</span> sao os modulos padrao do perfil "{{ profile.get_role_display }}".
+        </span>
+    </div>
+
+    <form method="post" id="modulesForm">
+        {% csrf_token %}
+
+        <div class="modules-card">
+            <h3 class="section-title">
+                <i class="fas fa-cubes"></i> Modulos do Sistema
+            </h3>
+
+            <div class="modules-grid">
+                {% for module_code, module_name in all_modules %}
+                <label class="module-item module-{{ module_code }} {% if module_code in current_modules %}selected{% endif %} {% if module_code in default_modules %}default{% endif %}" for="module_{{ module_code }}">
+                    {% if module_code in default_modules %}
+                    <span class="module-badge">Padrao</span>
+                    {% endif %}
+                    <input type="checkbox"
+                           name="modules"
+                           value="{{ module_code }}"
+                           id="module_{{ module_code }}"
+                           class="module-checkbox"
+                           {% if module_code in current_modules %}checked{% endif %}
+                           onchange="toggleModuleStyle(this)">
+                    <div class="module-icon">
+                        {% if module_code == 'dashboard' %}
+                        <i class="fas fa-tachometer-alt"></i>
+                        {% elif module_code == 'ocorrencias' %}
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {% elif module_code == 'eventos' %}
+                        <i class="fas fa-calendar-alt"></i>
+                        {% elif module_code == 'areas' %}
+                        <i class="fas fa-map-marked-alt"></i>
+                        {% elif module_code == 'matriz' %}
+                        <i class="fas fa-th"></i>
+                        {% elif module_code == 'cameras' %}
+                        <i class="fas fa-video"></i>
+                        {% elif module_code == 'usuarios' %}
+                        <i class="fas fa-users"></i>
+                        {% else %}
+                        <i class="fas fa-cube"></i>
+                        {% endif %}
+                    </div>
+                    <div class="module-name">{{ module_name }}</div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-reset" onclick="resetToDefaults()">
+                    <i class="fas fa-undo"></i> Restaurar Padrao
+                </button>
+                <div class="action-buttons">
+                    <a href="{% url 'user_management' %}" class="btn-cancel">Cancelar</a>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i> Salvar Permissoes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const defaultModules = {{ default_modules|safe }};
+
+    function toggleModuleStyle(checkbox) {
+        const label = checkbox.closest('.module-item');
+        if (checkbox.checked) {
+            label.classList.add('selected');
+        } else {
+            label.classList.remove('selected');
+        }
+    }
+
+    function resetToDefaults() {
+        // Desmarcar todos
+        document.querySelectorAll('.module-checkbox').forEach(cb => {
+            cb.checked = false;
+            cb.closest('.module-item').classList.remove('selected');
+        });
+
+        // Marcar os padrão
+        defaultModules.forEach(moduleCode => {
+            const checkbox = document.getElementById('module_' + moduleCode);
+            if (checkbox) {
+                checkbox.checked = true;
+                checkbox.closest('.module-item').classList.add('selected');
+            }
+        });
+    }
+
+    // Garantir que o Dashboard sempre esteja selecionado (mínimo)
+    document.getElementById('modulesForm').addEventListener('submit', function(e) {
+        const checkedModules = document.querySelectorAll('.module-checkbox:checked');
+        if (checkedModules.length === 0) {
+            e.preventDefault();
+            alert('Selecione pelo menos um módulo para o usuário.');
+        }
+    });
+</script>
+{% endblock %}

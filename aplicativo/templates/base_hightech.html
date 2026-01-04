@@ -189,36 +189,52 @@
                 <span>Sistema Online</span>
             </div>
 
-            <!-- Navigation Menu -->
+            <!-- Navigation Menu - Filtrado por permissões de módulo -->
             <nav class="header-nav">
+                {% if user.profile.has_module_access|default:True %}
                 <a href="{% url 'cor_dashboard_hightech' %}" class="nav-link {% if request.resolver_match.url_name == 'cor_dashboard_hightech' %}active{% endif %}" title="Dashboard">
                     <i class="fas fa-chart-line"></i>
                     <span>Dashboard</span>
                 </a>
+                {% endif %}
+                {% with user_modules=user.profile.get_allowed_modules %}
+                {% if 'ocorrencias' in user_modules or user.profile.role == 'administrador' %}
                 <a href="{% url 'ocorrencias_dashboard' %}" class="nav-link {% if 'ocorrencia' in request.resolver_match.url_name %}active{% endif %}" title="Ocorrencias" target="_blank">
                     <i class="fas fa-clipboard-list"></i>
                     <span>Ocorrencias</span>
                 </a>
+                {% endif %}
+                {% if 'matriz' in user_modules or user.profile.role == 'administrador' %}
                 <a href="{% url 'matriz_dashboard' %}" class="nav-link {% if 'matriz' in request.resolver_match.url_name %}active{% endif %}" title="Matriz Decisoria" target="_blank">
                     <i class="fas fa-brain"></i>
                     <span>Matriz</span>
                 </a>
+                {% endif %}
+                {% if 'areas' in user_modules or user.profile.role == 'administrador' %}
                 <a href="{% url 'areas_dashboard' %}" class="nav-link {% if 'areas' in request.resolver_match.url_name %}active{% endif %}" title="Areas de Observacao">
                     <i class="fas fa-draw-polygon"></i>
                     <span>Areas</span>
                 </a>
+                {% endif %}
+                {% if 'eventos' in user_modules or user.profile.role == 'administrador' %}
                 <a href="{% url 'eventos_lista' %}" class="nav-link {% if 'evento' in request.resolver_match.url_name %}active{% endif %}" title="Gestao de Eventos">
                     <i class="fas fa-calendar-alt"></i>
                     <span>Eventos</span>
                 </a>
+                {% endif %}
+                {% if 'cameras' in user_modules or user.profile.role == 'administrador' %}
                 <a href="{% url 'videomonitoramento' %}" class="nav-link {% if request.resolver_match.url_name == 'videomonitoramento' %}active{% endif %}" title="Cameras">
                     <i class="fas fa-video"></i>
                     <span>Cameras</span>
                 </a>
+                {% endif %}
+                {% if 'usuarios' in user_modules or user.profile.role == 'administrador' %}
                 <a href="{% url 'user_management' %}" class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usuarios">
                     <i class="fas fa-users"></i>
                     <span>Usuarios</span>
                 </a>
+                {% endif %}
+                {% endwith %}
             </nav>
         </div>
 

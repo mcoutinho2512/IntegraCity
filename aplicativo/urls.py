@@ -22,6 +22,7 @@ urlpatterns = [
     # ============================================
     # GERENCIAMENTO DE USUÁRIOS
     # ============================================
+    path('usuarios/', views_users.user_management, name='usuarios_dashboard'),
     path('users/', views_users.user_management, name='user_management'),
     path('users/create/', views_users.user_create, name='user_create'),
     path('users/<int:user_id>/', views_users.user_detail, name='user_detail'),
@@ -31,8 +32,10 @@ urlpatterns = [
     path('users/<int:user_id>/unlock/', views_users.user_unlock, name='user_unlock'),
     path('users/<int:user_id>/reset-password/', views_users.user_reset_password, name='user_reset_password'),
     path('users/<int:user_id>/permissions/', views_users.user_permissions, name='user_permissions'),
+    path('users/<int:user_id>/modules/', views_users.user_module_permissions, name='user_module_permissions'),
 
     # APIs de Usuários
+    path('api/users/<int:user_id>/modules/', views_users.api_user_module_permissions, name='api_user_module_permissions'),
     path('api/users/', views_users.api_users_list, name='api_users_list'),
     path('api/users/stats/', views_users.api_users_stats, name='api_users_stats'),
 

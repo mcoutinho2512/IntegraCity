@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'aplicativo.middleware.LoginSecurityMiddleware',  # Segurança de login após autenticação
+    'aplicativo.middleware.ModuleAccessMiddleware',   # Controle de acesso por módulo
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

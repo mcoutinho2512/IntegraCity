@@ -181,3 +181,148 @@ class LoginSecurityMiddleware(MiddlewareMixin):
         else:
             ip = request.META.get('REMOTE_ADDR', '0.0.0.0')
         return ip
+
+
+class ModuleAccessMiddleware(MiddlewareMixin):
+    """Middleware para verificar acesso a módulos por usuário"""
+
+    # Mapeamento de URLs para módulos
+    URL_MODULE_MAP = {
+        # Dashboard
+        '/cor/': 'dashboard',
+        '/cor': 'dashboard',
+        '/api/alertas': 'dashboard',
+        '/api/estatisticas': 'dashboard',
+        '/api/waze': 'dashboard',
+        '/api/brt': 'dashboard',
+        '/api/estagio': 'dashboard',
+        '/meteorologia/': 'dashboard',
+        '/mobilidade/': 'dashboard',
+
+        # Ocorrências
+        '/ocorrencias/': 'ocorrencias',
+        '/ocorrencia/': 'ocorrencias',
+        '/api/ocorrencias': 'ocorrencias',
+        '/api/pops': 'ocorrencias',
+
+        # Eventos
+        '/eventos/': 'eventos',
+        '/evento/': 'eventos',
+        '/api/eventos': 'eventos',
+
+        # Áreas
+        '/areas/': 'areas',
+        '/area/': 'areas',
+        '/api/areas': 'areas',
+
+        # Matriz
+        '/matriz/': 'matriz',
+        '/api/matriz': 'matriz',
+
+        # Câmeras
+        '/cameras/': 'cameras',
+        '/camera/': 'cameras',
+        '/video/': 'cameras',
+        '/api/camera': 'cameras',
+
+        # Usuários
+        '/usuarios/': 'usuarios',
+        '/usuario/': 'usuarios',
+    }
+
+    # URLs que não precisam de verificação de módulo
+    EXEMPT_URLS = [
+        '/login/',
+        '/logout/',
+        '/admin/',
+        '/static/',
+        '/media/',
+        '/api/sirenes',
+        '/api/chuvas',
+        '/api/pluviometros',
+    ]
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        """Verificar se usuário tem acesso ao módulo"""
+        if not request.user.is_authenticated:
+            return None
+
+        path = getattr(request, 'path_info', request.path)
+
+        # Ignorar URLs isentas
+        if any(path.startswith(url) for url in self.EXEMPT_URLS):
+            return None
+
+        # Identificar o módulo
+        module = None
+        for url_prefix, mod in self.URL_MODULE_MAP.items():
+            if path.startswith(url_prefix):
+                module = mod
+                break
+
+        # Se não encontrou módulo correspondente, permitir (URLs não mapeadas)
+        if not module:
+            return None
+
+        # Verificar acesso ao módulo
+        try:
+            from aplicativo.models import UserProfile
+            profile, created = UserProfile.objects.get_or_create(
+                user=request.user,
+                defaults={'role': 'operador'}
+            )
+
+            if not profile.has_module_access(module):
+                from django.http import HttpResponseForbidden
+                return HttpResponseForbidden(
+                    '''<!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Acesso Negado</title>
+                        <style>
+                            body {
+                                font-family: 'Segoe UI', sans-serif;
+                                background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+                                height: 100vh;
+                                margin: 0;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: white;
+                            }
+                            .container {
+                                text-align: center;
+                                padding: 40px;
+                                background: rgba(255,255,255,0.1);
+                                border-radius: 16px;
+                                backdrop-filter: blur(10px);
+                            }
+                            h1 { font-size: 4rem; margin: 0; color: #ef4444; }
+                            p { font-size: 1.2rem; color: #94a3b8; }
+                            a {
+                                display: inline-block;
+                                margin-top: 20px;
+                                padding: 12px 24px;
+                                background: #3b82f6;
+                                color: white;
+                                text-decoration: none;
+                                border-radius: 8px;
+                            }
+                            a:hover { background: #2563eb; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <h1>🚫 403</h1>
+                            <p>Você não tem permissão para acessar este módulo.</p>
+                            <p>Contate o administrador do sistema para solicitar acesso.</p>
+                            <a href="/integracity/cor/">← Voltar ao Dashboard</a>
+                        </div>
+                    </body>
+                    </html>'''
+                )
+
+        except Exception:
+            pass
+
+        return None

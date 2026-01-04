@@ -104,11 +104,11 @@ class UserCreateForm(UserCreationForm):
         self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Senha'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirmar senha'})
 
-        # Admin não pode criar superadmin
+        # Apenas Administrador pode criar outro Administrador
         if self.request_user and hasattr(self.request_user, 'profile'):
-            if self.request_user.profile.role != 'superadmin':
+            if self.request_user.profile.role != 'administrador':
                 self.fields['role'].choices = [
-                    (k, v) for k, v in UserProfile.ROLES if k != 'superadmin'
+                    (k, v) for k, v in UserProfile.ROLES if k != 'administrador'
                 ]
 
     def clean_password1(self):
@@ -236,11 +236,11 @@ class UserEditForm(forms.ModelForm):
             self.fields['cargo'].initial = profile.cargo
             self.fields['notes'].initial = profile.notes
 
-        # Admin não pode editar para superadmin
+        # Apenas Administrador pode editar para Administrador
         if self.request_user and hasattr(self.request_user, 'profile'):
-            if self.request_user.profile.role != 'superadmin':
+            if self.request_user.profile.role != 'administrador':
                 self.fields['role'].choices = [
-                    (k, v) for k, v in UserProfile.ROLES if k != 'superadmin'
+                    (k, v) for k, v in UserProfile.ROLES if k != 'administrador'
                 ]
 
     def clean_email(self):

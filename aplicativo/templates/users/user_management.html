@@ -243,34 +243,28 @@
         letter-spacing: 0.5px;
     }
 
-    .role-badge.superadmin {
+    .role-badge.administrador {
         background: rgba(181, 55, 242, 0.2);
         color: #B537F2;
         border: 1px solid #B537F2;
     }
 
-    .role-badge.admin {
+    .role-badge.coordenador {
         background: rgba(0, 212, 255, 0.2);
         color: #00D4FF;
         border: 1px solid #00D4FF;
     }
 
-    .role-badge.operator_senior {
+    .role-badge.operador {
         background: rgba(0, 255, 136, 0.2);
         color: #00ff88;
         border: 1px solid #00ff88;
     }
 
-    .role-badge.operator {
+    .role-badge.planejamento {
         background: rgba(255, 152, 0, 0.2);
         color: #ff9800;
         border: 1px solid #ff9800;
-    }
-
-    .role-badge.viewer {
-        background: rgba(136, 146, 176, 0.2);
-        color: #8892b0;
-        border: 1px solid #8892b0;
     }
 
     .status-badge {
@@ -341,6 +335,11 @@
     .btn-action.permissions {
         background: rgba(0, 255, 136, 0.2);
         color: #00ff88;
+    }
+
+    .btn-action.modules {
+        background: rgba(139, 92, 246, 0.2);
+        color: #8b5cf6;
     }
 
     .btn-action.unlock {
@@ -1030,6 +1029,11 @@
                             <a href="{% url 'user_permissions' user.id %}" class="btn-action permissions" title="Permissoes">
                                 <i class="fas fa-key"></i>
                             </a>
+                            {% if user.profile.role != 'administrador' %}
+                            <a href="{% url 'user_module_permissions' user.id %}" class="btn-action modules" title="Modulos">
+                                <i class="fas fa-th-large"></i>
+                            </a>
+                            {% endif %}
                             <a href="{% url 'user_reset_password' user.id %}" class="btn-action password" title="Resetar senha">
                                 <i class="fas fa-lock"></i>
                             </a>

@@ -5166,15 +5166,34 @@ class UserProfile(models.Model):
     """Perfil estendido do usuário do INTEGRACITY"""
 
     ROLES = [
-        ('superadmin', 'Super Administrador'),
-        ('admin', 'Administrador'),
-        ('operator_senior', 'Operador Senior'),
-        ('operator', 'Operador'),
-        ('viewer', 'Visualizador'),
+        ('administrador', 'Administrador'),
+        ('coordenador', 'Coordenador'),
+        ('operador', 'Operador'),
+        ('planejamento', 'Planejamento'),
     ]
 
+    # Módulos disponíveis no sistema
+    MODULES = [
+        ('dashboard', 'Dashboard'),
+        ('ocorrencias', 'Ocorrências'),
+        ('eventos', 'Eventos'),
+        ('areas', 'Áreas'),
+        ('matriz', 'Matriz'),
+        ('cameras', 'Câmeras'),
+        ('usuarios', 'Usuários'),
+    ]
+
+    # Módulos padrão por perfil
+    DEFAULT_MODULES = {
+        'administrador': ['dashboard', 'ocorrencias', 'eventos', 'areas', 'matriz', 'cameras', 'usuarios'],
+        'coordenador': ['dashboard', 'ocorrencias', 'eventos', 'areas', 'matriz', 'cameras'],
+        'operador': ['dashboard', 'ocorrencias', 'eventos', 'cameras'],
+        'planejamento': ['dashboard', 'areas', 'matriz'],
+    }
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    role = models.CharField('Perfil', max_length=20, choices=ROLES, default='viewer')
+    role = models.CharField('Perfil', max_length=20, choices=ROLES, default='operador')
+    allowed_modules = models.JSONField('Módulos Permitidos', default=list, blank=True)
     phone = models.CharField('Telefone', max_length=20, blank=True, null=True)
     department = models.CharField('Departamento', max_length=100, blank=True, null=True)
     cargo = models.CharField('Cargo', max_length=100, blank=True, null=True)
@@ -5240,25 +5259,58 @@ class UserProfile(models.Model):
         self.save(update_fields=['failed_login_attempts'])
 
     def is_admin(self):
-        """Verifica se é admin ou superadmin"""
-        return self.role in ['admin', 'superadmin']
+        """Verifica se é administrador"""
+        return self.role == 'administrador'
 
-    def is_superadmin(self):
-        """Verifica se é superadmin"""
-        return self.role == 'superadmin'
+    def is_coordenador(self):
+        """Verifica se é coordenador ou administrador"""
+        return self.role in ['administrador', 'coordenador']
 
     def can_manage_users(self):
         """Verifica se pode gerenciar usuários"""
-        return self.role in ['admin', 'superadmin']
+        return self.role == 'administrador'
 
     def can_view_audit(self):
         """Verifica se pode ver logs de auditoria"""
-        return self.role in ['admin', 'superadmin']
+        return self.role in ['administrador', 'coordenador']
+
+    def has_module_access(self, module):
+        """Verifica se usuário tem acesso a um módulo específico"""
+        # Administrador sempre tem acesso a tudo
+        if self.role == 'administrador':
+            return True
+
+        # Se allowed_modules está definido, usar isso
+        if self.allowed_modules:
+            return module in self.allowed_modules
+
+        # Senão, usar os módulos padrão do perfil
+        default_modules = self.DEFAULT_MODULES.get(self.role, [])
+        return module in default_modules
+
+    def get_allowed_modules(self):
+        """Retorna lista de módulos permitidos para o usuário"""
+        # Administrador sempre tem acesso a tudo
+        if self.role == 'administrador':
+            return [m[0] for m in self.MODULES]
+
+        # Se allowed_modules está definido, usar isso
+        if self.allowed_modules:
+            return self.allowed_modules
+
+        # Senão, usar os módulos padrão do perfil
+        return self.DEFAULT_MODULES.get(self.role, [])
+
+    def set_allowed_modules(self, modules):
+        """Define os módulos permitidos para o usuário"""
+        valid_modules = [m[0] for m in self.MODULES]
+        self.allowed_modules = [m for m in modules if m in valid_modules]
+        self.save(update_fields=['allowed_modules'])
 
     def has_permission(self, resource, action):
         """Verifica se usuário tem permissão específica"""
-        # Superadmin tem todas as permissões
-        if self.role == 'superadmin':
+        # Administrador tem todas as permissões
+        if self.role == 'administrador':
             return True
 
         # Verificar permissões baseadas no role
@@ -5277,40 +5329,33 @@ class UserProfile(models.Model):
 
 # Permissões padrão por role
 ROLE_DEFAULT_PERMISSIONS = {
-    'superadmin': {
-        'users': ['view', 'add', 'edit', 'delete'],
-        'cameras': ['view_all', 'view_assigned', 'control'],
-        'mosaic': ['view', 'create', 'edit'],
-        'map': ['view', 'edit_layers', 'add_markers'],
-        'reports': ['view', 'export', 'generate'],
-        'audit': ['view_own', 'view_all'],
-        'settings': ['view', 'edit'],
+    'administrador': {
+        'dashboard': ['view', 'edit'],
+        'ocorrencias': ['view', 'add', 'edit', 'delete'],
+        'eventos': ['view', 'add', 'edit', 'delete'],
+        'areas': ['view', 'add', 'edit', 'delete'],
+        'matriz': ['view', 'edit'],
+        'cameras': ['view', 'control'],
+        'usuarios': ['view', 'add', 'edit', 'delete'],
     },
-    'admin': {
-        'users': ['view', 'add', 'edit'],
-        'cameras': ['view_all', 'view_assigned', 'control'],
-        'mosaic': ['view', 'create', 'edit'],
-        'map': ['view', 'edit_layers', 'add_markers'],
-        'reports': ['view', 'export', 'generate'],
-        'audit': ['view_all'],
-        'settings': ['view'],
+    'coordenador': {
+        'dashboard': ['view'],
+        'ocorrencias': ['view', 'add', 'edit'],
+        'eventos': ['view', 'add', 'edit'],
+        'areas': ['view', 'add', 'edit'],
+        'matriz': ['view', 'edit'],
+        'cameras': ['view', 'control'],
     },
-    'operator_senior': {
-        'cameras': ['view_all', 'view_assigned'],
-        'mosaic': ['view', 'create', 'edit'],
-        'map': ['view', 'add_markers'],
-        'reports': ['view', 'export'],
-        'audit': ['view_own'],
+    'operador': {
+        'dashboard': ['view'],
+        'ocorrencias': ['view', 'add', 'edit'],
+        'eventos': ['view', 'add'],
+        'cameras': ['view'],
     },
-    'operator': {
-        'cameras': ['view_assigned'],
-        'mosaic': ['view'],
-        'map': ['view'],
-        'reports': ['view'],
-    },
-    'viewer': {
-        'cameras': ['view_assigned'],
-        'map': ['view'],
+    'planejamento': {
+        'dashboard': ['view'],
+        'areas': ['view', 'edit'],
+        'matriz': ['view', 'edit'],
     },
 }
 
@@ -5319,29 +5364,21 @@ class UserPermission(models.Model):
     """Permissões granulares customizadas de usuário"""
 
     RESOURCES = [
-        ('users', 'Usuários'),
+        ('dashboard', 'Dashboard'),
+        ('ocorrencias', 'Ocorrências'),
+        ('eventos', 'Eventos'),
+        ('areas', 'Áreas'),
+        ('matriz', 'Matriz'),
         ('cameras', 'Câmeras'),
-        ('mosaic', 'Mosaico'),
-        ('map', 'Mapa'),
-        ('reports', 'Relatórios'),
-        ('audit', 'Auditoria'),
-        ('settings', 'Configurações'),
+        ('usuarios', 'Usuários'),
     ]
 
     ACTIONS = [
         ('view', 'Visualizar'),
-        ('view_all', 'Visualizar Todos'),
-        ('view_assigned', 'Visualizar Atribuídos'),
         ('add', 'Adicionar'),
         ('edit', 'Editar'),
         ('delete', 'Excluir'),
         ('control', 'Controlar'),
-        ('create', 'Criar'),
-        ('edit_layers', 'Editar Camadas'),
-        ('add_markers', 'Adicionar Marcadores'),
-        ('export', 'Exportar'),
-        ('generate', 'Gerar'),
-        ('view_own', 'Ver Próprios'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='custom_permissions')
