@@ -608,7 +608,7 @@ h1, h2, h3, h4, h5, h6,
 .header-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
     flex: 1;
     min-width: 0;
     overflow: hidden;
@@ -676,9 +676,9 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .header-logo-full {
-    height: 52px;
+    height: 38px;
     width: auto;
-    max-width: 420px;
+    max-width: 180px;
     object-fit: contain;
     filter: drop-shadow(0 0 10px var(--cyan-glow));
     transition: all 0.3s ease;
@@ -724,21 +724,21 @@ h1, h2, h3, h4, h5, h6,
 .system-status {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
+    gap: 6px;
+    padding: 4px 10px;
     background: rgba(0, 255, 136, 0.1);
     border: 1px solid var(--green-neon);
-    border-radius: 20px;
-    font-size: 0.75rem;
+    border-radius: 15px;
+    font-size: 0.65rem;
     font-weight: 600;
     color: var(--green-neon);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .status-dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     background: var(--green-neon);
     border-radius: 50%;
     animation: pulse-dot 2s infinite;
@@ -747,7 +747,7 @@ h1, h2, h3, h4, h5, h6,
 .header-center {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
     flex-shrink: 0;
     position: relative;
     z-index: 10;
@@ -757,7 +757,7 @@ h1, h2, h3, h4, h5, h6,
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0 12px;
+    padding: 0 8px;
     border-left: 1px solid var(--border-color);
 }
 
@@ -766,15 +766,15 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .stat-label {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .stat-value {
     font-family: 'Orbitron', monospace;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--cyan);
 }
@@ -791,17 +791,19 @@ h1, h2, h3, h4, h5, h6,
 .header-right {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .header-btn {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     background: rgba(0, 212, 255, 0.1);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 6px;
     color: var(--cyan);
     cursor: pointer;
+    font-size: 0.85rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -834,11 +836,11 @@ h1, h2, h3, h4, h5, h6,
 .user-info {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 6px 12px;
+    gap: 8px;
+    padding: 4px 10px;
     background: rgba(0, 212, 255, 0.05);
     border: 1px solid var(--border-color);
-    border-radius: 25px;
+    border-radius: 20px;
     cursor: pointer;
     transition: var(--transition-fast);
 }
@@ -849,24 +851,24 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .user-avatar {
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     background: linear-gradient(135deg, var(--cyan), var(--purple-neon));
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-weight: 600;
 }
 
 .user-name {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 500;
 }
 
 .user-role {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     color: var(--text-muted);
 }
 
@@ -874,21 +876,21 @@ h1, h2, h3, h4, h5, h6,
 .header-nav {
     display: flex;
     align-items: center;
-    gap: 5px;
-    margin-left: 20px;
-    padding-left: 20px;
+    gap: 3px;
+    margin-left: 12px;
+    padding-left: 12px;
     border-left: 1px solid var(--border-color);
 }
 
 .header-nav .nav-link {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
+    gap: 5px;
+    padding: 6px 10px;
     color: var(--text-secondary);
     text-decoration: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
     font-weight: 500;
     transition: var(--transition-fast);
     border: 1px solid transparent;
@@ -908,7 +910,7 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .header-nav .nav-link i {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
 }
 
 @media (max-width: 1400px) {
@@ -927,19 +929,19 @@ h1, h2, h3, h4, h5, h6,
 
 @media (max-width: 1200px) {
     .header-center {
-        gap: 10px;
+        gap: 8px;
     }
 
     .header-stat {
-        padding: 0 8px;
+        padding: 0 6px;
     }
 
     .stat-value {
-        font-size: 0.95rem;
+        font-size: 0.7rem;
     }
 
     .stat-label {
-        font-size: 0.6rem;
+        font-size: 0.55rem;
     }
 }
 
@@ -1481,6 +1483,40 @@ h1, h2, h3, h4, h5, h6,
     animation: rain-pulse-strong 1.5s ease-in-out infinite;
 }
 
+/* Sirene tocando - pisca vermelho/amarelo intenso */
+.rain-alert-marker.sirene-tocando,
+.rain-alert-marker.sirene-tocando > div {
+    animation: sirene-tocando-pulse 0.5s ease-in-out infinite !important;
+}
+
+@keyframes sirene-tocando-pulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+        box-shadow: 0 0 20px #ff0000;
+    }
+    25% {
+        transform: scale(1.2);
+        filter: brightness(1.5);
+        box-shadow: 0 0 40px #ff0000, 0 0 60px #ffff00;
+    }
+    50% {
+        transform: scale(1);
+        filter: brightness(0.8);
+        box-shadow: 0 0 30px #ff6600;
+    }
+    75% {
+        transform: scale(1.2);
+        filter: brightness(1.5);
+        box-shadow: 0 0 40px #ff0000, 0 0 60px #ffff00;
+    }
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
 .rain-alert-badge {
     position: fixed;
     top: 80px;
@@ -1897,20 +1933,20 @@ h1, h2, h3, h4, h5, h6,
     }
 
     .header-nav .nav-link {
-        padding: 6px 8px;
-        font-size: 0.75rem;
+        padding: 5px 6px;
+        font-size: 0.7rem;
     }
 
     .header-stat {
-        padding: 0 6px;
+        padding: 0 5px;
     }
 
     .stat-value {
-        font-size: 0.9rem;
+        font-size: 0.65rem;
     }
 
     .stat-label {
-        font-size: 0.55rem;
+        font-size: 0.5rem;
     }
 }
 
@@ -2027,11 +2063,12 @@ h1, h2, h3, h4, h5, h6,
     }
 
     .stat-value {
-        font-size: 0.7rem;
+        font-size: 0.6rem;
     }
 
     .header-logo-full {
-        max-width: 240px;
+        max-width: 160px;
+        height: 32px;
     }
 }
 

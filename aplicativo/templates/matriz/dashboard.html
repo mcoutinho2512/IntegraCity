@@ -187,9 +187,9 @@
 
     /* Cards dos Grupos */
     .grupos-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
         margin-top: 20px;
     }
 
@@ -197,30 +197,34 @@
         background: var(--bg-surface);
         border: 1px solid var(--border-color);
         border-radius: 12px;
-        padding: 15px;
+        padding: 12px 15px;
         transition: all 0.3s ease;
     }
 
     .grupo-card:hover {
         border-color: var(--cyan);
-        transform: translateY(-3px);
     }
 
     .grupo-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+    }
+
+    .grupo-header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     .grupo-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 
     .grupo-icon.meteo { background: rgba(0, 212, 255, 0.2); color: var(--cyan); }
@@ -230,21 +234,81 @@
 
     .grupo-nivel {
         font-family: 'Orbitron', monospace;
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         font-weight: 700;
+    }
+
+    .grupo-info {
+        display: flex;
+        flex-direction: column;
     }
 
     .grupo-nome {
         font-size: 0.85rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        color: var(--text-primary);
+        font-weight: 600;
     }
 
     .grupo-peso {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         color: var(--text-muted);
-        margin-top: 5px;
+    }
+
+    .grupo-detalhes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-color);
+        font-size: 0.8rem;
+    }
+
+    .grupo-detalhes span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .grupo-detalhes i.fa-circle {
+        font-size: 0.5rem;
+    }
+
+    .grupo-razao {
+        width: 100%;
+        margin-top: 8px;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    /* Estatisticas de chuva */
+    .chuva-stats {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .chuva-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 60px;
+    }
+
+    .chuva-valor {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .chuva-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
     }
 
     /* Painel direito */
@@ -310,19 +374,19 @@
         border: 1px solid var(--border-color);
     }
 
-    .stat-value {
+    .stat-item .stat-number {
         font-family: 'Orbitron', monospace;
         font-size: 1.8rem;
         font-weight: 700;
         margin-bottom: 5px;
     }
 
-    .stat-value.baixa { color: var(--green-neon); }
-    .stat-value.media { color: var(--cyan); }
-    .stat-value.alta { color: var(--yellow-warn); }
-    .stat-value.critica { color: var(--red-alert); }
+    .stat-item .stat-number.baixa { color: var(--green-neon); }
+    .stat-item .stat-number.media { color: var(--cyan); }
+    .stat-item .stat-number.alta { color: var(--yellow-warn); }
+    .stat-item .stat-number.critica { color: var(--red-alert); }
 
-    .stat-label {
+    .stat-item .stat-name {
         font-size: 0.75rem;
         color: var(--text-muted);
         text-transform: uppercase;
@@ -450,7 +514,7 @@
     /* Responsive */
     @media (max-width: 768px) {
         .grupos-grid {
-            grid-template-columns: 1fr;
+            gap: 10px;
         }
 
         .stats-grid {
@@ -478,10 +542,10 @@
     <div class="card-body">
         <div style="text-align: center;">
             {% if estagio %}
-            <div style="font-family: 'Orbitron', monospace; font-size: 1.1rem; color: var(--cyan);">
+            <div style="font-family: 'Orbitron', monospace; font-size: 0.85rem; color: var(--cyan);">
                 {{ estagio.calculado_em|date:"H:i" }}
             </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted);">
+            <div style="font-size: 0.65rem; color: var(--text-muted);">
                 {{ estagio.calculado_em|date:"d/m/Y" }}
             </div>
             {% else %}
@@ -498,10 +562,10 @@
     <div class="card-body">
         <div style="text-align: center;">
             {% if matriz %}
-            <div style="font-family: 'Orbitron', monospace; font-size: 1.1rem; color: var(--purple-neon);">
+            <div style="font-family: 'Orbitron', monospace; font-size: 0.85rem; color: var(--purple-neon);">
                 v{{ matriz.versao }}
             </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted);">
+            <div style="font-size: 0.65rem; color: var(--text-muted);">
                 {{ matriz.status|upper }}
             </div>
             {% else %}
@@ -574,62 +638,145 @@
                 </div>
             </div>
 
-            <!-- Cards dos Grupos -->
+            <!-- Cards dos Grupos com Detalhes -->
             <div class="grupos-grid">
+                <!-- METEOROLOGIA -->
                 <div class="grupo-card">
                     <div class="grupo-header">
-                        <div class="grupo-icon meteo">
-                            <i class="fas fa-cloud-sun-rain"></i>
+                        <div class="grupo-header-left">
+                            <div class="grupo-icon meteo">
+                                <i class="fas fa-cloud-sun-rain"></i>
+                            </div>
+                            <div class="grupo-info">
+                                <div class="grupo-nome">Meteorologia</div>
+                                <div class="grupo-peso">Peso: {{ matriz.peso_meteorologia }}</div>
+                            </div>
                         </div>
                         <div class="grupo-nivel" id="nivelMeteo" style="color: var(--cyan);">
                             {{ estagio.nivel_meteorologia }}
                         </div>
                     </div>
-                    <div class="grupo-nome">Meteorologia</div>
-                    <div class="grupo-peso">Peso: {{ matriz.peso_meteorologia }}</div>
+                    <div class="grupo-detalhes">
+                        <span><i class="fas fa-thermometer-half"></i> <span id="meteoTemp">{{ dados_meteorologia.temperatura|default:"--" }}</span>C</span>
+                        <span><i class="fas fa-tint"></i> <span id="meteoUmidade">{{ dados_meteorologia.umidade|default:"--" }}</span>%</span>
+                        <span><i class="fas fa-cloud-rain"></i> <span id="meteoChuva">{{ dados_meteorologia.chuva_mm_h|default:"0" }}</span> mm/h</span>
+                        <span><i class="fas fa-wind"></i> <span id="meteoVento">{{ dados_meteorologia.vento_kmh|default:"0" }}</span> km/h</span>
+                        <div class="grupo-razao" id="meteoRazao" style="{% if not dados_meteorologia.razao %}display:none;{% endif %}">{{ dados_meteorologia.razao|default:"" }}</div>
+                    </div>
                 </div>
 
+                <!-- INCIDENTES -->
                 <div class="grupo-card">
                     <div class="grupo-header">
-                        <div class="grupo-icon incidentes">
-                            <i class="fas fa-exclamation-circle"></i>
+                        <div class="grupo-header-left">
+                            <div class="grupo-icon incidentes">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="grupo-info">
+                                <div class="grupo-nome">Incidentes (24h)</div>
+                                <div class="grupo-peso">Peso: {{ matriz.peso_incidentes }}</div>
+                            </div>
                         </div>
                         <div class="grupo-nivel" id="nivelIncidentes" style="color: var(--red-alert);">
                             {{ estagio.nivel_incidentes }}
                         </div>
                     </div>
-                    <div class="grupo-nome">Incidentes</div>
-                    <div class="grupo-peso">Peso: {{ matriz.peso_incidentes }}</div>
+                    <div class="grupo-detalhes">
+                        <span style="color: var(--green-neon);"><i class="fas fa-circle"></i> <span id="incBaixas">{{ stats_ocorrencias.baixas|default:0 }}</span> Baixas</span>
+                        <span style="color: var(--cyan);"><i class="fas fa-circle"></i> <span id="incMedias">{{ stats_ocorrencias.medias|default:0 }}</span> Medias</span>
+                        <span style="color: var(--yellow-warn);"><i class="fas fa-circle"></i> <span id="incAltas">{{ stats_ocorrencias.altas|default:0 }}</span> Altas</span>
+                        <span style="color: var(--red-alert);"><i class="fas fa-circle"></i> <span id="incCriticas">{{ stats_ocorrencias.criticas|default:0 }}</span> Criticas</span>
+                        <span style="color: var(--text-muted);"><i class="fas fa-clipboard-list"></i> Total: <span id="incTotal">{{ stats_ocorrencias.total|default:0 }}</span></span>
+                        <div class="grupo-razao" id="incRazao" style="{% if not estagio.detalhes_incidentes.razao %}display:none;{% endif %}">{{ estagio.detalhes_incidentes.razao|default:"" }}</div>
+                    </div>
                 </div>
 
+                <!-- MOBILIDADE -->
                 <div class="grupo-card">
                     <div class="grupo-header">
-                        <div class="grupo-icon mobilidade">
-                            <i class="fas fa-car"></i>
+                        <div class="grupo-header-left">
+                            <div class="grupo-icon mobilidade">
+                                <i class="fas fa-car"></i>
+                            </div>
+                            <div class="grupo-info">
+                                <div class="grupo-nome">Mobilidade (Waze)</div>
+                                <div class="grupo-peso">Peso: {{ matriz.peso_mobilidade }}</div>
+                            </div>
                         </div>
                         <div class="grupo-nivel" id="nivelMobilidade" style="color: var(--yellow-warn);">
                             {{ estagio.nivel_mobilidade }}
                         </div>
                     </div>
-                    <div class="grupo-nome">Mobilidade</div>
-                    <div class="grupo-peso">Peso: {{ matriz.peso_mobilidade }}</div>
+                    <div class="grupo-detalhes">
+                        <span style="color: var(--yellow-warn);"><i class="fas fa-road"></i> <span id="mobJams">{{ dados_mobilidade.total_jams|default:0 }}</span> Jams</span>
+                        <span style="color: var(--red-alert);"><i class="fas fa-exclamation-triangle"></i> <span id="mobSeveros">{{ dados_mobilidade.jams_severos|default:0 }}</span> Severos</span>
+                        <span style="color: var(--red-alert);"><i class="fas fa-car-crash"></i> <span id="mobAcidentes">{{ dados_mobilidade.acidentes_maiores|default:0 }}</span> Acidentes</span>
+                        <span style="color: #FF6B00;"><i class="fas fa-ban"></i> <span id="mobInterdicoes">{{ dados_mobilidade.vias_interditadas|default:0 }}</span> Interdicoes</span>
+                        <div class="grupo-razao" id="mobRazao" style="{% if not dados_mobilidade.razao %}display:none;{% endif %}">{{ dados_mobilidade.razao|default:"" }}</div>
+                    </div>
                 </div>
 
+                <!-- EVENTOS -->
                 <div class="grupo-card">
                     <div class="grupo-header">
-                        <div class="grupo-icon eventos">
-                            <i class="fas fa-calendar-alt"></i>
+                        <div class="grupo-header-left">
+                            <div class="grupo-icon eventos">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="grupo-info">
+                                <div class="grupo-nome">Eventos</div>
+                                <div class="grupo-peso">Peso: {{ matriz.peso_eventos }}</div>
+                            </div>
                         </div>
                         <div class="grupo-nivel" id="nivelEventos" style="color: var(--purple-neon);">
                             {{ estagio.nivel_eventos }}
                         </div>
                     </div>
-                    <div class="grupo-nome">Eventos</div>
-                    <div class="grupo-peso">Peso: {{ matriz.peso_eventos }}</div>
+                    <div class="grupo-detalhes">
+                        <span><i class="fas fa-info-circle"></i> Entrada manual</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Info Box -->
+            <!-- Card de Chuva em Tempo Real -->
+            {% if dados_chuva.total %}
+            <div class="info-box" style="margin-top: 15px; background: rgba(0, 212, 255, 0.1); border-color: var(--cyan);">
+                <div class="info-box-title">
+                    <i class="fas fa-cloud-rain"></i> Pluviometros em Tempo Real
+                </div>
+                <div class="info-box-content">
+                    <div class="chuva-stats">
+                        <div class="chuva-stat">
+                            <span class="chuva-valor">{{ dados_chuva.total }}</span>
+                            <span class="chuva-label">Total</span>
+                        </div>
+                        <div class="chuva-stat">
+                            <span class="chuva-valor" style="color: var(--cyan);">{{ dados_chuva.com_chuva }}</span>
+                            <span class="chuva-label">Com Chuva</span>
+                        </div>
+                        <div class="chuva-stat">
+                            <span class="chuva-valor" style="color: #3b82f6;">{{ dados_chuva.fraca }}</span>
+                            <span class="chuva-label">Fraca</span>
+                        </div>
+                        <div class="chuva-stat">
+                            <span class="chuva-valor" style="color: #eab308;">{{ dados_chuva.moderada }}</span>
+                            <span class="chuva-label">Moderada</span>
+                        </div>
+                        <div class="chuva-stat">
+                            <span class="chuva-valor" style="color: var(--red-alert);">{{ dados_chuva.forte }}</span>
+                            <span class="chuva-label">Forte</span>
+                        </div>
+                    </div>
+                    {% if dados_chuva.max_chuva > 0 %}
+                    <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);">
+                        <i class="fas fa-arrow-up"></i> Maior: <strong style="color: var(--cyan);">{{ dados_chuva.max_chuva }} mm/h</strong> em {{ dados_chuva.estacao_max }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Info Box Detalhes -->
             <div class="info-box">
                 <div class="info-box-title">
                     <i class="fas fa-info-circle"></i> Detalhes do Calculo
@@ -639,6 +786,14 @@
                     <strong>Incidentes:</strong> {{ estagio.detalhes_incidentes.razao }}
                     <br>
                     <small>Total: {{ estagio.detalhes_incidentes.total }} ocorrencias nas ultimas {{ estagio.detalhes_incidentes.horas_analisadas }}h</small>
+                    {% endif %}
+                    {% if dados_mobilidade.razao %}
+                    <br><br>
+                    <strong>Mobilidade:</strong> {{ dados_mobilidade.razao }}
+                    {% endif %}
+                    {% if dados_meteorologia.razao %}
+                    <br><br>
+                    <strong>Meteorologia:</strong> {{ dados_meteorologia.razao }}
                     {% endif %}
                 </div>
             </div>
@@ -669,7 +824,7 @@
                 <div class="panel-header">
                     <div class="panel-title">
                         <i class="fas fa-clipboard-list"></i>
-                        Ocorrencias Ativas (24h)
+                        Ocorrencias Ativas
                     </div>
                     <span style="font-size: 0.85rem; color: var(--text-muted);">
                         Total: {{ stats_ocorrencias.total|default:0 }}
@@ -678,20 +833,20 @@
                 <div class="panel-body">
                     <div class="stats-grid">
                         <div class="stat-item">
-                            <div class="stat-value baixa">{{ stats_ocorrencias.baixas|default:0 }}</div>
-                            <div class="stat-label">Baixas</div>
+                            <div class="stat-number baixa" id="statBaixas">{{ stats_ocorrencias.baixas|default:0 }}</div>
+                            <div class="stat-name">Baixas</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value media">{{ stats_ocorrencias.medias|default:0 }}</div>
-                            <div class="stat-label">Medias</div>
+                            <div class="stat-number media" id="statMedias">{{ stats_ocorrencias.medias|default:0 }}</div>
+                            <div class="stat-name">Medias</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value alta">{{ stats_ocorrencias.altas|default:0 }}</div>
-                            <div class="stat-label">Altas</div>
+                            <div class="stat-number alta" id="statAltas">{{ stats_ocorrencias.altas|default:0 }}</div>
+                            <div class="stat-name">Altas</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value critica">{{ stats_ocorrencias.criticas|default:0 }}</div>
-                            <div class="stat-label">Criticas</div>
+                            <div class="stat-number critica" id="statCriticas">{{ stats_ocorrencias.criticas|default:0 }}</div>
+                            <div class="stat-name">Criticas</div>
                         </div>
                     </div>
                 </div>
@@ -922,13 +1077,102 @@ function atualizarNivel(data) {
     document.getElementById('nivelMobilidade').textContent = data.niveis.mobilidade;
     document.getElementById('nivelEventos').textContent = data.niveis.eventos;
 
-    // Detalhes
+    // ========================================
+    // METEOROLOGIA - Atualizar detalhes
+    // ========================================
+    if (data.detalhes_meteorologia) {
+        const meteo = data.detalhes_meteorologia;
+        const tempEl = document.getElementById('meteoTemp');
+        const umidadeEl = document.getElementById('meteoUmidade');
+        const chuvaEl = document.getElementById('meteoChuva');
+        const ventoEl = document.getElementById('meteoVento');
+        const razaoEl = document.getElementById('meteoRazao');
+
+        if (tempEl) tempEl.textContent = meteo.temperatura || '--';
+        if (umidadeEl) umidadeEl.textContent = meteo.umidade || '--';
+        if (chuvaEl) chuvaEl.textContent = meteo.chuva_mm_h || '0';
+        if (ventoEl) ventoEl.textContent = meteo.vento_kmh || '0';
+        if (razaoEl) {
+            if (meteo.razao) {
+                razaoEl.textContent = meteo.razao;
+                razaoEl.style.display = 'block';
+            } else {
+                razaoEl.style.display = 'none';
+            }
+        }
+    }
+
+    // ========================================
+    // INCIDENTES - Atualizar detalhes
+    // ========================================
     if (data.detalhes_incidentes) {
+        const inc = data.detalhes_incidentes;
+        const baixasEl = document.getElementById('incBaixas');
+        const mediasEl = document.getElementById('incMedias');
+        const altasEl = document.getElementById('incAltas');
+        const criticasEl = document.getElementById('incCriticas');
+        const totalEl = document.getElementById('incTotal');
+        const razaoEl = document.getElementById('incRazao');
+
+        if (baixasEl) baixasEl.textContent = inc.baixas || 0;
+        if (mediasEl) mediasEl.textContent = inc.medias || 0;
+        if (altasEl) altasEl.textContent = inc.altas || 0;
+        if (criticasEl) criticasEl.textContent = inc.criticas || 0;
+        if (totalEl) totalEl.textContent = inc.total || 0;
+        if (razaoEl) {
+            if (inc.razao) {
+                razaoEl.textContent = inc.razao;
+                razaoEl.style.display = 'block';
+            } else {
+                razaoEl.style.display = 'none';
+            }
+        }
+
+        // NOTA: O painel "Ocorrencias Ativas" (statBaixas, statMedias, etc.)
+        // mostra TODAS as ocorrencias ativas (sem filtro de data).
+        // O card "Incidentes (24h)" mostra apenas as ultimas 24h.
+        // Por isso NAO atualizamos o painel de estatisticas aqui.
+
+        // Info box detalhes
         document.getElementById('detalhesCalculo').innerHTML = `
-            <strong>Incidentes:</strong> ${data.detalhes_incidentes.razao}
+            <strong>Incidentes:</strong> ${inc.razao}
             <br>
-            <small>Total: ${data.detalhes_incidentes.total} ocorrencias nas ultimas ${data.detalhes_incidentes.horas_analisadas}h</small>
+            <small>Total: ${inc.total} ocorrencias nas ultimas ${inc.horas_analisadas}h</small>
         `;
+    }
+
+    // ========================================
+    // MOBILIDADE - Atualizar detalhes
+    // ========================================
+    if (data.detalhes_mobilidade) {
+        const mob = data.detalhes_mobilidade;
+        const jamsEl = document.getElementById('mobJams');
+        const severosEl = document.getElementById('mobSeveros');
+        const acidentesEl = document.getElementById('mobAcidentes');
+        const interdicoesEl = document.getElementById('mobInterdicoes');
+        const razaoEl = document.getElementById('mobRazao');
+
+        if (jamsEl) jamsEl.textContent = mob.total_jams || 0;
+        if (severosEl) severosEl.textContent = mob.jams_severos || 0;
+        if (acidentesEl) acidentesEl.textContent = mob.acidentes_maiores || 0;
+        if (interdicoesEl) interdicoesEl.textContent = mob.vias_interditadas || 0;
+        if (razaoEl) {
+            if (mob.razao) {
+                razaoEl.textContent = mob.razao;
+                razaoEl.style.display = 'block';
+            } else {
+                razaoEl.style.display = 'none';
+            }
+        }
+
+        // Atualizar info box com mobilidade tambem
+        const detalhesCalculo = document.getElementById('detalhesCalculo');
+        if (detalhesCalculo && mob.razao) {
+            detalhesCalculo.innerHTML += `
+                <br><br>
+                <strong>Mobilidade:</strong> ${mob.razao}
+            `;
+        }
     }
 
     // Atualizar acoes

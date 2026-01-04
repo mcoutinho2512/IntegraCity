@@ -1816,6 +1816,32 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script>
     // ============================================
+    // FUNCAO SHOWTOAST - NOTIFICACOES
+    // ============================================
+    function showToast(message, type) {
+        type = type || 'info';
+        var container = document.getElementById('toastContainer');
+        if (!container) {
+            console.log('[TOAST] ' + type.toUpperCase() + ': ' + message);
+            return;
+        }
+        var toast = document.createElement('div');
+        toast.className = 'toast ' + type;
+        var icon = 'fa-info-circle';
+        if (type === 'success') icon = 'fa-check-circle';
+        else if (type === 'error') icon = 'fa-times-circle';
+        else if (type === 'warning') icon = 'fa-exclamation-triangle';
+        toast.innerHTML = '<i class="fas ' + icon + '"></i><span>' + message + '</span>';
+        container.appendChild(toast);
+        setTimeout(function() {
+            toast.style.animation = 'slideDown 0.3s ease forwards';
+            setTimeout(function() {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 300);
+        }, 4000);
+    }
+
+    // ============================================
     // INICIALIZACAO DO MAPA LEAFLET
     // ============================================
 
@@ -2322,6 +2348,62 @@
         }
     }
 
+    // Sincronizar filtros do Waze com o estado atual dos checkboxes
+    function syncWazeFiltersFromUI() {
+        var mapFilters = [
+            'congestionamentos', 'interdicoes', 'eventos', 'acidentes',
+            'buracos', 'perigos', 'carroParado', 'policia', 'outros'
+        ];
+        mapFilters.forEach(function(tipo) {
+            var tipoCapitalized = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+            var checkbox = document.getElementById('layerWaze' + tipoCapitalized);
+            if (checkbox) {
+                wazeFilters[tipo] = checkbox.checked;
+            }
+        });
+    }
+
+    function applyWazeLayers() {
+        var anyActive = wazeFilters.congestionamentos || wazeFilters.interdicoes || wazeFilters.eventos ||
+            wazeFilters.acidentes || wazeFilters.buracos || wazeFilters.perigos ||
+            wazeFilters.carroParado || wazeFilters.policia || wazeFilters.outros;
+        if (!anyActive) {
+            map.removeLayer(mapLayers.wazeCongestionamentos);
+            map.removeLayer(mapLayers.wazeInterdicoes);
+            map.removeLayer(mapLayers.wazeEventos);
+            map.removeLayer(mapLayers.wazeAcidentes);
+            map.removeLayer(mapLayers.wazeBuracos);
+            map.removeLayer(mapLayers.wazePerigos);
+            map.removeLayer(mapLayers.wazeCarroParado);
+            map.removeLayer(mapLayers.wazePolicia);
+            map.removeLayer(mapLayers.wazeOutros);
+            return;
+        }
+        if (!layerDataCache.waze) {
+            loadWazeCompleto();
+            return;
+        }
+
+        if (wazeFilters.congestionamentos) mapLayers.wazeCongestionamentos.addTo(map);
+        else map.removeLayer(mapLayers.wazeCongestionamentos);
+        if (wazeFilters.interdicoes) mapLayers.wazeInterdicoes.addTo(map);
+        else map.removeLayer(mapLayers.wazeInterdicoes);
+        if (wazeFilters.eventos) mapLayers.wazeEventos.addTo(map);
+        else map.removeLayer(mapLayers.wazeEventos);
+        if (wazeFilters.acidentes) mapLayers.wazeAcidentes.addTo(map);
+        else map.removeLayer(mapLayers.wazeAcidentes);
+        if (wazeFilters.buracos) mapLayers.wazeBuracos.addTo(map);
+        else map.removeLayer(mapLayers.wazeBuracos);
+        if (wazeFilters.perigos) mapLayers.wazePerigos.addTo(map);
+        else map.removeLayer(mapLayers.wazePerigos);
+        if (wazeFilters.carroParado) mapLayers.wazeCarroParado.addTo(map);
+        else map.removeLayer(mapLayers.wazeCarroParado);
+        if (wazeFilters.policia) mapLayers.wazePolicia.addTo(map);
+        else map.removeLayer(mapLayers.wazePolicia);
+        if (wazeFilters.outros) mapLayers.wazeOutros.addTo(map);
+        else map.removeLayer(mapLayers.wazeOutros);
+    }
+
     // Toggle todas as camadas Waze (checkbox principal)
     function toggleAllWaze() {
         var mainCheckbox = document.getElementById('layerWaze');
@@ -2347,18 +2429,8 @@
             } else {
                 // Renderizar com filtros atuais
                 renderWazeCompleto(layerDataCache.waze);
+                applyWazeLayers();
             }
-
-            // Adicionar camadas ao mapa
-            if (wazeFilters.congestionamentos) mapLayers.wazeCongestionamentos.addTo(map);
-            if (wazeFilters.interdicoes) mapLayers.wazeInterdicoes.addTo(map);
-            if (wazeFilters.eventos) mapLayers.wazeEventos.addTo(map);
-            if (wazeFilters.acidentes) mapLayers.wazeAcidentes.addTo(map);
-            if (wazeFilters.buracos) mapLayers.wazeBuracos.addTo(map);
-            if (wazeFilters.perigos) mapLayers.wazePerigos.addTo(map);
-            if (wazeFilters.carroParado) mapLayers.wazeCarroParado.addTo(map);
-            if (wazeFilters.policia) mapLayers.wazePolicia.addTo(map);
-            if (wazeFilters.outros) mapLayers.wazeOutros.addTo(map);
 
             showToast('Camada Waze ativada', 'success');
         } else {
@@ -2409,12 +2481,15 @@
         // Se nao tem dados, carregar
         if (!layerDataCache.waze && isChecked) {
             loadWazeCompleto();
+        } else {
+            applyWazeLayers();
         }
     }
 
     // Carregar dados completos do Waze
     function loadWazeCompleto() {
-        var url = baseUrl + 'integracity/api/mob/waze-completo/';
+        var wazeBaseUrl = window.location.origin + '/';
+        var url = wazeBaseUrl + 'integracity/api/mob/waze-completo/';
         showToast('Carregando dados Waze...', 'info');
         console.log('Carregando Waze completo de:', url);
 
@@ -2427,8 +2502,12 @@
             })
             .then(function(data) {
                 console.log('Dados Waze recebidos:', data);
+                if (data && data.success === false) {
+                    throw new Error(data.error || 'Erro ao carregar Waze');
+                }
                 layerDataCache.waze = data;
                 renderWazeCompleto(data);
+                applyWazeLayers();
                 showToast('Dados Waze carregados', 'success');
             })
             .catch(function(error) {
@@ -2518,6 +2597,10 @@
             // Adicionar borda primeiro, depois linha principal
             mapLayers.wazeCongestionamentos.addLayer(polylineBorder);
             mapLayers.wazeCongestionamentos.addLayer(polyline);
+
+            // TAMBEM adicionar direto no mapa (como a linha de teste que funcionou)
+            polylineBorder.addTo(map);
+            polyline.addTo(map);
             mapLayers.waze.addLayer(polylineBorder);
             mapLayers.waze.addLayer(polyline);
         });
@@ -2727,6 +2810,54 @@
                     ', Acidentes: ' + contadores.acidentes +
                     ', Buracos: ' + contadores.buracos +
                     ', Perigos: ' + contadores.perigos);
+
+        // Adicionar camadas ao mapa baseado nos filtros (apos dados carregados)
+        console.log('[renderWazeCompleto] Adicionando camadas ao mapa...');
+        console.log('[renderWazeCompleto] wazeFilters:', JSON.stringify(wazeFilters));
+        console.log('[renderWazeCompleto] Congestionamentos no layer:', mapLayers.wazeCongestionamentos.getLayers().length);
+
+        // Remover e re-adicionar para garantir que funcionem
+        try {
+            if (wazeFilters.congestionamentos) {
+                map.removeLayer(mapLayers.wazeCongestionamentos);
+                mapLayers.wazeCongestionamentos.addTo(map);
+                console.log('[renderWazeCompleto] Camada congestionamentos adicionada');
+            }
+            if (wazeFilters.acidentes) {
+                map.removeLayer(mapLayers.wazeAcidentes);
+                mapLayers.wazeAcidentes.addTo(map);
+            }
+            if (wazeFilters.carroParado) {
+                map.removeLayer(mapLayers.wazeCarroParado);
+                mapLayers.wazeCarroParado.addTo(map);
+            }
+            if (wazeFilters.interdicoes) {
+                map.removeLayer(mapLayers.wazeInterdicoes);
+                mapLayers.wazeInterdicoes.addTo(map);
+            }
+            if (wazeFilters.eventos) {
+                map.removeLayer(mapLayers.wazeEventos);
+                mapLayers.wazeEventos.addTo(map);
+            }
+            if (wazeFilters.buracos) {
+                map.removeLayer(mapLayers.wazeBuracos);
+                mapLayers.wazeBuracos.addTo(map);
+            }
+            if (wazeFilters.perigos) {
+                map.removeLayer(mapLayers.wazePerigos);
+                mapLayers.wazePerigos.addTo(map);
+            }
+            if (wazeFilters.policia) {
+                map.removeLayer(mapLayers.wazePolicia);
+                mapLayers.wazePolicia.addTo(map);
+            }
+            if (wazeFilters.outros) {
+                map.removeLayer(mapLayers.wazeOutros);
+                mapLayers.wazeOutros.addTo(map);
+            }
+        } catch(e) {
+            console.error('[renderWazeCompleto] Erro ao adicionar camadas:', e);
+        }
     }
 
     // Toggle da sidebar de camadas
@@ -5095,13 +5226,11 @@
         console.log('[CHUVA] Buscando:', apiSirenes);
 
         // Limpar marcadores anteriores PRIMEIRO
-        if (window.rainAlertMarkers && window.rainAlertMarkers.length > 0) {
-            console.log('[CHUVA] Removendo', window.rainAlertMarkers.length, 'marcadores antigos');
-            window.rainAlertMarkers.forEach(function(m) {
-                try {
-                    if (map.hasLayer(m)) map.removeLayer(m);
-                } catch(e) { }
-            });
+        if (mapLayers.alertasChuva) {
+            mapLayers.alertasChuva.clearLayers();
+            if (!map.hasLayer(mapLayers.alertasChuva)) {
+                mapLayers.alertasChuva.addTo(map);
+            }
         }
         window.rainAlertMarkers = [];
 
@@ -5149,7 +5278,11 @@
                         });
 
                         marker.bindPopup('<b>' + (s.nome || 'Sirene') + '</b><br>' + s.nivel_texto + '<br>1h: ' + h01.toFixed(1) + 'mm');
-                        marker.addTo(map);
+                        if (mapLayers.alertasChuva) {
+                            mapLayers.alertasChuva.addLayer(marker);
+                        } else {
+                            marker.addTo(map);
+                        }
                         window.rainAlertMarkers.push(marker);
                         addedCount++;
                     } catch(e) {
@@ -5200,7 +5333,11 @@
                         });
 
                         marker.bindPopup('<b>' + (p.nome || 'Pluviometro') + '</b><br>' + p.nivel_texto + '<br>1h: ' + h01.toFixed(1) + 'mm');
-                        marker.addTo(map);
+                        if (mapLayers.alertasChuva) {
+                            mapLayers.alertasChuva.addLayer(marker);
+                        } else {
+                            marker.addTo(map);
+                        }
                         window.rainAlertMarkers.push(marker);
                         addedCount++;
                     } catch(e) {
@@ -5270,10 +5407,11 @@
     // Iniciar apos carregar a pagina
     setTimeout(iniciarMonitoramentoChuva, 3000);
 
-    // ===== DETECTOR DE MOSAICO NA URL =====
-    window.addEventListener('DOMContentLoaded', function() {
+    // ===== DETECTOR DE MOSAICO NA URL E CAMADAS DEFAULT =====
+    function initDefaultLayersAndMosaic() {
+        console.log('[INIT] initDefaultLayersAndMosaic() executando...');
         var urlParams = new URLSearchParams(window.location.search);
-        
+
         if (urlParams.get('mosaic') === 'true') {
             var cameraIds = urlParams.get('cameras');
             var layout = parseInt(urlParams.get('layout')) || 4;
@@ -5332,33 +5470,39 @@
             if (wazeItem) wazeItem.classList.add('active');
             console.log('[INIT] Carregando Waze...');
 
-            // Atualizar checkboxes dos sub-filtros baseado em wazeFilters
-            document.getElementById('layerWazeCongestionamentos').checked = wazeFilters.congestionamentos;
-            document.getElementById('layerWazeInterdicoes').checked = wazeFilters.interdicoes;
-            document.getElementById('layerWazeEventos').checked = wazeFilters.eventos;
-            document.getElementById('layerWazeAcidentes').checked = wazeFilters.acidentes;
-            document.getElementById('layerWazeBuracos').checked = wazeFilters.buracos;
-            document.getElementById('layerWazePerigos').checked = wazeFilters.perigos;
-            document.getElementById('layerWazeCarroParado').checked = wazeFilters.carroParado;
-            document.getElementById('layerWazePolicia').checked = wazeFilters.policia;
-            document.getElementById('layerWazeOutros').checked = wazeFilters.outros;
+            // Definir defaults desejados
+            wazeFilters.congestionamentos = true;
+            wazeFilters.acidentes = true;
+            wazeFilters.carroParado = true;
+            wazeFilters.interdicoes = false;
+            wazeFilters.eventos = false;
+            wazeFilters.buracos = false;
+            wazeFilters.perigos = false;
+            wazeFilters.policia = false;
+            wazeFilters.outros = false;
 
-            // Carregar dados e adicionar camadas ao mapa
-            loadWazeCompleto();
+            // Atualizar checkboxes dos sub-filtros baseado nos defaults
+            var cbCong = document.getElementById('layerWazeCongestionamentos');
+            if (cbCong) cbCong.checked = wazeFilters.congestionamentos;
+            var cbInter = document.getElementById('layerWazeInterdicoes');
+            if (cbInter) cbInter.checked = wazeFilters.interdicoes;
+            var cbEventos = document.getElementById('layerWazeEventos');
+            if (cbEventos) cbEventos.checked = wazeFilters.eventos;
+            var cbAcid = document.getElementById('layerWazeAcidentes');
+            if (cbAcid) cbAcid.checked = wazeFilters.acidentes;
+            var cbBuracos = document.getElementById('layerWazeBuracos');
+            if (cbBuracos) cbBuracos.checked = wazeFilters.buracos;
+            var cbPerigos = document.getElementById('layerWazePerigos');
+            if (cbPerigos) cbPerigos.checked = wazeFilters.perigos;
+            var cbCarro = document.getElementById('layerWazeCarroParado');
+            if (cbCarro) cbCarro.checked = wazeFilters.carroParado;
+            var cbPolicia = document.getElementById('layerWazePolicia');
+            if (cbPolicia) cbPolicia.checked = wazeFilters.policia;
+            var cbOutros = document.getElementById('layerWazeOutros');
+            if (cbOutros) cbOutros.checked = wazeFilters.outros;
 
-            // Adicionar camadas ao mapa baseado nos filtros
-            setTimeout(function() {
-                console.log('[INIT] Adicionando camadas Waze ao mapa...');
-                if (wazeFilters.congestionamentos) mapLayers.wazeCongestionamentos.addTo(map);
-                if (wazeFilters.acidentes) mapLayers.wazeAcidentes.addTo(map);
-                if (wazeFilters.carroParado) mapLayers.wazeCarroParado.addTo(map);
-                if (wazeFilters.interdicoes) mapLayers.wazeInterdicoes.addTo(map);
-                if (wazeFilters.eventos) mapLayers.wazeEventos.addTo(map);
-                if (wazeFilters.buracos) mapLayers.wazeBuracos.addTo(map);
-                if (wazeFilters.perigos) mapLayers.wazePerigos.addTo(map);
-                if (wazeFilters.policia) mapLayers.wazePolicia.addTo(map);
-                if (wazeFilters.outros) mapLayers.wazeOutros.addTo(map);
-            }, 2000); // Aguardar dados carregarem
+            // Carregar dados e aplicar camadas
+            applyWazeLayers();
         }
 
         // 2. OCORRENCIAS DO SISTEMA
@@ -5391,7 +5535,16 @@
         }
 
         console.log('[INIT] Camadas default carregadas!');
-    });
+    }
+
+    // Executar imediatamente se DOM ja carregou, senao aguardar
+    if (document.readyState === 'loading') {
+        console.log('[INIT] DOM ainda carregando, aguardando DOMContentLoaded...');
+        window.addEventListener('DOMContentLoaded', initDefaultLayersAndMosaic);
+    } else {
+        console.log('[INIT] DOM ja carregado, executando imediatamente...');
+        initDefaultLayersAndMosaic();
+    }
 
     // Atualizar ocorrencias a cada 2 minutos
     setInterval(function() {

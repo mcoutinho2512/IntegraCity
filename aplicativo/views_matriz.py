@@ -40,6 +40,9 @@ def matriz_dashboard(request):
         'grafico_data': [],
         'stats_ocorrencias': {},
         'acoes': [],
+        'dados_chuva': {},
+        'dados_mobilidade': {},
+        'dados_meteorologia': {},
     }
 
     try:
@@ -50,6 +53,10 @@ def matriz_dashboard(request):
         # Calcular estágio atual
         estagio_atual = motor.calcular_nivel_cidade(usuario=request.user)
         context['estagio'] = estagio_atual
+
+        # Extrair detalhes do estágio para exibição
+        context['dados_meteorologia'] = estagio_atual.detalhes_meteorologia or {}
+        context['dados_mobilidade'] = estagio_atual.detalhes_mobilidade or {}
 
         # Histórico últimas 24h
         limite = timezone.now() - timedelta(hours=24)
@@ -73,9 +80,8 @@ def matriz_dashboard(request):
             })
         context['grafico_data'] = json.dumps(grafico_data)
 
-        # Estatísticas de ocorrências por prioridade (últimas 24h)
+        # Estatísticas de ocorrências ATIVAS (todas abertas, independente da data)
         stats_ocorrencias = OcorrenciaGerenciada.objects.filter(
-            data_abertura__gte=limite,
             status__in=['aberta', 'em_andamento', 'aguardando']
         ).aggregate(
             total=Count('id'),
@@ -88,6 +94,60 @@ def matriz_dashboard(request):
 
         # Ações recomendadas para o nível atual
         context['acoes'] = estagio_atual.acoes_geradas
+
+        # Buscar dados de chuva em tempo real (pluviômetros)
+        try:
+            import requests
+            pluvio_response = requests.get(
+                'https://websempre.rio.rj.gov.br/json/dados_pluviometricos',
+                timeout=10,
+                headers={'User-Agent': 'Mozilla/5.0'}
+            )
+            if pluvio_response.ok:
+                geojson = pluvio_response.json()
+                features = geojson.get('features', [])
+                total_pluvio = len(features)
+                com_chuva = 0
+                chuva_fraca = 0
+                chuva_moderada = 0
+                chuva_forte = 0
+                max_chuva = 0
+                estacao_max = ''
+
+                for f in features:
+                    props = f.get('properties', {})
+                    data = props.get('data', {})
+                    h01_str = data.get('h01', '0')
+                    try:
+                        h01 = float(str(h01_str).replace(',', '.'))
+                    except:
+                        h01 = 0
+
+                    if h01 > 0:
+                        com_chuva += 1
+                        if h01 > max_chuva:
+                            max_chuva = h01
+                            estacao_max = props.get('station', {}).get('name', '')
+
+                    if 0 < h01 <= 5:
+                        chuva_fraca += 1
+                    elif 5 < h01 <= 25:
+                        chuva_moderada += 1
+                    elif h01 > 25:
+                        chuva_forte += 1
+
+                context['dados_chuva'] = {
+                    'total': total_pluvio,
+                    'com_chuva': com_chuva,
+                    'fraca': chuva_fraca,
+                    'moderada': chuva_moderada,
+                    'forte': chuva_forte,
+                    'max_chuva': round(max_chuva, 1),
+                    'estacao_max': estacao_max,
+                }
+        except Exception as e:
+            logger.warning(f"Erro ao buscar pluviômetros: {e}")
+            context['dados_chuva'] = {'erro': str(e)}
 
     except ValueError as e:
         context['erro'] = str(e)
@@ -202,6 +262,8 @@ def api_calcular_estagio(request):
                 'eventos': estagio.nivel_eventos,
             },
             'detalhes_incidentes': estagio.detalhes_incidentes,
+            'detalhes_meteorologia': estagio.detalhes_meteorologia or {},
+            'detalhes_mobilidade': estagio.detalhes_mobilidade or {},
             'acoes': estagio.acoes_geradas,
             'calculado_em': estagio.calculado_em.isoformat(),
         })
@@ -251,6 +313,9 @@ def api_ultimo_estagio(request):
                 'eventos': estagio.nivel_eventos,
             },
             'detalhes_incidentes': estagio.detalhes_incidentes,
+            'detalhes_meteorologia': estagio.detalhes_meteorologia or {},
+            'detalhes_mobilidade': estagio.detalhes_mobilidade or {},
+            'acoes': estagio.acoes_geradas or [],
         })
 
     except ValueError as e:

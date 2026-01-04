@@ -501,15 +501,11 @@ def api_waze_completo(request):
         integrador = IntegradorWaze(cliente)
         dados = integrador.obter_dados_completos_mapa()
 
-        stats = dados.get('estatisticas', {}) if isinstance(dados, dict) else {}
-        sem_dados = not stats or sum([
-            stats.get('total_congestionamentos', 0),
-            stats.get('total_interdicoes', 0),
-            stats.get('total_eventos', 0),
-            stats.get('total_alertas', 0)
-        ]) == 0
+        # SEMPRE usar dados em tempo real do Waze para o mapa
+        # A API em tempo real tem muito mais dados que os dados armazenados
+        usar_tempo_real = True
 
-        if sem_dados:
+        if usar_tempo_real:
             import requests
             partner_id = cliente.config_apis.get('waze_partner_id') if cliente.config_apis else None
             feed_id = cliente.config_apis.get('waze_feed_id') if cliente.config_apis else None
