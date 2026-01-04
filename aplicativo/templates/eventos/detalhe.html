@@ -1,0 +1,599 @@
+{% extends "base_hightech.html" %}
+{% load static %}
+
+{% block title %}{{ evento.nome_evento }} - IntegraCity{% endblock %}
+
+{% block sidebar_class %}collapsed{% endblock %}
+{% block toggle_class %}collapsed{% endblock %}
+{% block wrapper_class %}sidebar-collapsed{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    /* Container Principal com Scroll */
+    .detalhe-wrapper {
+        position: fixed;
+        top: 60px;
+        left: 60px;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a2a 100%);
+        padding: 20px 30px;
+    }
+
+    .detalhe-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding-bottom: 40px;
+    }
+
+    /* Header da Pagina */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        gap: 20px;
+    }
+
+    .page-title-section {
+        flex: 1;
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        color: #00ffff;
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    }
+
+    .page-subtitle {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .page-subtitle i {
+        color: #00ffff;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-action {
+        font-family: 'Rajdhani', sans-serif;
+        padding: 10px 18px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-voltar {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #888;
+    }
+
+    .btn-voltar:hover {
+        border-color: #00ffff;
+        color: #00ffff;
+    }
+
+    .btn-editar {
+        background: rgba(0, 255, 255, 0.15);
+        border: 1px solid rgba(0, 255, 255, 0.5);
+        color: #00ffff;
+    }
+
+    .btn-editar:hover {
+        background: rgba(0, 255, 255, 0.25);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    }
+
+    /* Badges */
+    .badges-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .badge {
+        font-family: 'Rajdhani', sans-serif;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-criticidade-alta { background: rgba(255, 68, 68, 0.15); color: #ff6666; border: 1px solid rgba(255, 68, 68, 0.5); }
+    .badge-criticidade-media { background: rgba(255, 170, 0, 0.15); color: #ffaa00; border: 1px solid rgba(255, 170, 0, 0.5); }
+    .badge-criticidade-normal { background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.5); }
+
+    .badge-tipo { background: rgba(0, 255, 255, 0.15); color: #00ffff; border: 1px solid rgba(0, 255, 255, 0.3); }
+    .badge-status-planejado { background: rgba(0, 136, 255, 0.15); color: #0088ff; border: 1px solid rgba(0, 136, 255, 0.5); }
+    .badge-status-cancelado { background: rgba(255, 68, 68, 0.15); color: #ff6666; border: 1px solid rgba(255, 68, 68, 0.5); }
+    .badge-principal {
+        background: linear-gradient(135deg, rgba(255, 0, 255, 0.3), rgba(0, 255, 255, 0.3));
+        color: #fff;
+        border: 1px solid rgba(255, 0, 255, 0.5);
+        text-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
+    }
+
+    /* Layout Grid */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 20px;
+    }
+
+    @media (max-width: 1024px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Cards */
+    .info-card {
+        background: rgba(0, 20, 40, 0.6);
+        border: 1px solid rgba(0, 255, 255, 0.15);
+        border-radius: 8px;
+        padding: 18px 20px;
+        margin-bottom: 18px;
+        backdrop-filter: blur(10px);
+    }
+
+    .card-title {
+        font-family: 'Orbitron', monospace;
+        color: #00ffff;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-title i {
+        font-size: 13px;
+        text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+
+    .info-value {
+        font-family: 'Rajdhani', sans-serif;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        text-align: right;
+    }
+
+    /* Criticidade Grid */
+    .criticidade-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .criticidade-item {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px 12px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid rgba(0, 255, 255, 0.1);
+    }
+
+    .criticidade-item-label {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 10px;
+        text-transform: uppercase;
+    }
+
+    .criticidade-item-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 3px;
+        letter-spacing: 0.5px;
+    }
+
+    .crit-alta { background: rgba(255, 68, 68, 0.2); color: #ff6666; border: 1px solid rgba(255, 68, 68, 0.4); }
+    .crit-media, .crit-média { background: rgba(255, 170, 0, 0.2); color: #ffaa00; border: 1px solid rgba(255, 170, 0, 0.4); }
+    .crit-normal { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.4); }
+
+    /* Datas */
+    .data-item {
+        background: rgba(0, 255, 255, 0.05);
+        border: 1px solid rgba(0, 255, 255, 0.15);
+        border-radius: 6px;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+    }
+
+    .data-date {
+        font-family: 'Orbitron', monospace;
+        color: #00ffff;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .data-time {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 12px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .data-time span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* Mapa */
+    #map {
+        height: 280px;
+        border-radius: 6px;
+        margin-top: 10px;
+        border: 1px solid rgba(0, 255, 255, 0.2);
+    }
+
+    /* Descricao */
+    .descricao-text {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 13px;
+        line-height: 1.7;
+        white-space: pre-wrap;
+    }
+
+    /* Pontos de Atencao */
+    .pontos-atencao {
+        background: rgba(255, 170, 0, 0.1);
+        border: 1px solid rgba(255, 170, 0, 0.3);
+        border-radius: 4px;
+        padding: 12px 15px;
+        font-family: 'Rajdhani', sans-serif;
+        color: #ffaa00;
+        font-size: 13px;
+        white-space: pre-wrap;
+        line-height: 1.6;
+    }
+
+    /* Fonte */
+    .fonte-text {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    /* Scrollbar customizada */
+    .detalhe-wrapper::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .detalhe-wrapper::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .detalhe-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(0, 255, 255, 0.3);
+        border-radius: 4px;
+    }
+
+    .detalhe-wrapper::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 255, 255, 0.5);
+    }
+
+    /* Empty state */
+    .empty-state {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 12px;
+        text-align: center;
+        padding: 15px;
+    }
+</style>
+
+<div class="detalhe-wrapper">
+    <div class="detalhe-container">
+        <div class="page-header">
+            <div class="page-title-section">
+                <h1 class="page-title">{{ evento.nome_evento }}</h1>
+                <p class="page-subtitle">
+                    <i class="fas fa-map-marker-alt"></i> {{ evento.endere.local|default:"-" }} - {{ evento.endere.bairro|default:"" }}
+                </p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'eventos_lista' %}" class="btn-action btn-voltar">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+                <a href="{% url 'eventos_editar' evento.id %}" class="btn-action btn-editar">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+            </div>
+        </div>
+
+        <div class="badges-row">
+            {% if evento.principal == 'Sim' %}
+            <span class="badge badge-principal"><i class="fas fa-star"></i> Principal</span>
+            {% endif %}
+
+            {% if evento.criti == 'Alta' %}
+            <span class="badge badge-criticidade-alta"><i class="fas fa-exclamation-triangle"></i> Criticidade Alta</span>
+            {% elif evento.criti == 'Média' or evento.criti == 'Media' %}
+            <span class="badge badge-criticidade-media"><i class="fas fa-exclamation-circle"></i> Criticidade Media</span>
+            {% else %}
+            <span class="badge badge-criticidade-normal"><i class="fas fa-check-circle"></i> Criticidade Normal</span>
+            {% endif %}
+
+            <span class="badge badge-tipo"><i class="fas fa-tag"></i> {{ evento.tipo|default:"Outros" }}</span>
+
+            {% if evento.status == 'Cancelado' %}
+            <span class="badge badge-status-cancelado"><i class="fas fa-ban"></i> Cancelado</span>
+            {% else %}
+            <span class="badge badge-status-planejado"><i class="fas fa-calendar-check"></i> {{ evento.status|default:"Planejado" }}</span>
+            {% endif %}
+        </div>
+
+        <div class="content-grid">
+            <div class="main-content">
+                <!-- Descricao -->
+                {% if evento.descri %}
+                <div class="info-card">
+                    <h3 class="card-title"><i class="fas fa-align-left"></i> Descricao</h3>
+                    <div class="descricao-text">{{ evento.descri }}</div>
+                </div>
+                {% endif %}
+
+                <!-- Datas -->
+                <div class="info-card">
+                    <h3 class="card-title"><i class="fas fa-calendar-alt"></i> Datas do Evento</h3>
+                    {% for data in evento.datas.all %}
+                    <div class="data-item">
+                        <div class="data-date">
+                            <i class="fas fa-calendar"></i> {{ data.data_inicio|date:"d/m/Y" }}
+                        </div>
+                        <div class="data-time">
+                            {% if data.data_conce %}
+                            <span><i class="fas fa-door-open"></i> Concentracao: {{ data.data_conce|date:"H:i" }}</span>
+                            {% endif %}
+                            <span><i class="fas fa-play"></i> Inicio: {{ data.data_inicio|date:"H:i" }}</span>
+                            <span><i class="fas fa-stop"></i> Fim: {{ data.data_fim|date:"H:i" }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="empty-state">Nenhuma data cadastrada</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Criticidade Detalhada -->
+                <div class="info-card">
+                    <h3 class="card-title"><i class="fas fa-chart-bar"></i> Analise de Criticidade</h3>
+                    <div class="criticidade-grid">
+                        <div class="criticidade-item">
+                            <span class="criticidade-item-label">Local</span>
+                            <span class="criticidade-item-value crit-{{ evento.local_criti|lower }}">{{ evento.local_criti|default:"Normal" }}</span>
+                        </div>
+                        <div class="criticidade-item">
+                            <span class="criticidade-item-label">Data</span>
+                            <span class="criticidade-item-value crit-{{ evento.data_criti|lower }}">{{ evento.data_criti|default:"Normal" }}</span>
+                        </div>
+                        <div class="criticidade-item">
+                            <span class="criticidade-item-label">Hora</span>
+                            <span class="criticidade-item-value crit-{{ evento.hora_criti|lower }}">{{ evento.hora_criti|default:"Normal" }}</span>
+                        </div>
+                        <div class="criticidade-item">
+                            <span class="criticidade-item-label">Mobilidade</span>
+                            <span class="criticidade-item-value crit-{{ evento.mobi_criti|lower }}">{{ evento.mobi_criti|default:"Normal" }}</span>
+                        </div>
+                        <div class="criticidade-item">
+                            <span class="criticidade-item-label">Publico</span>
+                            <span class="criticidade-item-value crit-{{ evento.pub_criti|lower }}">{{ evento.pub_criti|default:"Normal" }}</span>
+                        </div>
+                        <div class="criticidade-item">
+                            <span class="criticidade-item-label">Exposicao</span>
+                            <span class="criticidade-item-value crit-{{ evento.exp_criti|lower }}">{{ evento.exp_criti|default:"Normal" }}</span>
+                        </div>
+                        <div class="criticidade-item">
+                            <span class="criticidade-item-label">Fig. Publicas</span>
+                            <span class="criticidade-item-value crit-{{ evento.fp_criti|lower }}">{{ evento.fp_criti|default:"Normal" }}</span>
+                        </div>
+                        <div class="criticidade-item">
+                            <span class="criticidade-item-label">Efetivo PCRJ</span>
+                            <span class="criticidade-item-value crit-{{ evento.efe_criti|lower }}">{{ evento.efe_criti|default:"Normal" }}</span>
+                        </div>
+                        <div class="criticidade-item">
+                            <span class="criticidade-item-label">Pop. Impactada</span>
+                            <span class="criticidade-item-value crit-{{ evento.pop_criti|lower }}">{{ evento.pop_criti|default:"Normal" }}</span>
+                        </div>
+                        <div class="criticidade-item">
+                            <span class="criticidade-item-label">Agravamento</span>
+                            <span class="criticidade-item-value crit-{{ evento.pt_criti|lower }}">{{ evento.pt_criti|default:"Normal" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pontos de Atencao -->
+                {% if evento.pontos_atencao %}
+                <div class="info-card">
+                    <h3 class="card-title"><i class="fas fa-exclamation-triangle"></i> Pontos de Atencao</h3>
+                    <div class="pontos-atencao">{{ evento.pontos_atencao }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="sidebar-content">
+                <!-- Localizacao -->
+                <div class="info-card">
+                    <h3 class="card-title"><i class="fas fa-map-marker-alt"></i> Localizacao</h3>
+                    <div id="map"></div>
+                    <div style="margin-top: 12px;">
+                        <div class="info-row">
+                            <span class="info-label">Local</span>
+                            <span class="info-value">{{ evento.endere.local|default:"-" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Bairro</span>
+                            <span class="info-value">{{ evento.endere.bairro|default:"-" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Zona</span>
+                            <span class="info-value">{{ evento.endere.zona|default:"-" }}</span>
+                        </div>
+                        {% if evento.endereco %}
+                        <div class="info-row">
+                            <span class="info-label">Dispersao</span>
+                            <span class="info-value">{{ evento.endereco }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Informacoes Operacionais -->
+                <div class="info-card">
+                    <h3 class="card-title"><i class="fas fa-cogs"></i> Informacoes Operacionais</h3>
+                    <div class="info-row">
+                        <span class="info-label">Responsavel</span>
+                        <span class="info-value">{{ evento.respeven|default:"-" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Est. Publico</span>
+                        <span class="info-value">{{ evento.qt|default:"-" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Estrutura</span>
+                        <span class="info-value">{{ evento.estr|default:"-" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">CPE</span>
+                        <span class="info-value">{{ evento.cpe|default:"-" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Forma</span>
+                        <span class="info-value">{{ evento.forma|default:"-" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Alinhamento</span>
+                        <span class="info-value">{{ evento.alinha|default:"Nao" }}</span>
+                    </div>
+                </div>
+
+                <!-- Fonte -->
+                {% if evento.fonte %}
+                <div class="info-card">
+                    <h3 class="card-title"><i class="fas fa-info-circle"></i> Fonte</h3>
+                    <p class="fonte-text">{{ evento.fonte }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar mapa
+    const map = L.map('map').setView([-22.9068, -43.1729], 13);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CartoDB',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Adicionar marcador do evento
+    {% if evento.endere.location %}
+    const location = '{{ evento.endere.location }}';
+    const parts = location.split(',');
+    const lat = parseFloat(parts[0]);
+    const lng = parseFloat(parts[1]);
+
+    if (lat && lng) {
+        // Cor baseada na criticidade
+        const cor = '{% if evento.criti == "Alta" %}#ff4444{% elif evento.criti == "Média" or evento.criti == "Media" %}#ffaa00{% else %}#00ff88{% endif %}';
+
+        const marker = L.circleMarker([lat, lng], {
+            radius: 12,
+            fillColor: cor,
+            color: '#fff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).addTo(map);
+
+        marker.bindPopup('<strong>{{ evento.nome_evento|escapejs }}</strong><br>{{ evento.endere.local|escapejs }}');
+
+        // Adicionar circulo de raio se definido
+        {% if evento.raio %}
+        L.circle([lat, lng], {
+            radius: {{ evento.raio }},
+            color: cor,
+            fillColor: cor,
+            fillOpacity: 0.1,
+            weight: 1
+        }).addTo(map);
+        {% endif %}
+
+        map.setView([lat, lng], 14);
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

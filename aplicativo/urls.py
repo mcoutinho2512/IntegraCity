@@ -10,6 +10,7 @@ from aplicativo import views_matriz
 from aplicativo import views_meteorologia
 from aplicativo import views_mobilidade
 from aplicativo import views_areas
+from aplicativo import views_eventos
 
 urlpatterns = [
     # LOGIN - PÁGINA PRINCIPAL
@@ -102,6 +103,24 @@ urlpatterns = [
 
     # APIs - Eventos
     path('api/eventos/', views.api_eventos, name='api_eventos'),
+
+    # ============================================
+    # GESTAO DE EVENTOS
+    # ============================================
+    path('eventos/', views_eventos.eventos_lista_view, name='eventos_lista'),
+    path('eventos/cadastro/', views_eventos.eventos_cadastro_view, name='eventos_cadastro'),
+    path('eventos/<int:evento_id>/', views_eventos.eventos_detalhe_view, name='eventos_detalhe'),
+    path('eventos/<int:evento_id>/editar/', views_eventos.eventos_editar_view, name='eventos_editar'),
+
+    # APIs de Eventos (novas)
+    path('api/eventos/geojson/', views_eventos.api_eventos_geojson, name='api_eventos_geojson'),
+    path('api/eventos/lista/', views_eventos.api_eventos_lista, name='api_eventos_lista'),
+    path('api/eventos/timeline/', views_eventos.api_eventos_timeline, name='api_eventos_timeline'),
+    path('api/eventos/estatisticas/', views_eventos.api_eventos_estatisticas, name='api_eventos_estatisticas'),
+    path('api/eventos/<int:evento_id>/', views_eventos.api_evento_detalhe, name='api_evento_detalhe'),
+    path('api/eventos/criar/', views_eventos.api_evento_criar, name='api_evento_criar'),
+    path('api/eventos/<int:evento_id>/atualizar/', views_eventos.api_evento_atualizar, name='api_evento_atualizar'),
+    path('api/eventos/<int:evento_id>/excluir/', views_eventos.api_evento_excluir, name='api_evento_excluir'),
 
     # APIs - Locais
     path('api/escolas/', views.escolas_view, name='escolas'),

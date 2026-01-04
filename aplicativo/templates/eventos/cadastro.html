@@ -1,0 +1,943 @@
+{% extends "base_hightech.html" %}
+{% load static %}
+
+{% block title %}Cadastro de Evento - IntegraCity{% endblock %}
+
+{% block sidebar_class %}collapsed{% endblock %}
+{% block toggle_class %}collapsed{% endblock %}
+{% block wrapper_class %}sidebar-collapsed{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    /* Container Principal com Scroll */
+    .cadastro-wrapper {
+        position: fixed;
+        top: 60px;
+        left: 60px;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a2a 100%);
+        padding: 20px 30px;
+    }
+
+    .cadastro-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-bottom: 40px;
+    }
+
+    /* Header da Pagina */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        color: #00ffff;
+        font-size: 22px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .page-title i {
+        font-size: 24px;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+
+    .btn-voltar {
+        font-family: 'Rajdhani', sans-serif;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #888;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-voltar:hover {
+        border-color: #00ffff;
+        color: #00ffff;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+
+    /* Form Sections */
+    .form-section {
+        background: rgba(0, 20, 40, 0.6);
+        border: 1px solid rgba(0, 255, 255, 0.15);
+        border-radius: 8px;
+        padding: 20px 25px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+    }
+
+    .section-title {
+        font-family: 'Orbitron', monospace;
+        color: #00ffff;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .section-title i {
+        font-size: 14px;
+        text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 18px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(0, 255, 255, 0.8);
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .form-label.required::after {
+        content: ' *';
+        color: #ff4444;
+    }
+
+    .form-control {
+        font-family: 'Rajdhani', sans-serif;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(0, 255, 255, 0.25);
+        color: #fff;
+        padding: 10px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #00ffff;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        background: rgba(0, 20, 40, 0.5);
+    }
+
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    textarea.form-control {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    select.form-control {
+        cursor: pointer;
+    }
+
+    select.form-control option {
+        background: #0a1a2a;
+        color: #fff;
+    }
+
+    /* Criticidade Grid */
+    .criticidade-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+    }
+
+    .criticidade-item {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px 12px;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 255, 255, 0.1);
+    }
+
+    .criticidade-item label {
+        display: block;
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 10px;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .criticidade-item select {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .criticidade-resultado {
+        background: rgba(0, 255, 255, 0.08);
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        border-radius: 6px;
+        padding: 15px;
+        text-align: center;
+        margin-top: 15px;
+    }
+
+    .criticidade-resultado-label {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 11px;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    .criticidade-resultado-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .criticidade-normal { color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+    .criticidade-media { color: #ffaa00; text-shadow: 0 0 10px rgba(255, 170, 0, 0.5); }
+    .criticidade-alta { color: #ff4444; text-shadow: 0 0 10px rgba(255, 68, 68, 0.5); }
+
+    /* Datas Container */
+    .datas-container {
+        margin-top: 12px;
+    }
+
+    .data-item {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 255, 255, 0.15);
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+
+    .data-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .data-item-title {
+        font-family: 'Orbitron', monospace;
+        color: #00ffff;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .btn-remover-data {
+        font-family: 'Rajdhani', sans-serif;
+        background: rgba(255, 68, 68, 0.15);
+        border: 1px solid rgba(255, 68, 68, 0.5);
+        color: #ff6666;
+        padding: 5px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-remover-data:hover {
+        background: rgba(255, 68, 68, 0.3);
+        border-color: #ff4444;
+    }
+
+    .data-item-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    @media (max-width: 768px) {
+        .data-item-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .btn-adicionar-data {
+        font-family: 'Rajdhani', sans-serif;
+        background: rgba(0, 255, 136, 0.1);
+        border: 1px dashed rgba(0, 255, 136, 0.5);
+        color: #00ff88;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+
+    .btn-adicionar-data:hover {
+        background: rgba(0, 255, 136, 0.2);
+        border-color: #00ff88;
+    }
+
+    /* Mapa */
+    #map {
+        height: 300px;
+        border: 1px solid rgba(0, 255, 255, 0.25);
+        border-radius: 4px;
+        margin-top: 8px;
+    }
+
+    .map-instructions {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 11px;
+        margin-top: 6px;
+    }
+
+    /* Botoes de Acao */
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid rgba(0, 255, 255, 0.2);
+    }
+
+    .btn-salvar {
+        font-family: 'Orbitron', monospace;
+        background: linear-gradient(135deg, #00ffff, #0088ff);
+        color: #000;
+        border: none;
+        padding: 12px 35px;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-salvar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 25px rgba(0, 255, 255, 0.4);
+    }
+
+    .btn-cancelar {
+        font-family: 'Rajdhani', sans-serif;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #888;
+        padding: 12px 35px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-cancelar:hover {
+        border-color: #ff4444;
+        color: #ff4444;
+    }
+
+    /* Checkbox customizado */
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-top: 20px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #00ffff;
+        cursor: pointer;
+    }
+
+    .checkbox-group label {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+    /* Alertas */
+    .alert {
+        font-family: 'Rajdhani', sans-serif;
+        padding: 12px 18px;
+        border-radius: 4px;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .alert-success {
+        background: rgba(0, 255, 136, 0.1);
+        border: 1px solid rgba(0, 255, 136, 0.4);
+        color: #00ff88;
+    }
+
+    .alert-error {
+        background: rgba(255, 68, 68, 0.1);
+        border: 1px solid rgba(255, 68, 68, 0.4);
+        color: #ff6666;
+    }
+
+    /* Scrollbar customizada */
+    .cadastro-wrapper::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .cadastro-wrapper::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .cadastro-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(0, 255, 255, 0.3);
+        border-radius: 4px;
+    }
+
+    .cadastro-wrapper::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 255, 255, 0.5);
+    }
+</style>
+
+<div class="cadastro-wrapper">
+    <div class="cadastro-container">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-calendar-plus"></i>
+                Cadastro de Evento
+            </h1>
+            <a href="{% url 'eventos_lista' %}" class="btn-voltar">
+                <i class="fas fa-arrow-left"></i> Voltar para Lista
+            </a>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <form id="eventoForm">
+            {% csrf_token %}
+
+            <!-- Informacoes Basicas -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-info-circle"></i> Informacoes Basicas
+                </h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label required">Nome do Evento</label>
+                        <input type="text" name="nome_evento" class="form-control" placeholder="Digite o nome do evento" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required">Tipo de Evento</label>
+                        <select name="tipo" class="form-control" required>
+                            <option value="">Selecione o tipo</option>
+                            {% for tipo in tipos %}
+                            <option value="{{ tipo }}">{{ tipo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-control">
+                            <option value="Planejado">Planejado</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Responsavel</label>
+                        <select name="responsavel" class="form-control">
+                            <option value="">Selecione o responsavel</option>
+                            {% for resp in responsaveis %}
+                            <option value="{{ resp }}">{{ resp }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="form-label">Descricao</label>
+                        <textarea name="descricao" class="form-control" rows="3" placeholder="Descreva o evento..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Localizacao -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-map-marker-alt"></i> Localizacao
+                </h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label required">Local Principal</label>
+                        <select name="local_id" class="form-control" required id="localSelect">
+                            <option value="">Selecione o local</option>
+                            {% for local in locais %}
+                            <option value="{{ local.id }}" data-location="{{ local.location }}">{{ local.local }} - {{ local.bairro }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Endereco de Dispersao</label>
+                        <input type="text" name="endereco_dispersao" class="form-control" placeholder="Endereco para dispersao do publico">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Raio (metros)</label>
+                        <input type="number" name="raio" class="form-control" value="5000" min="100" max="50000">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Forma de Apresentacao</label>
+                        <select name="forma" class="form-control">
+                            <option value="">Selecione</option>
+                            <option value="Parado">Parado</option>
+                            <option value="Com deslocamento">Com deslocamento</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group full-width" style="margin-top: 15px;">
+                    <label class="form-label">Visualizacao no Mapa</label>
+                    <div id="map"></div>
+                    <p class="map-instructions"><i class="fas fa-info-circle"></i> Selecione um local acima para visualizar no mapa</p>
+                </div>
+            </div>
+
+            <!-- Datas e Horarios -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-clock"></i> Datas e Horarios
+                </h3>
+                <div class="datas-container" id="datasContainer">
+                    <div class="data-item" data-index="0">
+                        <div class="data-item-header">
+                            <span class="data-item-title"><i class="fas fa-calendar"></i> Data 1</span>
+                        </div>
+                        <div class="data-item-grid">
+                            <div class="form-group">
+                                <label class="form-label">Concentracao</label>
+                                <input type="datetime-local" name="datas[0][concentracao]" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label required">Inicio</label>
+                                <input type="datetime-local" name="datas[0][inicio]" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label required">Fim</label>
+                                <input type="datetime-local" name="datas[0][fim]" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-adicionar-data" onclick="adicionarData()">
+                    <i class="fas fa-plus"></i> Adicionar Outra Data
+                </button>
+            </div>
+
+            <!-- Informacoes Operacionais -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-cogs"></i> Informacoes Operacionais
+                </h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Estrutura (Palco, etc)</label>
+                        <input type="text" name="estrutura" class="form-control" placeholder="Ex: Palco, arquibancada, tendas...">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">CPE</label>
+                        <input type="text" name="cpe" class="form-control" placeholder="Codigo CPE">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Estimativa de Publico</label>
+                        <input type="text" name="estimativa_publico" class="form-control" placeholder="Ex: 50.000 pessoas">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="alinhamento" id="alinhamento" value="Sim">
+                            <label for="alinhamento">Houve reuniao de alinhamento</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="principal" id="principal" value="Sim">
+                            <label for="principal">Evento Principal (destaque no mapa)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Criticidade -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-exclamation-triangle"></i> Analise de Criticidade
+                </h3>
+                <div class="criticidade-grid">
+                    <div class="criticidade-item">
+                        <label>Local</label>
+                        <select name="criticidade_local" class="form-control criticidade-campo">
+                            <option value="Normal">Normal</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Data</label>
+                        <select name="criticidade_data" class="form-control criticidade-campo">
+                            <option value="Normal">Normal</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Hora</label>
+                        <select name="criticidade_hora" class="form-control criticidade-campo">
+                            <option value="Normal">Normal</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Mobilidade</label>
+                        <select name="criticidade_mobilidade" class="form-control criticidade-campo">
+                            <option value="Normal">Normal</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Publico</label>
+                        <select name="criticidade_publico" class="form-control criticidade-campo">
+                            <option value="Normal">Normal</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Exposicao</label>
+                        <select name="criticidade_exposicao" class="form-control criticidade-campo">
+                            <option value="Normal">Normal</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Fig. Publicas</label>
+                        <select name="criticidade_figuras_publicas" class="form-control criticidade-campo">
+                            <option value="Normal">Normal</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Efetivo PCRJ</label>
+                        <select name="criticidade_efetivo" class="form-control criticidade-campo">
+                            <option value="Normal">Normal</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Pop. Impactada</label>
+                        <select name="criticidade_populacao" class="form-control criticidade-campo">
+                            <option value="Normal">Normal</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Agravamento</label>
+                        <select name="criticidade_agravamento" class="form-control criticidade-campo">
+                            <option value="Normal">Normal</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="criticidade-resultado">
+                    <div class="criticidade-resultado-label">Criticidade Geral Calculada</div>
+                    <div class="criticidade-resultado-value criticidade-normal" id="criticidadeGeral">NORMAL</div>
+                </div>
+            </div>
+
+            <!-- Observacoes -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-clipboard"></i> Observacoes
+                </h3>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label class="form-label">Pontos de Atencao</label>
+                        <textarea name="pontos_atencao" class="form-control" rows="3" placeholder="Descreva pontos importantes a serem observados..."></textarea>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="form-label">Fonte da Informacao</label>
+                        <textarea name="fonte" class="form-control" rows="2" placeholder="Origem da informacao sobre o evento..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botoes -->
+            <div class="action-buttons">
+                <a href="{% url 'eventos_lista' %}" class="btn-cancelar">Cancelar</a>
+                <button type="submit" class="btn-salvar">
+                    <i class="fas fa-save"></i> Salvar Evento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map;
+let marker;
+let dataIndex = 1;
+
+// Inicializar mapa
+function initMap() {
+    map = L.map('map').setView([-22.9068, -43.1729], 11);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CartoDB',
+        maxZoom: 19
+    }).addTo(map);
+}
+
+// Atualizar mapa quando local for selecionado
+document.getElementById('localSelect').addEventListener('change', function() {
+    const option = this.options[this.selectedIndex];
+    const location = option.dataset.location;
+
+    if (marker) {
+        map.removeLayer(marker);
+        marker = null;
+    }
+
+    if (location) {
+        const parts = location.split(',');
+        const lat = parseFloat(parts[0]);
+        const lng = parseFloat(parts[1]);
+
+        marker = L.marker([lat, lng]).addTo(map);
+        map.setView([lat, lng], 15);
+    }
+});
+
+// Adicionar data
+function adicionarData() {
+    const container = document.getElementById('datasContainer');
+    const html = `
+        <div class="data-item" data-index="${dataIndex}">
+            <div class="data-item-header">
+                <span class="data-item-title"><i class="fas fa-calendar"></i> Data ${dataIndex + 1}</span>
+                <button type="button" class="btn-remover-data" onclick="removerData(this)">
+                    <i class="fas fa-trash"></i> Remover
+                </button>
+            </div>
+            <div class="data-item-grid">
+                <div class="form-group">
+                    <label class="form-label">Concentracao</label>
+                    <input type="datetime-local" name="datas[${dataIndex}][concentracao]" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">Inicio</label>
+                    <input type="datetime-local" name="datas[${dataIndex}][inicio]" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">Fim</label>
+                    <input type="datetime-local" name="datas[${dataIndex}][fim]" class="form-control" required>
+                </div>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+    dataIndex++;
+}
+
+function removerData(btn) {
+    btn.closest('.data-item').remove();
+}
+
+// Calcular criticidade
+function calcularCriticidade() {
+    const campos = document.querySelectorAll('.criticidade-campo');
+    let altas = 0;
+    let medias = 0;
+
+    campos.forEach(campo => {
+        if (campo.value === 'Alta') altas++;
+        else if (campo.value === 'Media') medias++;
+    });
+
+    const resultado = document.getElementById('criticidadeGeral');
+
+    if (altas >= 3) {
+        resultado.textContent = 'ALTA';
+        resultado.className = 'criticidade-resultado-value criticidade-alta';
+    } else if ((altas + medias) >= 3) {
+        resultado.textContent = 'MEDIA';
+        resultado.className = 'criticidade-resultado-value criticidade-media';
+    } else {
+        resultado.textContent = 'NORMAL';
+        resultado.className = 'criticidade-resultado-value criticidade-normal';
+    }
+}
+
+// Listeners para criticidade
+document.querySelectorAll('.criticidade-campo').forEach(campo => {
+    campo.addEventListener('change', calcularCriticidade);
+});
+
+// Submit do formulario
+document.getElementById('eventoForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    // Montar objeto de dados
+    const data = {
+        nome_evento: formData.get('nome_evento'),
+        tipo: formData.get('tipo'),
+        status: formData.get('status'),
+        descricao: formData.get('descricao'),
+        local_id: parseInt(formData.get('local_id')),
+        endereco_dispersao: formData.get('endereco_dispersao'),
+        raio: parseInt(formData.get('raio')) || 5000,
+        forma: formData.get('forma'),
+        estrutura: formData.get('estrutura'),
+        cpe: formData.get('cpe'),
+        estimativa_publico: formData.get('estimativa_publico'),
+        responsavel: formData.get('responsavel'),
+        alinhamento: formData.get('alinhamento') === 'Sim' ? 'Sim' : 'Nao',
+        principal: formData.get('principal') === 'Sim' ? 'Sim' : 'Nao',
+        criticidade_local: formData.get('criticidade_local'),
+        criticidade_data: formData.get('criticidade_data'),
+        criticidade_hora: formData.get('criticidade_hora'),
+        criticidade_mobilidade: formData.get('criticidade_mobilidade'),
+        criticidade_publico: formData.get('criticidade_publico'),
+        criticidade_exposicao: formData.get('criticidade_exposicao'),
+        criticidade_figuras_publicas: formData.get('criticidade_figuras_publicas'),
+        criticidade_efetivo: formData.get('criticidade_efetivo'),
+        criticidade_populacao: formData.get('criticidade_populacao'),
+        criticidade_agravamento: formData.get('criticidade_agravamento'),
+        pontos_atencao: formData.get('pontos_atencao'),
+        fonte: formData.get('fonte'),
+        datas: []
+    };
+
+    // Coletar datas
+    const dataItems = document.querySelectorAll('.data-item');
+    dataItems.forEach((item, index) => {
+        const inicio = item.querySelector('input[name*="[inicio]"]').value;
+        const fim = item.querySelector('input[name*="[fim]"]').value;
+        const concentracao = item.querySelector('input[name*="[concentracao]"]').value;
+
+        if (inicio && fim) {
+            data.datas.push({
+                inicio: inicio,
+                fim: fim,
+                concentracao: concentracao || null
+            });
+        }
+    });
+
+    try {
+        const response = await fetch('/integracity/api/eventos/criar/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert('Evento criado com sucesso!', 'success');
+            setTimeout(() => {
+                window.location.href = '{% url "eventos_lista" %}';
+            }, 1500);
+        } else {
+            showAlert('Erro: ' + result.error, 'error');
+        }
+    } catch (error) {
+        showAlert('Erro de conexao', 'error');
+    }
+});
+
+function showAlert(message, type) {
+    const container = document.getElementById('alertContainer');
+    container.innerHTML = `
+        <div class="alert alert-${type}">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            ${message}
+        </div>
+    `;
+
+    // Scroll para o topo para mostrar o alerta
+    document.querySelector('.cadastro-wrapper').scrollTop = 0;
+}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+});
+</script>
+{% endblock %}

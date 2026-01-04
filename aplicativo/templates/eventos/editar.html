@@ -1,0 +1,667 @@
+{% extends "base_hightech.html" %}
+{% load static %}
+
+{% block title %}Editar: {{ evento.nome_evento }} - IntegraCity{% endblock %}
+
+{% block sidebar_class %}collapsed{% endblock %}
+{% block toggle_class %}collapsed{% endblock %}
+{% block wrapper_class %}sidebar-collapsed{% endblock %}
+
+{% block content %}
+<style>
+    /* Container Principal com Scroll */
+    .editar-wrapper {
+        position: fixed;
+        top: 60px;
+        left: 60px;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a2a 100%);
+        padding: 20px 30px;
+    }
+
+    .editar-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-bottom: 40px;
+    }
+
+    /* Header da Pagina */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    }
+
+    .page-title {
+        font-family: 'Orbitron', monospace;
+        color: #00ffff;
+        font-size: 22px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .page-title i {
+        font-size: 24px;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+
+    .btn-voltar {
+        font-family: 'Rajdhani', sans-serif;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #888;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-voltar:hover {
+        border-color: #00ffff;
+        color: #00ffff;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+
+    /* Form Sections */
+    .form-section {
+        background: rgba(0, 20, 40, 0.6);
+        border: 1px solid rgba(0, 255, 255, 0.15);
+        border-radius: 8px;
+        padding: 20px 25px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+    }
+
+    .section-title {
+        font-family: 'Orbitron', monospace;
+        color: #00ffff;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .section-title i {
+        font-size: 14px;
+        text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 18px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(0, 255, 255, 0.8);
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .form-control {
+        font-family: 'Rajdhani', sans-serif;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(0, 255, 255, 0.25);
+        color: #fff;
+        padding: 10px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #00ffff;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        background: rgba(0, 20, 40, 0.5);
+    }
+
+    textarea.form-control {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    select.form-control {
+        cursor: pointer;
+    }
+
+    select.form-control option {
+        background: #0a1a2a;
+        color: #fff;
+    }
+
+    /* Criticidade Grid */
+    .criticidade-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+    }
+
+    .criticidade-item {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px 12px;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 255, 255, 0.1);
+    }
+
+    .criticidade-item label {
+        display: block;
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 10px;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .criticidade-item select {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .criticidade-resultado {
+        background: rgba(0, 255, 255, 0.08);
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        border-radius: 6px;
+        padding: 15px;
+        text-align: center;
+        margin-top: 15px;
+    }
+
+    .criticidade-resultado-label {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 11px;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    .criticidade-resultado-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .criticidade-normal { color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+    .criticidade-media, .criticidade-média { color: #ffaa00; text-shadow: 0 0 10px rgba(255, 170, 0, 0.5); }
+    .criticidade-alta { color: #ff4444; text-shadow: 0 0 10px rgba(255, 68, 68, 0.5); }
+
+    /* Botoes de Acao */
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid rgba(0, 255, 255, 0.2);
+    }
+
+    .btn-salvar {
+        font-family: 'Orbitron', monospace;
+        background: linear-gradient(135deg, #00ffff, #0088ff);
+        color: #000;
+        border: none;
+        padding: 12px 35px;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-salvar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 25px rgba(0, 255, 255, 0.4);
+    }
+
+    .btn-cancelar {
+        font-family: 'Rajdhani', sans-serif;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #888;
+        padding: 12px 35px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-cancelar:hover {
+        border-color: #ff4444;
+        color: #ff4444;
+    }
+
+    /* Checkbox customizado */
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-top: 20px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #00ffff;
+        cursor: pointer;
+    }
+
+    .checkbox-group label {
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+    /* Alertas */
+    .alert {
+        font-family: 'Rajdhani', sans-serif;
+        padding: 12px 18px;
+        border-radius: 4px;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .alert-success {
+        background: rgba(0, 255, 136, 0.1);
+        border: 1px solid rgba(0, 255, 136, 0.4);
+        color: #00ff88;
+    }
+
+    .alert-error {
+        background: rgba(255, 68, 68, 0.1);
+        border: 1px solid rgba(255, 68, 68, 0.4);
+        color: #ff6666;
+    }
+
+    /* Scrollbar customizada */
+    .editar-wrapper::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .editar-wrapper::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .editar-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(0, 255, 255, 0.3);
+        border-radius: 4px;
+    }
+
+    .editar-wrapper::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 255, 255, 0.5);
+    }
+</style>
+
+<div class="editar-wrapper">
+    <div class="editar-container">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-edit"></i>
+                Editar Evento
+            </h1>
+            <a href="{% url 'eventos_detalhe' evento.id %}" class="btn-voltar">
+                <i class="fas fa-arrow-left"></i> Voltar para Detalhes
+            </a>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <form id="eventoForm">
+            {% csrf_token %}
+
+            <!-- Informacoes Basicas -->
+            <div class="form-section">
+                <h3 class="section-title"><i class="fas fa-info-circle"></i> Informacoes Basicas</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Nome do Evento</label>
+                        <input type="text" name="nome_evento" class="form-control" value="{{ evento.nome_evento|default:'' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Evento</label>
+                        <select name="tipo" class="form-control" required>
+                            {% for tipo in tipos %}
+                            <option value="{{ tipo }}" {% if evento.tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-control">
+                            <option value="Planejado" {% if evento.status == 'Planejado' %}selected{% endif %}>Planejado</option>
+                            <option value="Cancelado" {% if evento.status == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Responsavel</label>
+                        <select name="responsavel" class="form-control">
+                            <option value="">Selecione o responsavel</option>
+                            {% for resp in responsaveis %}
+                            <option value="{{ resp }}" {% if evento.respeven == resp %}selected{% endif %}>{{ resp }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="form-label">Descricao</label>
+                        <textarea name="descricao" class="form-control" rows="3">{{ evento.descri|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informacoes Operacionais -->
+            <div class="form-section">
+                <h3 class="section-title"><i class="fas fa-cogs"></i> Informacoes Operacionais</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Estrutura (Palco, etc)</label>
+                        <input type="text" name="estrutura" class="form-control" value="{{ evento.estr|default:'' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">CPE</label>
+                        <input type="text" name="cpe" class="form-control" value="{{ evento.cpe|default:'' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Estimativa de Publico</label>
+                        <input type="text" name="estimativa_publico" class="form-control" value="{{ evento.qt|default:'' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Forma de Apresentacao</label>
+                        <select name="forma" class="form-control">
+                            <option value="">Selecione</option>
+                            <option value="Parado" {% if evento.forma == 'Parado' %}selected{% endif %}>Parado</option>
+                            <option value="Com deslocamento" {% if evento.forma == 'Com deslocamento' %}selected{% endif %}>Com deslocamento</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="principal" id="principal" value="Sim" {% if evento.principal == 'Sim' %}checked{% endif %}>
+                            <label for="principal">Evento Principal (destaque no mapa)</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="alinhamento" id="alinhamento" value="Sim" {% if evento.alinha == 'Sim' %}checked{% endif %}>
+                            <label for="alinhamento">Houve reuniao de alinhamento</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Criticidade -->
+            <div class="form-section">
+                <h3 class="section-title"><i class="fas fa-exclamation-triangle"></i> Analise de Criticidade</h3>
+                <div class="criticidade-grid">
+                    <div class="criticidade-item">
+                        <label>Local</label>
+                        <select name="criticidade_local" class="form-control criticidade-campo">
+                            <option value="Normal" {% if evento.local_criti == 'Normal' %}selected{% endif %}>Normal</option>
+                            <option value="Media" {% if evento.local_criti == 'Média' or evento.local_criti == 'Media' %}selected{% endif %}>Media</option>
+                            <option value="Alta" {% if evento.local_criti == 'Alta' %}selected{% endif %}>Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Data</label>
+                        <select name="criticidade_data" class="form-control criticidade-campo">
+                            <option value="Normal" {% if evento.data_criti == 'Normal' %}selected{% endif %}>Normal</option>
+                            <option value="Media" {% if evento.data_criti == 'Média' or evento.data_criti == 'Media' %}selected{% endif %}>Media</option>
+                            <option value="Alta" {% if evento.data_criti == 'Alta' %}selected{% endif %}>Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Hora</label>
+                        <select name="criticidade_hora" class="form-control criticidade-campo">
+                            <option value="Normal" {% if evento.hora_criti == 'Normal' %}selected{% endif %}>Normal</option>
+                            <option value="Media" {% if evento.hora_criti == 'Média' or evento.hora_criti == 'Media' %}selected{% endif %}>Media</option>
+                            <option value="Alta" {% if evento.hora_criti == 'Alta' %}selected{% endif %}>Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Mobilidade</label>
+                        <select name="criticidade_mobilidade" class="form-control criticidade-campo">
+                            <option value="Normal" {% if evento.mobi_criti == 'Normal' %}selected{% endif %}>Normal</option>
+                            <option value="Media" {% if evento.mobi_criti == 'Média' or evento.mobi_criti == 'Media' %}selected{% endif %}>Media</option>
+                            <option value="Alta" {% if evento.mobi_criti == 'Alta' %}selected{% endif %}>Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Publico</label>
+                        <select name="criticidade_publico" class="form-control criticidade-campo">
+                            <option value="Normal" {% if evento.pub_criti == 'Normal' %}selected{% endif %}>Normal</option>
+                            <option value="Media" {% if evento.pub_criti == 'Média' or evento.pub_criti == 'Media' %}selected{% endif %}>Media</option>
+                            <option value="Alta" {% if evento.pub_criti == 'Alta' %}selected{% endif %}>Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Exposicao</label>
+                        <select name="criticidade_exposicao" class="form-control criticidade-campo">
+                            <option value="Normal" {% if evento.exp_criti == 'Normal' %}selected{% endif %}>Normal</option>
+                            <option value="Media" {% if evento.exp_criti == 'Média' or evento.exp_criti == 'Media' %}selected{% endif %}>Media</option>
+                            <option value="Alta" {% if evento.exp_criti == 'Alta' %}selected{% endif %}>Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Fig. Publicas</label>
+                        <select name="criticidade_figuras_publicas" class="form-control criticidade-campo">
+                            <option value="Normal" {% if evento.fp_criti == 'Normal' %}selected{% endif %}>Normal</option>
+                            <option value="Media" {% if evento.fp_criti == 'Média' or evento.fp_criti == 'Media' %}selected{% endif %}>Media</option>
+                            <option value="Alta" {% if evento.fp_criti == 'Alta' %}selected{% endif %}>Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Efetivo PCRJ</label>
+                        <select name="criticidade_efetivo" class="form-control criticidade-campo">
+                            <option value="Normal" {% if evento.efe_criti == 'Normal' %}selected{% endif %}>Normal</option>
+                            <option value="Media" {% if evento.efe_criti == 'Média' or evento.efe_criti == 'Media' %}selected{% endif %}>Media</option>
+                            <option value="Alta" {% if evento.efe_criti == 'Alta' %}selected{% endif %}>Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Pop. Impactada</label>
+                        <select name="criticidade_populacao" class="form-control criticidade-campo">
+                            <option value="Normal" {% if evento.pop_criti == 'Normal' %}selected{% endif %}>Normal</option>
+                            <option value="Media" {% if evento.pop_criti == 'Média' or evento.pop_criti == 'Media' %}selected{% endif %}>Media</option>
+                            <option value="Alta" {% if evento.pop_criti == 'Alta' %}selected{% endif %}>Alta</option>
+                        </select>
+                    </div>
+                    <div class="criticidade-item">
+                        <label>Agravamento</label>
+                        <select name="criticidade_agravamento" class="form-control criticidade-campo">
+                            <option value="Normal" {% if evento.pt_criti == 'Normal' %}selected{% endif %}>Normal</option>
+                            <option value="Media" {% if evento.pt_criti == 'Média' or evento.pt_criti == 'Media' %}selected{% endif %}>Media</option>
+                            <option value="Alta" {% if evento.pt_criti == 'Alta' %}selected{% endif %}>Alta</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="criticidade-resultado">
+                    <div class="criticidade-resultado-label">Criticidade Geral Calculada</div>
+                    <div class="criticidade-resultado-value criticidade-{{ evento.criti|lower }}" id="criticidadeGeral">{{ evento.criti|default:'NORMAL'|upper }}</div>
+                </div>
+            </div>
+
+            <!-- Observacoes -->
+            <div class="form-section">
+                <h3 class="section-title"><i class="fas fa-clipboard"></i> Observacoes</h3>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label class="form-label">Pontos de Atencao</label>
+                        <textarea name="pontos_atencao" class="form-control" rows="3">{{ evento.pontos_atencao|default:'' }}</textarea>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="form-label">Fonte da Informacao</label>
+                        <textarea name="fonte" class="form-control" rows="2">{{ evento.fonte|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botoes -->
+            <div class="action-buttons">
+                <a href="{% url 'eventos_detalhe' evento.id %}" class="btn-cancelar">Cancelar</a>
+                <button type="submit" class="btn-salvar">
+                    <i class="fas fa-save"></i> Salvar Alteracoes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Calcular criticidade
+function calcularCriticidade() {
+    const campos = document.querySelectorAll('.criticidade-campo');
+    let altas = 0;
+    let medias = 0;
+
+    campos.forEach(campo => {
+        if (campo.value === 'Alta') altas++;
+        else if (campo.value === 'Media') medias++;
+    });
+
+    const resultado = document.getElementById('criticidadeGeral');
+
+    if (altas >= 3) {
+        resultado.textContent = 'ALTA';
+        resultado.className = 'criticidade-resultado-value criticidade-alta';
+    } else if ((altas + medias) >= 3) {
+        resultado.textContent = 'MEDIA';
+        resultado.className = 'criticidade-resultado-value criticidade-media';
+    } else {
+        resultado.textContent = 'NORMAL';
+        resultado.className = 'criticidade-resultado-value criticidade-normal';
+    }
+}
+
+document.querySelectorAll('.criticidade-campo').forEach(campo => {
+    campo.addEventListener('change', calcularCriticidade);
+});
+
+// Submit
+document.getElementById('eventoForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    const data = {
+        nome_evento: formData.get('nome_evento'),
+        tipo: formData.get('tipo'),
+        status: formData.get('status'),
+        descricao: formData.get('descricao'),
+        estrutura: formData.get('estrutura'),
+        cpe: formData.get('cpe'),
+        estimativa_publico: formData.get('estimativa_publico'),
+        responsavel: formData.get('responsavel'),
+        forma: formData.get('forma'),
+        principal: formData.get('principal') === 'Sim' ? 'Sim' : 'Nao',
+        alinhamento: formData.get('alinhamento') === 'Sim' ? 'Sim' : 'Nao',
+        criticidade_local: formData.get('criticidade_local'),
+        criticidade_data: formData.get('criticidade_data'),
+        criticidade_hora: formData.get('criticidade_hora'),
+        criticidade_mobilidade: formData.get('criticidade_mobilidade'),
+        criticidade_publico: formData.get('criticidade_publico'),
+        criticidade_exposicao: formData.get('criticidade_exposicao'),
+        criticidade_figuras_publicas: formData.get('criticidade_figuras_publicas'),
+        criticidade_efetivo: formData.get('criticidade_efetivo'),
+        criticidade_populacao: formData.get('criticidade_populacao'),
+        criticidade_agravamento: formData.get('criticidade_agravamento'),
+        pontos_atencao: formData.get('pontos_atencao'),
+        fonte: formData.get('fonte')
+    };
+
+    try {
+        const response = await fetch('/integracity/api/eventos/{{ evento.id }}/atualizar/', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert('Evento atualizado com sucesso!', 'success');
+            setTimeout(() => {
+                window.location.href = '{% url "eventos_detalhe" evento.id %}';
+            }, 1500);
+        } else {
+            showAlert('Erro: ' + result.error, 'error');
+        }
+    } catch (error) {
+        showAlert('Erro de conexao', 'error');
+    }
+});
+
+function showAlert(message, type) {
+    const container = document.getElementById('alertContainer');
+    container.innerHTML = `
+        <div class="alert alert-${type}">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            ${message}
+        </div>
+    `;
+
+    // Scroll para o topo para mostrar o alerta
+    document.querySelector('.editar-wrapper').scrollTop = 0;
+}
+</script>
+{% endblock %}

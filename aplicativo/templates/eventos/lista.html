@@ -1,0 +1,674 @@
+{% extends "base_hightech.html" %}
+{% load static %}
+
+{% block title %}Gestao de Eventos - IntegraCity{% endblock %}
+
+{% block sidebar_class %}collapsed{% endblock %}
+{% block toggle_class %}collapsed{% endblock %}
+{% block wrapper_class %}expanded{% endblock %}
+
+{% block content %}
+<style>
+    .eventos-page {
+        padding: 20px 30px;
+        height: 100%;
+        overflow-y: auto;
+        background: linear-gradient(180deg, rgba(0,20,40,0.95) 0%, rgba(0,10,20,0.98) 100%);
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #00ffff;
+        font-family: 'Orbitron', monospace;
+        font-size: 1.3rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .page-title i {
+        color: #9C27B0;
+        font-size: 1.1rem;
+    }
+
+    .btn-novo {
+        background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+        color: #fff;
+        padding: 10px 24px;
+        border: none;
+        border-radius: 6px;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-novo:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(156, 39, 176, 0.4);
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .stat-card {
+        background: rgba(0, 20, 40, 0.6);
+        border: 1px solid rgba(0, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+        border-color: rgba(0, 255, 255, 0.3);
+        background: rgba(0, 30, 60, 0.6);
+    }
+
+    .stat-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #00ffff;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 6px;
+    }
+
+    .stat-card.alta .stat-value { color: #ff4444; }
+    .stat-card.media .stat-value { color: #ffaa00; }
+    .stat-card.normal .stat-value { color: #00ff88; }
+
+    /* Filtros */
+    .filtros-section {
+        background: rgba(0, 20, 40, 0.4);
+        border: 1px solid rgba(0, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .filtro-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .filtro-label {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 0.65rem;
+        color: rgba(0, 255, 255, 0.7);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .filtro-control {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(0, 255, 255, 0.2);
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 0.85rem;
+        min-width: 140px;
+    }
+
+    .filtro-control:focus {
+        outline: none;
+        border-color: #00ffff;
+    }
+
+    .btn-filtrar {
+        background: rgba(0, 255, 255, 0.15);
+        border: 1px solid #00ffff;
+        color: #00ffff;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-filtrar:hover {
+        background: rgba(0, 255, 255, 0.25);
+    }
+
+    .btn-limpar {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.6);
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 0.85rem;
+    }
+
+    /* Tabela */
+    .table-container {
+        background: rgba(0, 20, 40, 0.4);
+        border: 1px solid rgba(0, 255, 255, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .eventos-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .eventos-table th {
+        background: rgba(0, 255, 255, 0.08);
+        color: #00ffff;
+        padding: 12px 15px;
+        text-align: left;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+    }
+
+    .eventos-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .eventos-table tr:hover {
+        background: rgba(0, 255, 255, 0.03);
+    }
+
+    .evento-nome {
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .evento-nome a {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .evento-nome a:hover {
+        color: #00ffff;
+    }
+
+    /* Badges */
+    .badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-alta { background: rgba(255, 68, 68, 0.2); color: #ff4444; border: 1px solid rgba(255, 68, 68, 0.3); }
+    .badge-media { background: rgba(255, 170, 0, 0.2); color: #ffaa00; border: 1px solid rgba(255, 170, 0, 0.3); }
+    .badge-normal { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.3); }
+    .badge-planejado { background: rgba(0, 255, 255, 0.15); color: #00ffff; }
+    .badge-cancelado { background: rgba(255, 68, 68, 0.15); color: #ff4444; }
+    .badge-principal { background: linear-gradient(135deg, #9C27B0, #7B1FA2); color: #fff; font-size: 0.55rem; }
+
+    /* Data */
+    .evento-data {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .evento-data-proxima {
+        color: #00ff88;
+        font-weight: 600;
+    }
+
+    /* Acoes */
+    .acoes-cell {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-acao {
+        background: transparent;
+        border: 1px solid rgba(0, 255, 255, 0.2);
+        color: rgba(0, 255, 255, 0.7);
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-acao:hover {
+        background: rgba(0, 255, 255, 0.15);
+        border-color: #00ffff;
+        color: #00ffff;
+    }
+
+    .btn-acao.delete:hover {
+        background: rgba(255, 68, 68, 0.15);
+        border-color: #ff4444;
+        color: #ff4444;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: rgba(255, 255, 255, 0.15);
+        margin-bottom: 15px;
+    }
+
+    .empty-state p {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: rgba(0, 20, 40, 0.98);
+        border: 1px solid rgba(255, 68, 68, 0.3);
+        border-radius: 8px;
+        padding: 25px;
+        max-width: 450px;
+        width: 90%;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .modal-title {
+        color: #ff4444;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+
+    .modal-body {
+        color: rgba(255, 255, 255, 0.8);
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+
+    .modal-body strong {
+        color: #fff;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    .btn-cancel {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.7);
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    .btn-confirm-delete {
+        background: #ff4444;
+        border: none;
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 600;
+    }
+</style>
+
+<div class="eventos-page">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-calendar-alt"></i>
+            Gestao de Eventos
+        </h1>
+        <a href="{% url 'eventos_cadastro' %}" class="btn-novo">
+            <i class="fas fa-plus"></i> Novo Evento
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card alta">
+            <div class="stat-value" id="statAlta">0</div>
+            <div class="stat-label">Criticidade Alta</div>
+        </div>
+        <div class="stat-card media">
+            <div class="stat-value" id="statMedia">0</div>
+            <div class="stat-label">Criticidade Media</div>
+        </div>
+        <div class="stat-card normal">
+            <div class="stat-value" id="statNormal">0</div>
+            <div class="stat-label">Criticidade Normal</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statProximos7">0</div>
+            <div class="stat-label">Proximos 7 dias</div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-section">
+        <div class="filtro-group">
+            <span class="filtro-label">Buscar</span>
+            <input type="text" class="filtro-control" id="filtroSearch" placeholder="Nome do evento...">
+        </div>
+        <div class="filtro-group">
+            <span class="filtro-label">Tipo</span>
+            <select class="filtro-control" id="filtroTipo">
+                <option value="">Todos</option>
+                {% for tipo in tipos %}
+                <option value="{{ tipo }}">{{ tipo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filtro-group">
+            <span class="filtro-label">Status</span>
+            <select class="filtro-control" id="filtroStatus">
+                <option value="">Todos</option>
+                {% for status in status_choices %}
+                <option value="{{ status }}">{{ status }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filtro-group">
+            <span class="filtro-label">Criticidade</span>
+            <select class="filtro-control" id="filtroCriticidade">
+                <option value="">Todas</option>
+                {% for crit in criticidade_choices %}
+                <option value="{{ crit }}">{{ crit }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button class="btn-filtrar" onclick="aplicarFiltros()">
+            <i class="fas fa-search"></i> Filtrar
+        </button>
+        <button class="btn-limpar" onclick="limparFiltros()">
+            <i class="fas fa-times"></i> Limpar
+        </button>
+    </div>
+
+    <!-- Tabela -->
+    <div class="table-container">
+        <table class="eventos-table">
+            <thead>
+                <tr>
+                    <th>Evento</th>
+                    <th>Tipo</th>
+                    <th>Local</th>
+                    <th>Responsavel</th>
+                    <th>Criticidade</th>
+                    <th>Status</th>
+                    <th>Proxima Data</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody id="eventosTableBody">
+                {% for evento in eventos %}
+                <tr data-id="{{ evento.id }}">
+                    <td class="evento-nome">
+                        <a href="{% url 'eventos_detalhe' evento.id %}">
+                            {% if evento.principal == 'Sim' %}<span class="badge badge-principal">PRINCIPAL</span> {% endif %}
+                            {{ evento.nome_evento|default:"Sem nome" }}
+                        </a>
+                    </td>
+                    <td>{{ evento.tipo|default:"-" }}</td>
+                    <td>{{ evento.endere.local|default:"-"|truncatechars:25 }}</td>
+                    <td>{{ evento.respeven|default:"-" }}</td>
+                    <td>
+                        {% if evento.criti == 'Alta' %}
+                        <span class="badge badge-alta">Alta</span>
+                        {% elif evento.criti == 'Média' %}
+                        <span class="badge badge-media">Media</span>
+                        {% else %}
+                        <span class="badge badge-normal">Normal</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if evento.status == 'Cancelado' %}
+                        <span class="badge badge-cancelado">Cancelado</span>
+                        {% else %}
+                        <span class="badge badge-planejado">{{ evento.status|default:"Planejado" }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="evento-data">
+                        {% with evento.datas.first as primeira_data %}
+                            {% if primeira_data %}
+                            <span class="evento-data-proxima">{{ primeira_data.data_inicio|date:"d/m/Y H:i" }}</span>
+                            {% else %}
+                            <span>-</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td class="acoes-cell">
+                        <a href="{% url 'eventos_detalhe' evento.id %}" class="btn-acao" title="Ver detalhes">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'eventos_editar' evento.id %}" class="btn-acao" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button class="btn-acao delete" title="Excluir" onclick="confirmarExclusao({{ evento.id }}, '{{ evento.nome_evento|escapejs }}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-times"></i>
+                            <p>Nenhum evento cadastrado</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de Exclusao -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Confirmar Exclusao</h3>
+            <button class="modal-close" onclick="fecharModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Tem certeza que deseja excluir o evento:</p>
+            <p><strong id="deleteEventoNome"></strong></p>
+            <p style="color: #ff4444; margin-top: 10px; font-size: 0.8rem;">Esta acao nao pode ser desfeita.</p>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+            <button class="btn-confirm-delete" onclick="excluirEvento()">Excluir</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let eventoParaExcluir = null;
+
+async function carregarEstatisticas() {
+    try {
+        const response = await fetch('/integracity/api/eventos/estatisticas/');
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('statTotal').textContent = data.total;
+            document.getElementById('statAlta').textContent = data.por_criticidade.Alta || 0;
+            document.getElementById('statMedia').textContent = data.por_criticidade['Média'] || 0;
+            document.getElementById('statNormal').textContent = data.por_criticidade.Normal || 0;
+            document.getElementById('statProximos7').textContent = data.proximos_7_dias;
+        }
+    } catch (error) {
+        console.error('Erro ao carregar estatisticas:', error);
+    }
+}
+
+function aplicarFiltros() {
+    const search = document.getElementById('filtroSearch').value;
+    const tipo = document.getElementById('filtroTipo').value;
+    const status = document.getElementById('filtroStatus').value;
+    const criticidade = document.getElementById('filtroCriticidade').value;
+
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (tipo) params.append('tipo', tipo);
+    if (status) params.append('status', status);
+    if (criticidade) params.append('criticidade', criticidade);
+
+    window.location.href = '{% url "eventos_lista" %}?' + params.toString();
+}
+
+function limparFiltros() {
+    window.location.href = '{% url "eventos_lista" %}';
+}
+
+function confirmarExclusao(id, nome) {
+    eventoParaExcluir = id;
+    document.getElementById('deleteEventoNome').textContent = nome;
+    document.getElementById('deleteModal').classList.add('active');
+}
+
+function fecharModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+    eventoParaExcluir = null;
+}
+
+async function excluirEvento() {
+    if (!eventoParaExcluir) return;
+
+    try {
+        const response = await fetch('/integracity/api/eventos/' + eventoParaExcluir + '/excluir/', {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const row = document.querySelector('tr[data-id="' + eventoParaExcluir + '"]');
+            if (row) row.remove();
+            fecharModal();
+            carregarEstatisticas();
+        } else {
+            alert('Erro ao excluir: ' + data.error);
+        }
+    } catch (error) {
+        alert('Erro de conexao');
+    }
+}
+
+document.getElementById('filtroSearch').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') aplicarFiltros();
+});
+
+document.addEventListener('DOMContentLoaded', carregarEstatisticas);
+</script>
+{% endblock %}

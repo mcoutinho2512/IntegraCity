@@ -207,6 +207,10 @@
                     <i class="fas fa-draw-polygon"></i>
                     <span>Areas</span>
                 </a>
+                <a href="{% url 'eventos_lista' %}" class="nav-link {% if 'evento' in request.resolver_match.url_name %}active{% endif %}" title="Gestao de Eventos">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Eventos</span>
+                </a>
                 <a href="{% url 'videomonitoramento' %}" class="nav-link {% if request.resolver_match.url_name == 'videomonitoramento' %}active{% endif %}" title="Cameras">
                     <i class="fas fa-video"></i>
                     <span>Cameras</span>

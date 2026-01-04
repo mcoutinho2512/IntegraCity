@@ -509,6 +509,21 @@
                     <div class="escola-autocomplete-list" id="escolaAutocompleteList"></div>
                 </div>
 
+                <!-- Eventos da Cidade -->
+                <div class="layer-item" onclick="toggleLayerByClick('eventosCidade', event)">
+                    <label class="layer-checkbox" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="layerEventosCidade" onchange="toggleMapLayer('eventosCidade')">
+                        <span class="checkmark"></span>
+                    </label>
+                    <div class="layer-icon" style="background: rgba(156, 39, 176, 0.2); color: #9C27B0;">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="layer-info">
+                        <span class="layer-name">Eventos</span>
+                        <span class="layer-count" id="countEventosCidade">--</span>
+                    </div>
+                </div>
+
                 <!-- Hospitais -->
                 <div class="layer-item" onclick="toggleLayerByClick('hospitais', event)">
                     <label class="layer-checkbox" onclick="event.stopPropagation()">
@@ -2010,6 +2025,7 @@
     // Layer Groups para cada tipo de dado
     var mapLayers = {
         escolas: L.layerGroup(),
+        eventosCidade: L.layerGroup(),  // Eventos da cidade (shows, manifestacoes, etc)
         hospitais: L.layerGroup(),
         pluviometros: L.layerGroup(),
         sirenes: L.layerGroup(),
@@ -3089,6 +3105,7 @@
 
         var apiUrls = {
             escolas: baseUrl + 'integracity/api/escolas/',
+            eventosCidade: baseUrl + 'integracity/api/eventos/geojson/',
             hospitais: baseUrl + 'integracity/api/hospitais/',
             pluviometros: baseUrl + 'integracity/api/pluviometros-defesa-civil/',
             sirenes: baseUrl + 'integracity/api/sirenes-chuvas/',
@@ -3139,6 +3156,11 @@
                 } else if (layerName === 'brt') {
                     renderBRTMarkers(data);
                     showToast('BRT carregado: ' + (data.count || 0) + ' estações', 'success');
+                } else if (layerName === 'eventosCidade') {
+                    renderEventosCidadeMarkers(data);
+                    var count = data.features ? data.features.length : 0;
+                    document.getElementById('countEventosCidade').textContent = count;
+                    showToast('Eventos carregados: ' + count, 'success');
                 } else {
                     renderLayerMarkers(layerName, data);
                     updateLayerCount(layerName, data);
@@ -3442,6 +3464,86 @@
         if (countEl) {
             countEl.textContent = estacoes.length;
         }
+    }
+
+    // ============================================
+    // RENDERIZAR EVENTOS DA CIDADE
+    // ============================================
+    function renderEventosCidadeMarkers(geojson) {
+        mapLayers.eventosCidade.clearLayers();
+
+        if (!geojson || !geojson.features) {
+            console.warn('Dados de eventos invalidos:', geojson);
+            return;
+        }
+
+        console.log('Renderizando ' + geojson.features.length + ' eventos da cidade');
+
+        geojson.features.forEach(function(feature) {
+            if (feature.geometry.type === 'Point') {
+                var coords = feature.geometry.coordinates;
+                var props = feature.properties;
+
+                // Pular locais secundarios e poligonos
+                if (props.tipo_feature === 'local_secundario' || props.tipo_feature === 'poligono') {
+                    return;
+                }
+
+                var lat = coords[1];
+                var lng = coords[0];
+                var cor = props.cor || '#9C27B0';
+
+                // Icone baseado na criticidade
+                var tamanho = props.principal ? 40 : 32;
+                var icon = L.divIcon({
+                    className: 'evento-marker',
+                    html: '<div style="background: ' + cor + '; width: ' + tamanho + 'px; height: ' + tamanho + 'px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">' +
+                          '<i class="fas fa-calendar-alt" style="color: white; font-size: ' + (props.principal ? '18px' : '14px') + ';"></i>' +
+                          '</div>' +
+                          (props.principal ? '<div style="position: absolute; top: -8px; right: -8px; background: gold; color: black; font-size: 10px; padding: 2px 4px; border-radius: 3px; font-weight: bold;"><i class="fas fa-star"></i></div>' : ''),
+                    iconSize: [tamanho, tamanho],
+                    iconAnchor: [tamanho/2, tamanho/2],
+                    popupAnchor: [0, -tamanho/2]
+                });
+
+                var marker = L.marker([lat, lng], { icon: icon });
+
+                // Formatar data
+                var dataInfo = '';
+                if (props.proxima_data) {
+                    var inicio = new Date(props.proxima_data.inicio);
+                    dataInfo = '<p><i class="fas fa-clock"></i> ' + inicio.toLocaleDateString('pt-BR') + ' ' + inicio.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) + '</p>';
+                }
+
+                // Popup com informacoes
+                var popupHtml = '<div style="font-family: Rajdhani, sans-serif; min-width: 250px;">' +
+                    '<h4 style="margin: 0 0 8px 0; color: ' + cor + '; font-family: Orbitron, monospace; font-size: 0.9rem;">' +
+                    '<i class="fas fa-calendar-alt"></i> ' + (props.nome || 'Evento') + '</h4>' +
+                    '<div style="font-size: 0.85rem; color: #ccc;">' +
+                    '<p><i class="fas fa-tag" style="color: ' + cor + ';"></i> ' + (props.tipo || 'Evento') + '</p>' +
+                    '<p><i class="fas fa-map-marker-alt"></i> ' + (props.local || '-') + '</p>' +
+                    (props.estimativa_publico ? '<p><i class="fas fa-users"></i> ' + props.estimativa_publico + '</p>' : '') +
+                    dataInfo +
+                    '<p><i class="fas fa-exclamation-triangle"></i> Criticidade: <span style="color: ' + cor + '; font-weight: bold;">' + (props.criticidade || 'Normal') + '</span></p>' +
+                    '</div>' +
+                    '<a href="/integracity/eventos/' + props.id + '/" style="display: inline-block; margin-top: 8px; background: ' + cor + '; color: white; padding: 5px 12px; border-radius: 4px; text-decoration: none; font-size: 0.8rem;">' +
+                    '<i class="fas fa-eye"></i> Ver Detalhes</a>' +
+                    '</div>';
+
+                marker.bindPopup(popupHtml);
+
+                // Tooltip no hover
+                marker.bindTooltip(props.nome || 'Evento', {
+                    permanent: false,
+                    direction: 'top',
+                    className: 'evento-tooltip'
+                });
+
+                mapLayers.eventosCidade.addLayer(marker);
+            }
+        });
+
+        console.log('Eventos renderizados: ' + mapLayers.eventosCidade.getLayers().length);
     }
 
     // ============================================
