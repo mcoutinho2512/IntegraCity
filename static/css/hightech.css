@@ -766,7 +766,7 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .stat-label {
-    font-size: 0.6rem;
+    font-size: 0.45rem;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -774,7 +774,7 @@ h1, h2, h3, h4, h5, h6,
 
 .stat-value {
     font-family: 'Orbitron', monospace;
-    font-size: 0.75rem;
+    font-size: 0.55rem;
     font-weight: 600;
     color: var(--cyan);
 }

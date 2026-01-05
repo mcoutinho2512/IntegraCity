@@ -4,6 +4,7 @@ Views para Gestao de Eventos
 """
 import json
 from datetime import datetime, timedelta
+from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -460,10 +461,43 @@ def api_evento_criar(request):
 
         # Buscar ou criar o local
         local_id = data.get('local_id')
-        if not local_id:
-            return JsonResponse({'success': False, 'error': 'Local e obrigatorio'}, status=400)
+        local = None
 
-        local = get_object_or_404(Local, id=local_id)
+        if local_id:
+            # Usar local existente
+            local = get_object_or_404(Local, id=local_id)
+        else:
+            # Criar novo local com base no endereco e coordenadas
+            endereco_evento = data.get('endereco_evento')
+            latitude = data.get('latitude')
+            longitude = data.get('longitude')
+
+            if not endereco_evento or not latitude or not longitude:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Endereco e coordenadas sao obrigatorios quando nao ha local cadastrado'
+                }, status=400)
+
+            # Extrair bairro do endereco se possivel
+            bairro = None
+            endereco_parts = endereco_evento.split(' - ')
+            if len(endereco_parts) >= 2:
+                # Tentar encontrar bairro valido
+                for part in endereco_parts:
+                    part_clean = part.strip()
+                    # Verificar se e um bairro valido
+                    bairros_validos = [b[0] for b in Local.BAIRRO_CHOICE]
+                    if part_clean in bairros_validos:
+                        bairro = part_clean
+                        break
+
+            # Criar o local
+            local = Local.objects.create(
+                local=data.get('nome_evento', 'Evento')[:250],
+                end=endereco_evento[:250],
+                location=f"{latitude},{longitude}",
+                bairro=bairro
+            )
 
         # Criar evento
         evento = Evento.objects.create(
@@ -655,3 +689,136 @@ def eventos_detalhe_view(request, evento_id):
     )
 
     return render(request, 'eventos/detalhe.html', {'evento': evento})
+
+
+@login_required
+def eventos_dashboard_view(request):
+    """Dashboard de Eventos com Timeline, Mapa e Planilha"""
+    from django.db.models import Min, Max
+
+    # Obter todos os eventos com suas datas
+    eventos = Evento.objects.select_related('endere').prefetch_related('datas').order_by('-id')
+
+    # Estatisticas
+    total_eventos = eventos.count()
+    eventos_planejados = eventos.filter(status='Planejado').count()
+    eventos_cancelados = eventos.filter(status='Cancelado').count()
+
+    # Eventos por criticidade
+    eventos_alta = eventos.filter(criti='Alta').count()
+    eventos_media = eventos.filter(criti='Média').count()
+    eventos_normal = eventos.filter(criti='Normal').count()
+
+    # Proximos eventos (proximos 30 dias) + eventos em andamento
+    hoje = timezone.now()
+    data_limite = hoje + timedelta(days=30)
+
+    # Incluir eventos futuros E eventos em andamento (que ainda nao terminaram)
+    proximos_eventos = DataEvento.objects.filter(
+        Q(data_inicio__gte=hoje, data_inicio__lte=data_limite) |  # Futuros
+        Q(data_inicio__lte=hoje, data_fim__gte=hoje)  # Em andamento
+    ).select_related('evento', 'evento__endere').order_by('data_inicio')
+
+    # Eventos acontecendo agora
+    eventos_agora = DataEvento.objects.filter(
+        data_inicio__lte=hoje,
+        data_fim__gte=hoje
+    ).select_related('evento', 'evento__endere')
+
+    # Alertas - eventos iniciando nas proximas 2 horas
+    duas_horas = hoje + timedelta(hours=2)
+    eventos_iniciando = DataEvento.objects.filter(
+        data_inicio__gte=hoje,
+        data_inicio__lte=duas_horas
+    ).select_related('evento', 'evento__endere').order_by('data_inicio')
+
+    # Alertas - eventos terminando nas proximas 2 horas
+    eventos_terminando = DataEvento.objects.filter(
+        data_fim__gte=hoje,
+        data_fim__lte=duas_horas
+    ).select_related('evento', 'evento__endere').order_by('data_fim')
+
+    # Tipos para filtro
+    tipos = Evento.objects.values_list('tipo', flat=True).distinct()
+
+    context = {
+        'eventos': eventos,
+        'total_eventos': total_eventos,
+        'eventos_planejados': eventos_planejados,
+        'eventos_cancelados': eventos_cancelados,
+        'eventos_alta': eventos_alta,
+        'eventos_media': eventos_media,
+        'eventos_normal': eventos_normal,
+        'proximos_eventos': proximos_eventos,
+        'eventos_agora': eventos_agora,
+        'eventos_iniciando': eventos_iniciando,
+        'eventos_terminando': eventos_terminando,
+        'tipos': [t for t in tipos if t],
+    }
+
+    return render(request, 'eventos/dashboard.html', context)
+
+
+@never_cache
+def api_eventos_alertas(request):
+    """
+    API para obter alertas de eventos em tempo real
+
+    GET /api/eventos/alertas/
+    """
+    try:
+        hoje = timezone.now()
+        duas_horas = hoje + timedelta(hours=2)
+
+        alertas = []
+
+        # Eventos iniciando em breve
+        eventos_iniciando = DataEvento.objects.filter(
+            data_inicio__gte=hoje,
+            data_inicio__lte=duas_horas
+        ).select_related('evento', 'evento__endere').order_by('data_inicio')
+
+        for de in eventos_iniciando:
+            minutos = int((de.data_inicio - hoje).total_seconds() / 60)
+            alertas.append({
+                'tipo': 'inicio',
+                'evento_id': de.evento.id,
+                'nome': de.evento.nome_evento,
+                'local': de.evento.endere.local if de.evento.endere else '',
+                'horario': de.data_inicio.strftime('%H:%M'),
+                'minutos_restantes': minutos,
+                'criticidade': de.evento.criti,
+                'mensagem': f'Inicia em {minutos} minutos'
+            })
+
+        # Eventos terminando em breve
+        eventos_terminando = DataEvento.objects.filter(
+            data_fim__gte=hoje,
+            data_fim__lte=duas_horas,
+            data_inicio__lte=hoje  # Ja comecou
+        ).select_related('evento', 'evento__endere').order_by('data_fim')
+
+        for de in eventos_terminando:
+            minutos = int((de.data_fim - hoje).total_seconds() / 60)
+            alertas.append({
+                'tipo': 'fim',
+                'evento_id': de.evento.id,
+                'nome': de.evento.nome_evento,
+                'local': de.evento.endere.local if de.evento.endere else '',
+                'horario': de.data_fim.strftime('%H:%M'),
+                'minutos_restantes': minutos,
+                'criticidade': de.evento.criti,
+                'mensagem': f'Termina em {minutos} minutos'
+            })
+
+        # Ordenar por minutos restantes
+        alertas.sort(key=lambda x: x['minutos_restantes'])
+
+        return JsonResponse({
+            'success': True,
+            'alertas': alertas,
+            'total': len(alertas)
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

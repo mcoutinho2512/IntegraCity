@@ -5645,7 +5645,9 @@
                             zIndexOffset: 2000
                         });
 
-                        marker.bindPopup('<b>' + (s.nome || 'Sirene') + '</b><br>' + s.nivel_texto + '<br>1h: ' + h01.toFixed(1) + 'mm');
+                        var m5 = (s.chuva && s.chuva.m5) ? s.chuva.m5 : 0;
+                        var m15 = (s.chuva && s.chuva.m15) ? s.chuva.m15 : 0;
+                        marker.bindPopup('<b>' + (s.nome || 'Sirene') + '</b><br>' + s.nivel_texto + '<br>5min: ' + m5.toFixed(1) + 'mm<br>15min: ' + m15.toFixed(1) + 'mm<br>1h: ' + h01.toFixed(1) + 'mm');
                         if (mapLayers.alertasChuva) {
                             mapLayers.alertasChuva.addLayer(marker);
                         } else {
@@ -5700,7 +5702,9 @@
                             zIndexOffset: 1900
                         });
 
-                        marker.bindPopup('<b>' + (p.nome || 'Pluviometro') + '</b><br>' + p.nivel_texto + '<br>1h: ' + h01.toFixed(1) + 'mm');
+                        var m5 = (p.dados && p.dados.m5) ? p.dados.m5 : 0;
+                        var m15 = (p.dados && p.dados.m15) ? p.dados.m15 : 0;
+                        marker.bindPopup('<b>' + (p.nome || 'Pluviometro') + '</b><br>' + p.nivel_texto + '<br>5min: ' + m5.toFixed(1) + 'mm<br>15min: ' + m15.toFixed(1) + 'mm<br>1h: ' + h01.toFixed(1) + 'mm');
                         if (mapLayers.alertasChuva) {
                             mapLayers.alertasChuva.addLayer(marker);
                         } else {
